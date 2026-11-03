@@ -3254,5 +3254,228 @@
       refreshEvents();
     })();
   </script>
+<!-- ===================== TAROT CONTROL ===================== -->
+  <style>
+    .tarot-panel {
+      margin: 22px;
+      padding: 20px 22px;
+      border-radius: 14px;
+      border: 1px solid rgba(166, 120, 255, 0.28);
+      background: #0c0817;
+      color: #e9ddff;
+      font-family: 'EB Garamond', 'Segoe UI', serif;
+    }
+    .tarot-panel h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: 1px; }
+    .tarot-panel .hint { font-size: 13px; opacity: 0.7; margin-bottom: 14px; }
+    .tarot-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .tarot-field { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+    .tarot-field input {
+      padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(166, 120, 255, 0.3);
+      background: #150d26; color: #f2eaff; font-family: inherit; font-size: 14px;
+    }
+    .tarot-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .tarot-actions button {
+      padding: 9px 14px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 14px;
+      border: 1px solid rgba(166, 120, 255, 0.35); background: #1a1030; color: #eadfff;
+    }
+    .tarot-actions button:hover { background: #241543; }
+    .tarot-actions button.primary { background: linear-gradient(180deg, #4a2d86, #2a1850); border-color: rgba(216, 185, 120, 0.5); }
+    .tarot-actions button.on { border-color: #7ef0b0; color: #b6ffd8; }
+    .tarot-status { font-size: 13px; min-height: 18px; opacity: 0.85; margin-bottom: 8px; }
+    .tarot-history { max-height: 260px; overflow-y: auto; font-size: 13px; line-height: 1.5; }
+    .tarot-history .row { padding: 6px 0; border-bottom: 1px solid rgba(166, 120, 255, 0.12); }
+    .tarot-history .row b { color: #f5ecff; }
+    .tarot-history .meta { opacity: 0.65; font-size: 12px; }
+    .tarot-rules { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+    .tarot-rules th, .tarot-rules td { text-align: left; padding: 6px; border-bottom: 1px solid rgba(166, 120, 255, 0.12); }
+    .tarot-rules input, .tarot-rules select {
+      padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(166, 120, 255, 0.28);
+      background: #150d26; color: #f2eaff; font-family: inherit;
+    }
+  </style>
+  <section class="tarot-panel" id="tarotPanel">
+    <h2>&#128302; Tarot Control</h2>
+    <div class="hint">Readings use the server-side 78-card engine. AI interpretation is optional and always falls back to the built-in structured reading.</div>
+
+    <div class="tarot-grid">
+      <div class="tarot-field">
+        <label>Comment cooldown (seconds, global)</label>
+        <input type="number" id="tarotGlobalCooldown" min="0" max="600" step="1" />
+      </div>
+      <div class="tarot-field">
+        <label>Per-viewer cooldown (seconds)</label>
+        <input type="number" id="tarotViewerCooldown" min="0" max="3600" step="1" />
+      </div>
+      <div class="tarot-field">
+        <label>Max queued readings</label>
+        <input type="number" id="tarotMaxQueue" min="1" max="50" step="1" />
+      </div>
+    </div>
+
+    <table class="tarot-rules">
+      <thead><tr><th>Gift coins &ge;</th><th>Spread</th></tr></thead>
+      <tbody id="tarotRuleRows"></tbody>
+    </table>
+    <div class="tarot-actions">
+      <button id="tarotAddRule" type="button">+ Add gift rule</button>
+      <button id="tarotSave" class="primary" type="button">Save settings</button>
+      <button id="tarotToggleEnabled" type="button">Tarot: ON</button>
+      <button id="tarotToggleAi" type="button">AI interpretation: OFF</button>
+    </div>
+
+    <div class="tarot-actions">
+      <button id="tarotTestOne" type="button">Test one-card reading</button>
+      <button id="tarotTestThree" type="button">Test three-card reading</button>
+      <button id="tarotRefresh" type="button">Refresh history</button>
+      <button id="tarotClear" type="button">Clear history</button>
+    </div>
+    <div class="tarot-status" id="tarotStatus"></div>
+    <div class="tarot-history" id="tarotHistory"></div>
+  </section>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      let settings = { enabled: true, aiInterpretation: false, commentCooldownSeconds: 20, perViewerCooldownSeconds: 120, maxQueue: 8, giftRules: [] };
+
+      function status(text) { $('tarotStatus').textContent = text || ''; }
+
+      async function rpc(method, params) {
+        const res = await fetch('/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.result;
+      }
+
+      function renderRules() {
+        const host = $('tarotRuleRows');
+        host.innerHTML = '';
+        settings.giftRules.forEach((rule, index) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td><input type="number" min="1" max="100000" value="' + (Number(rule.minCoins) || 1) + '" data-rule-coins="' + index + '" /></td>' +
+            '<td><select data-rule-spread="' + index + '">' +
+            '<option value="one"' + (rule.spread === 'one' ? ' selected' : '') + '>One card</option>' +
+            '<option value="three"' + (rule.spread === 'three' ? ' selected' : '') + '>Three cards</option>' +
+            '</select></td>';
+          host.appendChild(tr);
+        });
+        if (!settings.giftRules.length) {
+          host.innerHTML = '<tr><td colspan="2">No gift rules — gifts will not trigger readings.</td></tr>';
+        }
+      }
+
+      function renderHistory(readings) {
+        const host = $('tarotHistory');
+        if (!readings || !readings.length) { host.innerHTML = '<div class="row">No readings yet.</div>'; return; }
+        host.innerHTML = readings.map((reading) => {
+          const cards = (reading.cards || []).map((c) => c.position + ': ' + c.name + (c.reversed ? ' (rev)' : '')).join(' · ');
+          return '<div class="row"><b>' + (reading.user || 'Guest') + '</b> — ' + cards +
+            '<div class="meta">' + reading.spread + ' · ' + reading.theme + ' · ' + reading.source + ' · ' +
+            new Date(reading.createdAt).toLocaleString() + ' · ' + reading.id + '</div></div>';
+        }).join('');
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot) return;
+        settings = {
+          enabled: snapshot.enabled !== false,
+          aiInterpretation: snapshot.aiInterpretation === true,
+          commentCooldownSeconds: Number(snapshot.commentCooldownSeconds) || 0,
+          perViewerCooldownSeconds: Number(snapshot.perViewerCooldownSeconds) || 0,
+          maxQueue: Number(snapshot.maxQueue) || 8,
+          giftRules: Array.isArray(snapshot.giftRules)
+            ? snapshot.giftRules.map((r) => ({ minCoins: Number(r.minCoins) || 1, spread: r.spread === 'one' ? 'one' : 'three' }))
+            : []
+        };
+        $('tarotGlobalCooldown').value = settings.commentCooldownSeconds;
+        $('tarotViewerCooldown').value = settings.perViewerCooldownSeconds;
+        $('tarotMaxQueue').value = settings.maxQueue;
+        $('tarotToggleEnabled').textContent = 'Tarot: ' + (settings.enabled ? 'ON' : 'OFF');
+        $('tarotToggleEnabled').classList.toggle('on', settings.enabled);
+        $('tarotToggleAi').textContent = 'AI interpretation: ' + (settings.aiInterpretation ? 'ON' : 'OFF');
+        $('tarotToggleAi').classList.toggle('on', settings.aiInterpretation);
+        renderRules();
+        renderHistory(snapshot.history);
+      }
+
+      function collectRules() {
+        const coins = [...document.querySelectorAll('[data-rule-coins]')];
+        const spreads = [...document.querySelectorAll('[data-rule-spread]')];
+        return coins.map((input, index) => ({
+          minCoins: Math.max(1, Number(input.value) || 1),
+          spread: spreads[index] && spreads[index].value === 'one' ? 'one' : 'three'
+        })).sort((a, b) => a.minCoins - b.minCoins);
+      }
+
+      async function save() {
+        const result = await rpc('tarot.updateSettings', {
+          enabled: settings.enabled,
+          aiInterpretation: settings.aiInterpretation,
+          commentCooldownSeconds: Number($('tarotGlobalCooldown').value) || 0,
+          perViewerCooldownSeconds: Number($('tarotViewerCooldown').value) || 0,
+          maxQueue: Number($('tarotMaxQueue').value) || 8,
+          giftRules: collectRules()
+        });
+        applySnapshot(result.tarot);
+        return result;
+      }
+
+      async function refresh() {
+        try {
+          const state = await (await fetch('/api/state')).json();
+          applySnapshot(state.tarot);
+        } catch (err) { status('Server offline: ' + err.message); }
+      }
+
+      $('tarotSave').addEventListener('click', async () => {
+        try { await save(); status('Settings saved.'); } catch (err) { status(err.message); }
+      });
+      $('tarotToggleEnabled').addEventListener('click', async () => {
+        settings.enabled = !settings.enabled;
+        try { await save(); status('Tarot ' + (settings.enabled ? 'enabled' : 'disabled') + '.'); } catch (err) { status(err.message); }
+      });
+      $('tarotToggleAi').addEventListener('click', async () => {
+        settings.aiInterpretation = !settings.aiInterpretation;
+        try { await save(); status('AI interpretation ' + (settings.aiInterpretation ? 'enabled' : 'disabled') + '.'); } catch (err) { status(err.message); }
+      });
+      $('tarotAddRule').addEventListener('click', () => {
+        settings.giftRules = [...collectRules(), { minCoins: 50, spread: 'three' }];
+        renderRules();
+      });
+      $('tarotTestOne').addEventListener('click', async () => {
+        status('Drawing one card…');
+        try {
+          const result = await rpc('tarot.testOne', { theme: 'love', announce: false });
+          status('One card: ' + result.reading.cards.map((c) => c.name).join(', '));
+          renderHistory(result.tarot.history);
+        } catch (err) { status(err.message); }
+      });
+      $('tarotTestThree').addEventListener('click', async () => {
+        status('Drawing three cards…');
+        try {
+          const result = await rpc('tarot.testThree', { question: 'What do the cards see?', announce: false });
+          status('Three cards: ' + result.reading.cards.map((c) => c.name + (c.reversed ? ' (rev)' : '')).join(', '));
+          renderHistory(result.tarot.history);
+        } catch (err) { status(err.message); }
+      });
+      $('tarotRefresh').addEventListener('click', () => refresh().then(() => status('History refreshed.')));
+      $('tarotClear').addEventListener('click', async () => {
+        try {
+          const result = await rpc('tarot.clearHistory', {});
+          applySnapshot(result.tarot);
+          status('History cleared.');
+        } catch (err) { status(err.message); }
+      });
+
+      refresh();
+      setInterval(refresh, 4000);
+    })();
+  </script>
+
 </body>
 </html>

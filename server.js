@@ -29,6 +29,8 @@ const PORT = Number.isFinite(ENV_PORT) && ENV_PORT > 0 && ENV_PORT < 65536 ? ENV
 const DATA_DIR = path.join(__dirname, 'data');
 const TTS_CACHE_DIR = path.join(DATA_DIR, 'tts-cache');
 const STATE_FILE = path.join(DATA_DIR, 'game-state.json');
+const { TarotEngine } = require('./tarot-engine');
+const tarotEngine = new TarotEngine({ historyFile: path.join(DATA_DIR, 'tarot-history.json') });
 
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
 
@@ -2703,6 +2705,17 @@ const DEFAULT_STATE = {
   supporters: {},
   likeBatching: normalizeLikeBatching(),
   recentEvents: [],
+  tarot: {
+    enabled: true,
+    aiInterpretation: false,
+    commentCooldownSeconds: 20,
+    perViewerCooldownSeconds: 120,
+    maxQueue: 8,
+    giftRules: [
+      { minCoins: 1, spread: 'one' },
+      { minCoins: 25, spread: 'three' }
+    ]
+  },
   settings: {
     running: true,
     paused: false,
@@ -2791,6 +2804,7 @@ function loadState() {
 const state = loadState();
 ensureReactive();
 state.likeBatching = normalizeLikeBatching(state.likeBatching);
+state.tarot = normalizeTarotState(state.tarot);
 const llmProviders = new LlmProviderManager({
   state,
   dataDir: DATA_DIR,
@@ -3903,7 +3917,8 @@ function getPublicState() {
     voiceProfiles: voiceProfilesSnapshot(),
     voiceRoutes: { ...VOICE_ROUTES },
     conversations: conversationSnapshot(),
-    reactive: reactiveSnapshot()
+    reactive: reactiveSnapshot(),
+    tarot: tarotSnapshot()
   };
 }
 
@@ -5011,6 +5026,7 @@ async function handleQueuedEvent(entry) {
   const payload = entry.payload || {};
   switch (entry.type) {
     case 'GIFT':
+      maybeHandleGiftTarot(payload);
       processGiftEvent(payload);
       return;
     case 'MEMBER':
@@ -5032,8 +5048,19 @@ async function handleQueuedEvent(entry) {
         _lean: true,
         share: entry.type === 'SHARE'
       });
+      if (entry.type === 'FOLLOW') {
+        broadcastNotification('mystic.fx', {
+          kind: 'welcome',
+          user: payload.user || payload.uniqueId || 'New follower',
+          uniqueId: payload.uniqueId || '',
+          at: Date.now()
+        });
+      }
       return;
     case 'CHAT':
+      // Tarot requests are handled first: a reading must not also trigger a
+      // reactive LLM reply, which would double the TTS load.
+      if (maybeHandleTarotComment(payload)) return;
       parseViewerComment(payload.commentText, payload.user, payload.uniqueId, payload.avatar).catch((err) => {
         console.warn('[Reactive] Comment handling failed:', err && err.message ? err.message : err);
       });
@@ -5546,6 +5573,390 @@ function configureAutoSim(enabled) {
 }
 
 // ============================================================================
+// 7b. TAROT ENGINE INTEGRATION
+// Selection lives in tarot-engine.js; this section only decides *when* to ask
+// for a reading, rate-limits requests, and announces the result.
+// ============================================================================
+const TAROT_DEFAULT_GIFT_RULES = Object.freeze([
+  { minCoins: 1, spread: 'one' },
+  { minCoins: 25, spread: 'three' }
+]);
+const TAROT_THEME_WORDS = Object.freeze({
+  love: 'love', crush: 'love', relationship: 'love', romance: 'love',
+  career: 'career', job: 'career', work: 'career', money: 'career', business: 'career',
+  future: 'future', destiny: 'future', fate: 'future'
+});
+const TAROT_COMMAND_WORDS = Object.freeze(['tarot', 'reading', 'cards', 'card', 'fortune']);
+
+const tarotQueueState = {
+  queue: [],
+  processing: false,
+  served: 0,
+  dropped: 0,
+  lastGlobalAt: 0,
+  lastByViewer: new Map(),
+  giftGroups: new Set()
+};
+
+function normalizeGiftRules(raw) {
+  const list = Array.isArray(raw) ? raw : TAROT_DEFAULT_GIFT_RULES;
+  const rules = list
+    .map((rule) => ({
+      minCoins: Math.max(1, Math.min(100000, Math.round(Number(rule && rule.minCoins) || 0))),
+      spread: String(rule && rule.spread).toLowerCase() === 'one' ? 'one' : 'three'
+    }))
+    .filter((rule) => rule.minCoins > 0)
+    .sort((a, b) => a.minCoins - b.minCoins)
+    .slice(0, 8);
+  return rules.length ? rules : TAROT_DEFAULT_GIFT_RULES.map((rule) => ({ ...rule }));
+}
+
+function normalizeTarotState(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const clampInt = (value, fallback, min, max) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return fallback;
+    return Math.max(min, Math.min(max, Math.round(number)));
+  };
+  return {
+    enabled: source.enabled !== false,
+    aiInterpretation: source.aiInterpretation === true,
+    commentCooldownSeconds: clampInt(source.commentCooldownSeconds, 20, 0, 600),
+    perViewerCooldownSeconds: clampInt(source.perViewerCooldownSeconds, 120, 0, 3600),
+    maxQueue: clampInt(source.maxQueue, 8, 1, 50),
+    giftRules: normalizeGiftRules(source.giftRules)
+  };
+}
+
+function tarotSettings() {
+  state.tarot = normalizeTarotState(state.tarot);
+  return state.tarot;
+}
+
+function tarotGiftRuleFor(coins) {
+  const value = Number(coins) || 0;
+  let match = null;
+  for (const rule of tarotSettings().giftRules) {
+    if (value >= rule.minCoins) match = rule;
+  }
+  return match;
+}
+
+function tarotSnapshot() {
+  const settings = tarotSettings();
+  const history = tarotEngine.history(8);
+  return {
+    enabled: settings.enabled,
+    aiInterpretation: settings.aiInterpretation,
+    commentCooldownSeconds: settings.commentCooldownSeconds,
+    perViewerCooldownSeconds: settings.perViewerCooldownSeconds,
+    maxQueue: settings.maxQueue,
+    giftRules: settings.giftRules.map((rule) => ({ ...rule })),
+    deckSize: tarotEngine.deckSize,
+    history,
+    total: tarotEngine.historyCount(),
+    lastReading: history[0] || null,
+    queue: {
+      pending: tarotQueueState.queue.length,
+      processing: tarotQueueState.processing,
+      served: tarotQueueState.served,
+      dropped: tarotQueueState.dropped
+    }
+  };
+}
+
+/**
+ * Recognize a tarot request in a chat comment.
+ * Short commands (TAROT / LOVE / CAREER / FUTURE) map to a theme; longer
+ * natural-language messages must mention tarot/reading/cards to qualify.
+ */
+function detectTarotRequest(rawText) {
+  const text = String(rawText || '').trim();
+  if (!text || text.length > 240) return null;
+  const normalized = text
+    .toLowerCase()
+    .replace(/[^a-z0-9'\s?]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!normalized) return null;
+  const words = normalized.split(' ');
+  const mentionsTarot = words.some((word) => TAROT_COMMAND_WORDS.includes(word)) || /\btarot\b/.test(normalized);
+
+  let theme = 'general';
+  for (const word of words) {
+    if (TAROT_THEME_WORDS[word]) {
+      theme = TAROT_THEME_WORDS[word];
+      break;
+    }
+  }
+
+  const shortCommand = words.length <= 3;
+  if (!mentionsTarot && !(shortCommand && theme !== 'general')) return null;
+  if (!mentionsTarot && shortCommand && theme === 'general') return null;
+
+  const wantsOne = /\b(one card|1 card|single card|quick reading)\b/.test(normalized);
+  const spread = wantsOne
+    ? 'one'
+    : theme === 'love' || theme === 'career'
+      ? 'one'
+      : 'three';
+
+  return { theme, spread, question: text.slice(0, 200) };
+}
+
+function tarotViewerKey(user, uniqueId) {
+  const id = String(uniqueId || '').trim().toLowerCase();
+  return id ? `u:${id}` : `n:${String(user || 'guest').toLowerCase().slice(0, 40)}`;
+}
+
+function enqueueTarotRequest(request = {}) {
+  const settings = tarotSettings();
+  if (!settings.enabled) return { accepted: false, reason: 'tarot_disabled' };
+  const now = Date.now();
+  // Paid gifts and admin tests must not be throttled by the chat cooldown; they
+  // are already deduplicated per gift group and still respect maxQueue.
+  const bypassCooldowns = request.bypassCooldowns === true;
+  const viewerKey = tarotViewerKey(request.user, request.uniqueId);
+  if (!bypassCooldowns && now - tarotQueueState.lastGlobalAt < settings.commentCooldownSeconds * 1000) {
+    tarotQueueState.dropped += 1;
+    return { accepted: false, reason: 'global_cooldown' };
+  }
+  const viewerLast = Number(tarotQueueState.lastByViewer.get(viewerKey) || 0);
+  if (!bypassCooldowns && now - viewerLast < settings.perViewerCooldownSeconds * 1000) {
+    tarotQueueState.dropped += 1;
+    return { accepted: false, reason: 'viewer_cooldown' };
+  }
+  if (tarotQueueState.queue.length >= settings.maxQueue) {
+    tarotQueueState.dropped += 1;
+    return { accepted: false, reason: 'queue_full' };
+  }
+
+  tarotQueueState.lastGlobalAt = now;
+  tarotQueueState.lastByViewer.set(viewerKey, now);
+  while (tarotQueueState.lastByViewer.size > 500) {
+    tarotQueueState.lastByViewer.delete(tarotQueueState.lastByViewer.keys().next().value);
+  }
+  tarotQueueState.queue.push({ ...request, queuedAt: now });
+  drainTarotQueue();
+  return { accepted: true, pending: tarotQueueState.queue.length };
+}
+
+async function drainTarotQueue() {
+  if (tarotQueueState.processing) return;
+  tarotQueueState.processing = true;
+  try {
+    while (tarotQueueState.queue.length) {
+      const request = tarotQueueState.queue.shift();
+      try {
+        await runTarotReading({ ...request, announce: true });
+        tarotQueueState.served += 1;
+      } catch (err) {
+        console.warn('[Tarot] Reading failed:', err && err.message ? err.message : err);
+      }
+    }
+  } finally {
+    tarotQueueState.processing = false;
+  }
+}
+
+/**
+ * Optional LLM narration. Card selection already happened upstream, so a
+ * provider outage can only shorten the prose — it can never change the draw.
+ * Any failure falls straight back to the built-in structured summary.
+ */
+async function tarotAiNarration(reading) {
+  const fallback = { text: reading.summary, source: 'static', provider: '' };
+  if (!tarotSettings().aiInterpretation) return fallback;
+  let candidates = [];
+  try {
+    candidates = llmProviders.candidates();
+  } catch (_) {
+    candidates = [];
+  }
+  if (!candidates.length) return { ...fallback, reason: 'no_llm_provider' };
+  const settings = ensureReactive().settings;
+  const cardLines = reading.cards
+    .map((card) => `${card.position}: ${card.name}${card.reversed ? ' (reversed)' : ''} — ${card.meaning}`)
+    .join('\n');
+  const prompt = [
+    `Viewer: ${reading.user}`,
+    `Question: ${reading.question || 'a general reading'}`,
+    `Theme: ${reading.theme}`,
+    cardLines
+  ].join('\n');
+
+  for (const providerConfig of candidates.slice(0, 2)) {
+    try {
+      const provider = reactiveProviderInfo(settings, providerConfig.id);
+      if (!provider || provider.status !== 'ready') continue;
+      const key = llmProviders.keyFor(providerConfig).key;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), providerConfig.timeoutMs || settings.timeoutMs || 8000);
+      let response;
+      try {
+        response = await fetch(provider.endpoint, {
+          method: 'POST',
+          headers: {
+            ...(providerConfig.headers || {}),
+            'Content-Type': 'application/json',
+            ...(key ? { Authorization: `Bearer ${key}` } : {})
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            messages: [
+              {
+                role: 'system',
+                content: 'You are the Mystic Witch, an ancient supernatural tarot reader on a live stream. Speak in American English. Two short sentences, atmospheric but concrete, no markdown, no lists, never invent cards.'
+              },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.8,
+            max_tokens: 160
+          }),
+          signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!response.ok) continue;
+      const data = await response.json();
+      const text = data && data.choices && data.choices[0] && data.choices[0].message
+        ? String(data.choices[0].message.content || '').trim()
+        : '';
+      if (text) return { text: text.slice(0, 400), source: 'ai', provider: provider.name || provider.id };
+    } catch (_) {
+      // try the next candidate, then fall back below
+    }
+  }
+  return { ...fallback, reason: 'llm_unavailable' };
+}
+
+async function announceTarotReading(reading) {
+  const text = String(reading.spoken || '').slice(0, Math.max(120, Number(state.settings.ttsMaxChars) || 120) * 2);
+  if (!text) return null;
+  try {
+    const result = await synthesizeSpeech(text, {
+      engine: state.settings.ttsEngine,
+      voice: state.settings.ttsVoice,
+      piperVoice: state.settings.ttsVoice,
+      language: 'en',
+      speed: state.settings.ttsSpeed,
+      allowFallback: true
+    });
+    if (!result || !result.ok) return result || null;
+    broadcastNotification('tts.play', {
+      text,
+      engine: result.engine,
+      requestedEngine: result.requestedEngine,
+      voice: result.voice,
+      language: result.language,
+      speed: result.speed,
+      volume: state.settings.ttsVolume,
+      url: result.url,
+      fallback: Boolean(result.fallback)
+    });
+    return result;
+  } catch (err) {
+    console.warn('[Tarot] TTS failed:', err && err.message ? err.message : err);
+    return null;
+  }
+}
+
+/** Draw, narrate, broadcast and (optionally) speak one reading. */
+async function runTarotReading(request = {}) {
+  const reading = tarotEngine.read({
+    spread: request.spread,
+    theme: request.theme,
+    question: request.question,
+    user: request.user,
+    uniqueId: request.uniqueId,
+    source: request.source || 'rpc',
+    trigger: request.trigger || ''
+  });
+  const narration = await tarotAiNarration(reading);
+  reading.narration = narration.text;
+  reading.narrationSource = narration.source;
+  reading.narrationProvider = narration.provider || '';
+  // The reading object stored in history is the same reference, so saving here
+  // persists the narration without appending a duplicate entry.
+  tarotEngine.store.save();
+
+  const event = pushEventLog({
+    type: 'tarotReading',
+    user: reading.user,
+    uniqueId: reading.uniqueId,
+    readingId: reading.id,
+    spread: reading.spread,
+    theme: reading.theme,
+    question: reading.question,
+    cards: reading.cards.map((card) => ({
+      name: card.name,
+      position: card.position,
+      orientation: card.orientation
+    })),
+    narration: reading.narration,
+    narrationSource: reading.narrationSource
+  });
+  delete event.speech;
+  saveState();
+
+  broadcastNotification('tarot.reading', { reading, tarot: tarotSnapshot() });
+  broadcastNotification('temple.event', { event });
+  if (request.announce === true) await announceTarotReading(reading);
+  return { reading, event, tarot: tarotSnapshot() };
+}
+
+function maybeHandleTarotComment(payload = {}) {
+  const detected = detectTarotRequest(payload.commentText || payload.comment || '');
+  if (!detected) return null;
+  return enqueueTarotRequest({
+    ...detected,
+    user: payload.user,
+    uniqueId: payload.uniqueId,
+    source: 'chat',
+    trigger: payload.commentText ? String(payload.commentText).slice(0, 40) : 'chat'
+  });
+}
+
+function maybeHandleGiftTarot(payload = {}) {
+  const rule = tarotGiftRuleFor(payload.giftCoins);
+  if (!rule) return null;
+  const groupKey = String(payload.groupId || `${payload.uniqueId}_${payload.giftName}`);
+  if (tarotQueueState.giftGroups.has(groupKey)) return null;
+  tarotQueueState.giftGroups.add(groupKey);
+  while (tarotQueueState.giftGroups.size > 1000) {
+    tarotQueueState.giftGroups.delete(tarotQueueState.giftGroups.values().next().value);
+  }
+  return enqueueTarotRequest({
+    spread: rule.spread,
+    theme: 'general',
+    question: `${payload.giftName || 'Gift'} reading`,
+    user: payload.user,
+    uniqueId: payload.uniqueId,
+    source: 'gift',
+    trigger: `gift:${payload.giftCoins}`,
+    bypassCooldowns: true
+  });
+}
+
+function updateTarotSettings(params = {}) {
+  const current = tarotSettings();
+  const next = normalizeTarotState({
+    ...current,
+    enabled: params.enabled === undefined ? current.enabled : params.enabled !== false,
+    aiInterpretation: params.aiInterpretation === undefined ? current.aiInterpretation : params.aiInterpretation === true,
+    commentCooldownSeconds: params.commentCooldownSeconds === undefined ? current.commentCooldownSeconds : params.commentCooldownSeconds,
+    perViewerCooldownSeconds: params.perViewerCooldownSeconds === undefined ? current.perViewerCooldownSeconds : params.perViewerCooldownSeconds,
+    maxQueue: params.maxQueue === undefined ? current.maxQueue : params.maxQueue,
+    giftRules: params.giftRules === undefined ? current.giftRules : params.giftRules
+  });
+  state.tarot = next;
+  saveState();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ok: true, tarot: tarotSnapshot() };
+}
+
+// ============================================================================
 // 8. JSON-RPC 2.0 DISPATCHER (legacy temple.* names are kept as aliases)
 // ============================================================================
 async function handleRpcCall(method, params = {}) {
@@ -5860,6 +6271,87 @@ async function handleRpcCall(method, params = {}) {
     case 'live.testCelebration':
       return Actions.testVip({ ...params, kind: 'celebration' });
 
+    case 'tarot.getState':
+    case 'tarot.state':
+      return tarotSnapshot();
+
+    case 'tarot.read':
+    case 'tarot.draw':
+      return runTarotReading({
+        spread: params.spread,
+        theme: params.theme,
+        question: params.question,
+        user: params.user,
+        uniqueId: params.uniqueId,
+        source: 'rpc',
+        trigger: params.trigger || 'rpc',
+        announce: params.announce === true
+      });
+
+    case 'tarot.testOne':
+    case 'tarot.testThree': {
+      const spread = method === 'tarot.testThree' ? 'three' : 'one';
+      return runTarotReading({
+        spread,
+        theme: params.theme || 'general',
+        question: params.question || `Test ${spread}-card reading`,
+        user: params.user || 'Test Viewer',
+        uniqueId: params.uniqueId || 'test.viewer',
+        source: 'admin',
+        trigger: 'admin-test',
+        announce: params.announce === true
+      });
+    }
+
+    case 'tarot.history':
+    case 'tarot.list':
+      return { readings: tarotEngine.history(params.limit || 20), total: tarotEngine.historyCount() };
+
+    case 'tarot.getReading':
+      return tarotEngine.getReading(params.id);
+
+    case 'tarot.clearHistory':
+      return { ...tarotEngine.clearHistory(), tarot: tarotSnapshot() };
+
+    case 'tarot.updateSettings':
+      return updateTarotSettings(params);
+
+    // Acceptance-test hooks: they run the exact same detection and gift-mapping
+    // code the TikTok pipeline uses, without a live connection.
+    case 'tarot.simulateComment': {
+      const outcome = maybeHandleTarotComment({
+        commentText: params.comment || params.text || '',
+        user: params.user || 'Chat Tester',
+        uniqueId: params.uniqueId || 'chat.tester'
+      });
+      return {
+        ok: true,
+        handled: Boolean(outcome),
+        accepted: Boolean(outcome && outcome.accepted),
+        reason: outcome ? outcome.reason || '' : 'not_a_tarot_request',
+        pending: tarotQueueState.queue.length,
+        tarot: tarotSnapshot()
+      };
+    }
+
+    case 'tarot.simulateGift': {
+      const outcome = maybeHandleGiftTarot({
+        user: params.user || 'Gift Tester',
+        uniqueId: params.uniqueId || 'gift.tester',
+        giftCoins: Number(params.coins) || 25,
+        giftName: params.giftName || 'Mystic Rose',
+        groupId: params.groupId || `sim_${Date.now()}`
+      });
+      return {
+        ok: true,
+        handled: Boolean(outcome),
+        accepted: Boolean(outcome && outcome.accepted),
+        reason: outcome ? outcome.reason || '' : 'duplicate_group_or_no_rule',
+        pending: tarotQueueState.queue.length,
+        tarot: tarotSnapshot()
+      };
+    }
+
     case 'live.connect':
       return await connectTikTokLive(params.username);
 
@@ -5887,6 +6379,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use('/tts-cache', express.static(TTS_CACHE_DIR, { maxAge: '7d' }));
+app.use('/assets/mystic-witch', express.static(path.join(__dirname, 'assets', 'mystic-witch'), { maxAge: '7d' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/admin', (_req, res) => {

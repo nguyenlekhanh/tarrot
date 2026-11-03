@@ -3,210 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mystic Witch Live — American Drink Shop Live (9:16)</title>
+  <title>MYSTIC WITCH LIVE — Tarot Reading (9:16)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/live.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/stage.css" />
 </head>
 <body>
-  <div class="app-workspace">
-    <!-- 9:16 STAGE — 1080 x 1920 (OBS browser source ready) -->
-    <div class="stage-wrapper" id="stageWrapper">
-      <div class="stage-9x16" id="stage9x16">
-        <!-- 1. STATIC OUTDOOR DRINK SHOP BACKGROUND -->
-        <img src="/assets/background/street.jpg" alt="American outdoor drink shop street" class="shop-bg-img" />
-        <div class="sun-wash"></div>
+  <div class="obs-root" id="obsRoot">
+    <!-- ============ 1080 x 1920 PORTRAIT STAGE (OBS browser source) ============ -->
+    <div class="stage" id="stage">
+      <!-- 1. CHAMBER BACKDROP -->
+      <div class="chamber">
+        <img class="chamber-photo" src="/assets/mystic-witch/tests/test-01-witch-832x1216.png" alt="" />
+        <div class="chamber-tint"></div>
+        <div class="chamber-vignette"></div>
+        <div class="chamber-fog fog-a"></div>
+        <div class="chamber-fog fog-b"></div>
+        <div class="rune-ring"></div>
+      </div>
 
-        <!-- 2. GAME / EFFECT CANVASES -->
-        <canvas id="gameCanvas" width="1080" height="1920"></canvas>
-        <canvas id="fxCanvas" width="1080" height="1920"></canvas>
+      <!-- 2. THE WITCH -->
+      <div class="witch-wrap">
+        <div class="witch-aura"></div>
+        <img class="witch-figure" src="/assets/mystic-witch/tests/test-02-hooded-witch.png" alt="The Mystic Witch" />
+        <div class="witch-fade"></div>
+      </div>
 
-        <!-- 3. TOP STATUS BAR -->
-        <header class="top-bar">
-          <div class="live-pill">
-            <span class="live-dot" id="liveDot"></span>
-            <span id="liveStatusText">SHOP CLOSED</span>
+      <!-- 3. FLOATING SPIRITS + MAGICAL PARTICLES -->
+      <canvas class="spirit-canvas" id="spiritCanvas" width="1080" height="1920"></canvas>
+
+      <!-- 4. HEADER -->
+      <header class="stage-header">
+        <div class="brand">
+          <span class="brand-mark">✦</span>
+          <span class="brand-line">MYSTIC WITCH LIVE</span>
+          <span class="brand-sub">TAROT READINGS · ASK IN CHAT</span>
+        </div>
+        <div class="live-pill" id="livePill">
+          <span class="live-dot" id="liveDot"></span>
+          <span id="liveStatusText">OFFLINE</span>
+        </div>
+      </header>
+
+      <!-- 5. READING PANEL -->
+      <section class="reading" id="readingPanel" aria-live="polite">
+        <div class="reading-question" id="readingQuestion">Speak your question in the chat…</div>
+        <div class="card-row" id="cardRow">
+          <div class="card-slot" data-slot="0"><div class="card-back">✦</div></div>
+          <div class="card-slot" data-slot="1"><div class="card-back">✦</div></div>
+          <div class="card-slot" data-slot="2"><div class="card-back">✦</div></div>
+        </div>
+        <div class="reading-narration" id="readingNarration"></div>
+      </section>
+
+      <!-- 6. WELCOME / GIFT BANNER -->
+      <div class="banner" id="banner">
+        <div class="banner-title" id="bannerTitle"></div>
+        <div class="banner-sub" id="bannerSub"></div>
+      </div>
+
+      <!-- 7. ANTIQUE TAROT TABLE -->
+      <div class="table">
+        <div class="table-cloth"></div>
+        <div class="table-lip"></div>
+        <div class="table-surface">
+          <div class="crystal-ball">
+            <div class="ball-glow"></div>
+            <div class="ball-glass"></div>
+            <div class="ball-stand"></div>
           </div>
-          <div class="stat-strip">
-            <div class="mini-stat-pill"><strong id="statServed">0</strong><span class="stat-label">SERVED</span></div>
-            <div class="mini-stat-pill"><strong id="statTips">$0.00</strong><span class="stat-label">TIPS</span></div>
-            <div class="mini-stat-pill coins"><strong id="statCoins">0</strong><span class="stat-label">COINS</span></div>
+          <div class="candles">
+            <div class="candle c1"><span class="flame"></span></div>
+            <div class="candle c2"><span class="flame"></span></div>
+            <div class="candle c3"><span class="flame"></span></div>
           </div>
-        </header>
-
-        <!-- 4. SHOP SIGN -->
-        <div class="shop-sign">
-          <div class="sign-top">MYSTIC WITCH LIVE</div>
-          <div class="sign-sub">AMERICAN DRINK SHOP · OPEN DAILY</div>
-          <div class="sign-chip" id="shopStateChip">RUNNING</div>
-        </div>
-
-        <!-- 5. QUEUE COUNTER -->
-        <div class="queue-chip">🧾 IN LINE <strong id="statQueue">0</strong></div>
-
-        <!-- 5b. GIFT DONATION TICKER -->
-        <div class="gift-ticker" id="giftTicker">
-          <div class="gt-header">🎁 RECENT GIFTS</div>
-          <div class="gt-list" id="giftTickerList">
-            <div class="gt-empty">Gifts buy drinks here</div>
+          <div class="cards-on-table">
+            <div class="tarot-prop p1">✧</div>
+            <div class="tarot-prop p2">☾</div>
+            <div class="tarot-prop p3">⚔</div>
           </div>
         </div>
+      </div>
 
-        <!-- 5c. COIN DRINK MENU (coin price selects the drink) -->
-        <div class="coin-menu" id="coinMenu">
-          <div class="cm-header">💝 MENU</div>
-          <div class="cm-list" id="coinMenuList"></div>
+      <!-- 8. FOOTER TICKER -->
+      <footer class="stage-footer">
+        <div class="ticker-label">RECENT READINGS</div>
+        <div class="ticker" id="ticker"></div>
+        <div class="stage-counters">
+          <span>🔮 <strong id="countReadings">0</strong> READINGS</span>
+          <span>✦ <strong id="countGifts">0</strong> GIFTS</span>
+          <span>♡ <strong id="countLikes">0</strong> LIKES</span>
         </div>
+      </footer>
 
-        <!-- 6. MYSTERY SIP CARD -->
-        <div class="mystery-card" id="mysteryCard">
-          <div class="mystery-label" id="mysteryRank">HOUSE FAVORITE</div>
-          <img class="mystery-drink" id="mysteryDrinkImg" src="/assets/drinks/Lemonade.jpg" alt="" />
-          <div class="mystery-title" id="mysteryTitle">Blue Ribbon Lemonade</div>
-          <div class="mystery-poem" id="mysteryPoem"></div>
-          <div class="mystery-note" id="mysteryNote"></div>
-        </div>
+      <!-- 9. EFFECT CANVAS (existing DrinkShopFX particle engine) -->
+      <canvas class="fx-canvas" id="fxCanvas" width="1080" height="1920"></canvas>
 
-        <!-- 7. PARTY BANNER -->
-        <div class="party-banner" id="partyBanner">
-          <img class="party-icon" id="giftBannerIcon" alt="" />
-          <img class="party-drink" id="giftBannerDrink" alt="" />
-          <div class="party-title" id="partyTitle">🎉 DRINK PARTY 🎉</div>
-          <div class="party-sub" id="partySub"></div>
-        </div>
-
-        <!-- 8. PAUSED OVERLAY -->
-        <div class="paused-overlay" id="pausedOverlay">
-          <div class="paused-badge">⏸ PAUSED</div>
-          <div class="paused-sub">Press START in the control panel to keep serving</div>
-        </div>
-
-        <!-- 8b. SUPPORTER NOTIFICATION STACK -->
-        <div class="notice-stack" id="noticeStack"></div>
-
-        <!-- 9. BOTTOM HUD -->
-        <footer class="bottom-hud">
-          <div class="hud-cards">
-            <button class="hud-card card-follow" id="cardFollow" type="button">
-              <span class="hud-card-tip">FREE DRINK</span>
-              <span class="hud-card-row"><span class="hud-emoji">💛</span><span class="hud-label">Follow</span></span>
-            </button>
-            <button class="hud-card card-like" id="cardLike" type="button">
-              <span class="hud-card-tip">CROWD RUSH</span>
-              <span class="hud-card-row"><span class="hud-emoji">❤️</span><span class="hud-label">Like</span></span>
-            </button>
-            <button class="hud-card card-comment" id="cardComment" type="button">
-              <span class="hud-card-tip">PLACE ORDER</span>
-              <span class="hud-card-row"><span class="hud-emoji">💬</span><span class="hud-label">Comment</span></span>
-            </button>
-            <button class="hud-card card-gift" id="cardGift" type="button">
-              <span class="hud-card-tip">PARTY TRAY</span>
-              <span class="hud-card-row"><span class="hud-emoji">🎁</span><span class="hud-label">Gift</span></span>
-            </button>
-          </div>
-
-          <div class="hud-leaderboard">
-            <div class="lb-header">TOP SUPPORTERS</div>
-            <div class="lb-list" id="leaderboardList"></div>
-          </div>
-        </footer>
+      <!-- 10. PAUSED OVERLAY -->
+      <div class="paused-overlay" id="pausedOverlay">
+        <div class="paused-badge">✦ THE MIST IS THIN ✦</div>
+        <div class="paused-sub">Tarot readings are paused</div>
       </div>
     </div>
 
-    <!-- CONTROL DOCK (hidden with ?obs=1) -->
-    <aside class="quick-dock" id="quickDock">
-      <div class="dock-header">
+    <!-- ============ CONTROL DOCK (hidden with ?obs=1) ============ -->
+    <aside class="dock" id="dock">
+      <div class="dock-head">
         <div>
           <div class="dock-title">🔮 Mystic Witch Live</div>
-          <div class="dock-subtitle">Live shop control panel</div>
+          <div class="dock-sub">Tarot stage control</div>
         </div>
-        <a href="/admin" target="_blank" class="dock-link">Full Admin ↗</a>
+        <a class="dock-link" href="/admin" target="_blank">Full Admin ↗</a>
       </div>
 
       <div class="dock-section">
-        <div class="dock-section-title">🎮 Game Controls</div>
-        <div class="dock-grid-3">
-          <button class="dock-btn gold" id="btnStart" type="button">▶ Start</button>
-          <button class="dock-btn" id="btnPause" type="button">⏸ Pause</button>
-          <button class="dock-btn" id="btnReset" type="button">⟲ Reset</button>
+        <div class="dock-section-title">📡 TikTok Live</div>
+        <div class="dock-row">
+          <input type="text" id="inputTiktok" class="dock-input" placeholder="@username or live link" />
+          <button class="dock-btn gold" id="btnConnect" type="button">Connect</button>
         </div>
-        <div class="volume-control-row">
-          <div class="volume-label-line">
-            <span>🚶 Customer spawn rate</span>
-            <strong id="valSpawn">1.0×</strong>
-          </div>
-          <input type="range" id="sliderSpawn" class="volume-slider" min="25" max="300" value="100" step="5" />
+        <div class="dock-row">
+          <button class="dock-btn" id="btnDisconnect" type="button">Disconnect</button>
+          <button class="dock-btn" id="btnToggleTarot" type="button">Tarot: ON</button>
         </div>
-        <button class="dock-btn" id="btnSpawn" type="button">🙋 Spawn a customer now</button>
+        <div class="dock-note" id="tiktokState">DISCONNECTED</div>
+      </div>
+
+      <div class="dock-section">
+        <div class="dock-section-title">🔮 Test readings</div>
+        <div class="dock-row">
+          <button class="dock-btn gold" id="btnOne" type="button">One card</button>
+          <button class="dock-btn gold" id="btnThree" type="button">Three cards</button>
+        </div>
+        <div class="dock-row">
+          <button class="dock-btn" id="btnLike" type="button">♡ Like burst</button>
+          <button class="dock-btn" id="btnGift" type="button">🎁 Gift</button>
+          <button class="dock-btn" id="btnFollow" type="button">✦ New follower</button>
+        </div>
         <div class="dock-note" id="dockStatus">Ready.</div>
       </div>
 
       <div class="dock-section">
-        <div class="dock-section-title">📡 TikTok Live Connection</div>
-        <div class="dock-input-row">
-          <input type="text" id="inputTikTokUser" class="dock-input" value="@tinytails99" placeholder="@username or live link" />
-          <button class="dock-btn gold" id="btnConnectTikTok" type="button">Connect</button>
-        </div>
-        <div class="dock-grid-2">
-          <button class="dock-btn" id="btnDisconnectTikTok" type="button">Disconnect</button>
-          <button class="dock-btn" id="btnToggleAutoSim" type="button">🤖 Auto Demo: OFF</button>
-        </div>
-        <div class="dock-live-box">
-          <div class="dock-live-state" id="tiktokState">DISCONNECTED</div>
-          <div class="dock-note" id="tiktokMeta">Enter a live TikTok @username and press Connect.</div>
-        </div>
-      </div>
-
-      <div class="dock-section">
-        <div class="dock-section-title">🎬 Trigger Interactions (JSON-RPC)</div>
-        <input type="text" id="inputViewerName" class="dock-input" value="Mia Carter" placeholder="Viewer name" />
-        <input type="text" id="inputOrderNote" class="dock-input" value="One fresh lemonade, extra ice please!" placeholder="Comment / order text" />
-        <div class="dock-grid-2">
-          <button class="dock-btn" id="btnRpcFollow" type="button">💛 Follow (free drink)</button>
-          <button class="dock-btn" id="btnRpcLike" type="button">❤️ Like (crowd rush)</button>
-          <button class="dock-btn" id="btnRpcComment" type="button">💬 Comment order</button>
-          <button class="dock-btn" id="btnRpcGift" type="button">🎁 Send a Rose gift (drink order)</button>
-        </div>
-        <div class="dock-grid-2">
-          <button class="dock-btn" id="btnRpcJoin" type="button">🚪 Viewer joins</button>
-          <button class="dock-btn" id="btnRpcLeave" type="button">👋 Viewer leaves</button>
-        </div>
-        <button class="dock-btn gold" id="btnRpcMystery" type="button">🔮 Mystery Sip of the Day</button>
-      </div>
-
-      <div class="dock-section">
-        <div class="dock-section-title">🔊 Sound</div>
-        <button class="dock-btn gold" id="btnUnlockAudio" type="button">🔈 Enable Shop Sound</button>
-        <div class="dock-grid-2">
-          <button class="dock-btn active-toggle" id="btnToggleTts" type="button">🎙️ Voice: ON</button>
-          <button class="dock-btn active-toggle" id="btnToggleMusic" type="button">🎵 Music: ON</button>
-        </div>
-        <div class="volume-control-row">
-          <div class="volume-label-line"><span>🎵 Music volume</span><strong id="valMusicVol">55%</strong></div>
-          <input type="range" id="sliderMusicVol" class="volume-slider" min="0" max="100" value="55" />
-        </div>
-        <div class="volume-control-row">
-          <div class="volume-label-line"><span>🎙️ Voice volume</span><strong id="valTtsVol">90%</strong></div>
-          <input type="range" id="sliderTtsVol" class="volume-slider" min="0" max="100" value="90" />
-        </div>
-      </div>
-
-      <div class="dock-section">
-        <div class="dock-section-title">📜 Recent Activity</div>
-        <div class="event-feed" id="eventFeed"></div>
+        <div class="dock-section-title">📜 History</div>
+        <div class="dock-history" id="dockHistory"></div>
       </div>
     </aside>
   </div>
 
-  <script src="/js/asset-manifest.js"></script>
-  <script src="/js/music.js"></script>
-  <script src="/js/audio.js"></script>
   <script src="/js/particles.js"></script>
-  <script src="/js/game.js"></script>
-  <script src="/js/announcer.js"></script>
-  <script src="/js/conversations.js"></script>
-  <script src="/js/reactive-seller.js"></script>
-  <script src="/js/live.js"></script>
+  <script src="/js/stage.js"></script>
 </body>
 </html>
