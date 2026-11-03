@@ -1,28 +1,230 @@
 {
-  "customersServed": 0,
-  "drinksSold": 0,
-  "totalTips": 0,
-  "likes": 0,
-  "follows": 0,
-  "comments": 0,
-  "gifts": 0,
-  "totalCoins": 0,
-  "recentGifts": [],
-  "supporters": {},
+  "customersServed": 46,
+  "drinksSold": 46,
+  "totalTips": 513.25,
+  "likes": 385,
+  "follows": 11,
+  "comments": 24,
+  "gifts": 6,
+  "totalCoins": 150,
+  "recentGifts": [
+    {
+      "id": "gift_1793682957120_5768",
+      "user": "Test Viewer",
+      "uniqueId": "Test Viewer",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Mystic Rose",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T05:15:57.120Z"
+    },
+    {
+      "id": "gift_1793682954624_e2yp",
+      "user": "Test Viewer",
+      "uniqueId": "Test Viewer",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Mystic Rose",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T05:15:54.624Z"
+    },
+    {
+      "id": "gift_1793682899373_c2v4",
+      "user": "Mia Carter",
+      "uniqueId": "Mia Carter",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Grand Ceremony",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T05:14:59.373Z"
+    },
+    {
+      "id": "gift_1793682862139_6skw",
+      "user": "Mia Carter",
+      "uniqueId": "Mia Carter",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Grand Ceremony",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T05:14:22.139Z"
+    },
+    {
+      "id": "gift_1793682790807_vxbs",
+      "user": "Mia Carter",
+      "uniqueId": "Mia Carter",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Grand Ceremony",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T05:13:10.807Z"
+    },
+    {
+      "id": "gift_1793680275242_xh0t",
+      "user": "Gift Probe",
+      "uniqueId": "Gift Probe",
+      "avatar": "",
+      "giftId": "coin_25",
+      "giftName": "Grand Ceremony",
+      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
+      "giftCoins": 25,
+      "coins": 25,
+      "units": 1,
+      "drinkId": "lemonade",
+      "drinkName": "Fresh Lemonade",
+      "drinkImage": "/assets/drinks/Lemonade.jpg",
+      "at": "2026-11-03T04:31:15.242Z"
+    }
+  ],
+  "supporters": {
+    "Mia Carter": {
+      "name": "Mia Carter",
+      "uniqueId": "Mia Carter",
+      "avatar": "",
+      "tips": 337.5,
+      "coins": 75,
+      "drinks": 37,
+      "gifts": 3,
+      "lastNote": "Chat order: Fresh Lemonade"
+    },
+    "admin.like.batch.test": {
+      "name": "Like Batch Test",
+      "uniqueId": "admin.like.batch.test",
+      "avatar": "",
+      "tips": 80,
+      "coins": 0,
+      "drinks": 0,
+      "gifts": 0,
+      "lastNote": "Sent some love to the shop"
+    },
+    "Guest": {
+      "name": "Guest",
+      "uniqueId": "Guest",
+      "avatar": "",
+      "tips": 24,
+      "coins": 0,
+      "drinks": 2,
+      "gifts": 0,
+      "lastNote": "Followed the shop"
+    },
+    "Probe Follower": {
+      "name": "Probe Follower",
+      "uniqueId": "Probe Follower",
+      "avatar": "",
+      "tips": 12,
+      "coins": 0,
+      "drinks": 1,
+      "gifts": 0,
+      "lastNote": "Followed the shop"
+    },
+    "Gift Probe": {
+      "name": "Gift Probe",
+      "uniqueId": "Gift Probe",
+      "avatar": "",
+      "tips": 7.5,
+      "coins": 25,
+      "drinks": 1,
+      "gifts": 1,
+      "lastNote": "25 coins"
+    },
+    "Stage Banner Probe": {
+      "name": "Stage Banner Probe",
+      "uniqueId": "Stage Banner Probe",
+      "avatar": "",
+      "tips": 12,
+      "coins": 0,
+      "drinks": 1,
+      "gifts": 0,
+      "lastNote": "Followed the shop"
+    },
+    "A New Soul": {
+      "name": "A New Soul",
+      "uniqueId": "A New Soul",
+      "avatar": "",
+      "tips": 24,
+      "coins": 0,
+      "drinks": 2,
+      "gifts": 0,
+      "lastNote": "Followed the shop"
+    },
+    "Test Viewer": {
+      "name": "Test Viewer",
+      "uniqueId": "Test Viewer",
+      "avatar": "",
+      "tips": 16.25,
+      "coins": 50,
+      "drinks": 2,
+      "gifts": 2,
+      "lastNote": "25 coins"
+    }
+  },
+  "likeBatching": {
+    "enabled": true,
+    "windowSeconds": 5,
+    "minLikes": 10,
+    "cooldownSeconds": 20,
+    "thresholds": [
+      {
+        "threshold": 10,
+        "text": "Thank you for the love!"
+      },
+      {
+        "threshold": 50,
+        "text": "Wow! Everyone is showing us some love!"
+      },
+      {
+        "threshold": 100,
+        "text": "One hundred likes! You guys are amazing!"
+      },
+      {
+        "threshold": 500,
+        "text": "Look at all those likes! Thank you, everyone!"
+      }
+    ]
+  },
   "settings": {
     "running": true,
     "paused": false,
     "spawnRate": 2,
     "ttsEnabled": true,
-    "ttsEngine": "piper",
+    "ttsEngine": "kokoro",
     "ttsLanguage": "en",
     "ttsVoice": "en_US-hfc_female-medium",
-    "ttsKokoroVoice": "af_heart",
+    "ttsKokoroVoice": "af_alloy",
     "ttsSpeed": 1,
     "ttsMaxChars": 120,
     "bgMusicEnabled": true,
     "sfxEnabled": true,
-    "musicVolume": 0.55,
+    "musicVolume": 0.28,
     "ttsVolume": 0.9,
     "sfxVolume": 0.85,
     "autoSim": false,
@@ -75,45 +277,27 @@
     "settings": {
       "enabled": true,
       "running": true,
-      "interval": 20,
+      "aiDialogue": true,
+      "interval": 45,
       "shuffle": true,
       "categories": {
-        "daily": true,
-        "drinks": true,
-        "menu": true,
-        "funny": true,
-        "teasing": true,
-        "greetings": true,
-        "busy": true,
-        "quiet": true,
-        "weather": true,
-        "weekend": true,
-        "supporter": true,
-        "atmosphere": true
+        "ambient": true,
+        "welcome": true,
+        "story": true,
+        "tarot": true,
+        "engagement": true,
+        "reading": true,
+        "greeting": true,
+        "follow": true,
+        "gift": true
       },
-      "savedAt": "2026-11-02T21:49:51.220Z"
+      "savedAt": "2026-11-03T04:02:22.145Z"
     },
     "list": [
       {
-        "id": "daily_1",
-        "category": "daily",
-        "male": "Morning, Sarah! The ice machine is already humming. That's a good sign.",
-        "female": "Best sound in the shop! I take it as a personal compliment.",
-        "followUp": "Let's make today a busy one, then.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": true,
-        "createdAt": "2026-11-02T17:38:26.039Z"
-      },
-      {
-        "id": "daily_2",
-        "category": "daily",
-        "male": "Hey, quick question: are we a drink shop or a sunshine delivery service?",
-        "female": "Why not both? We hand out the sunshine in cups.",
-        "followUp": "That's going on the sign. Sunshine, with ice.",
+        "id": "ambient_1",
+        "category": "ambient",
+        "text": "The candles are lit and the cards are resting. We begin whenever you are ready.",
         "contexts": [
           "any"
         ],
@@ -123,11 +307,9 @@
         "createdAt": null
       },
       {
-        "id": "daily_3",
-        "category": "daily",
-        "male": "I just organized the straws by color, and honestly? It's beautiful.",
-        "female": "You need a hobby, Marcus.",
-        "followUp": "I have a hobby. It's organizing straws.",
+        "id": "ambient_2",
+        "category": "ambient",
+        "text": "The room is quiet tonight, the way it always is before a message arrives.",
         "contexts": [
           "any"
         ],
@@ -137,11 +319,9 @@
         "createdAt": null
       },
       {
-        "id": "daily_4",
-        "category": "daily",
-        "male": "First customer of the day gets my famous welcome speech.",
-        "female": "Please don't do the robot again.",
-        "followUp": "Too late. The robot is happening.",
+        "id": "ambient_3",
+        "category": "ambient",
+        "text": "Somewhere beyond the screen the moon is doing her slow, patient work.",
         "contexts": [
           "any"
         ],
@@ -151,11 +331,9 @@
         "createdAt": null
       },
       {
-        "id": "daily_5",
-        "category": "daily",
-        "male": "I think the syrup shelf is judging me.",
-        "female": "It's definitely the blue raspberry. It's been staring all morning.",
-        "followUp": "I'm moving it to the back.",
+        "id": "ambient_4",
+        "category": "ambient",
+        "text": "Breathe with me for a moment. The circle is open and there is no hurry.",
         "contexts": [
           "any"
         ],
@@ -165,11 +343,9 @@
         "createdAt": null
       },
       {
-        "id": "daily_6",
-        "category": "daily",
-        "male": "New day, fresh ice, same beautiful chaos.",
-        "female": "You say that like you did not forget to stock the cups.",
-        "followUp": "I stocked them. Eventually counts.",
+        "id": "ambient_5",
+        "category": "ambient",
+        "text": "The smoke curls upward and forgets where it was going. I like that about it.",
         "contexts": [
           "any"
         ],
@@ -179,11 +355,9 @@
         "createdAt": null
       },
       {
-        "id": "drinks_1",
-        "category": "drinks",
-        "male": "What's your go-to right now? I need inspiration.",
-        "female": "Strawberry smoothie. Cold, creamy, and a little dramatic.",
-        "followUp": "Dramatic? It's a drink.",
+        "id": "ambient_6",
+        "category": "ambient",
+        "text": "Night keeps its own counsel. I keep mine, and sometimes I share it with you.",
         "contexts": [
           "any"
         ],
@@ -193,11 +367,9 @@
         "createdAt": null
       },
       {
-        "id": "drinks_2",
-        "category": "drinks",
-        "male": "I made a lemonade so fresh it slapped me.",
-        "female": "That's not how lemonade works.",
-        "followUp": "Tell that to my face. It's still recovering.",
+        "id": "welcome_1",
+        "category": "welcome",
+        "text": "Welcome back to the circle. The candles are lit and the deck is warm.",
         "contexts": [
           "any"
         ],
@@ -207,11 +379,9 @@
         "createdAt": null
       },
       {
-        "id": "drinks_3",
-        "category": "drinks",
-        "male": "If you could only drink one thing from the menu forever?",
-        "female": "Easy. Iced coffee. I have things to do.",
-        "followUp": "Everything except sleep, apparently.",
+        "id": "welcome_2",
+        "category": "welcome",
+        "text": "You found your way here again. The spirits noticed before I did.",
         "contexts": [
           "any"
         ],
@@ -221,11 +391,9 @@
         "createdAt": null
       },
       {
-        "id": "drinks_4",
-        "category": "drinks",
-        "male": "Blue slushie or berry smoothie? Settle this for me.",
-        "female": "Slushie for the vibes, smoothie for the actual fruit.",
-        "followUp": "So both. Got it.",
+        "id": "welcome_3",
+        "category": "welcome",
+        "text": "Come in, sit close. The room is quiet and the cards are listening.",
         "contexts": [
           "any"
         ],
@@ -235,11 +403,9 @@
         "createdAt": null
       },
       {
-        "id": "drinks_5",
-        "category": "drinks",
-        "male": "I'm testing a new combo: orange soda with a splash of lemonade.",
-        "female": "That sounds either genius or a science experiment.",
-        "followUp": "Those are my two favorite categories.",
+        "id": "welcome_4",
+        "category": "welcome",
+        "text": "Welcome, wanderer. Whatever brought you here brought you at the right time.",
         "contexts": [
           "any"
         ],
@@ -249,11 +415,9 @@
         "createdAt": null
       },
       {
-        "id": "menu_1",
-        "category": "menu",
-        "male": "Somebody asked if we have anything warm.",
-        "female": "We have a warm personality and a hot coffee machine.",
-        "followUp": "I'll put that on the menu.",
+        "id": "welcome_5",
+        "category": "welcome",
+        "text": "The door was never locked. Welcome to Mystic Witch Live.",
         "contexts": [
           "any"
         ],
@@ -263,11 +427,9 @@
         "createdAt": null
       },
       {
-        "id": "menu_2",
-        "category": "menu",
-        "male": "We should rename the mystery drink 'Trust Me.'",
-        "female": "Absolutely not. People will think it's a dare.",
-        "followUp": "It is a dare. That's the fun part.",
+        "id": "story_1",
+        "category": "story",
+        "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking.",
         "contexts": [
           "any"
         ],
@@ -277,11 +439,9 @@
         "createdAt": null
       },
       {
-        "id": "menu_3",
-        "category": "menu",
-        "male": "The menu board looks crooked again.",
-        "female": "It's not crooked. It's leaning into the summer theme.",
-        "followUp": "You're a genius.",
+        "id": "story_2",
+        "category": "story",
+        "text": "They say a witch once traded her reflection for a single true answer. She never regretted it, and she never looked in mirrors again.",
         "contexts": [
           "any"
         ],
@@ -291,11 +451,9 @@
         "createdAt": null
       },
       {
-        "id": "menu_4",
-        "category": "menu",
-        "male": "Do we have a drink for somebody who cannot decide?",
-        "female": "That is what the mystery sip was invented for.",
-        "followUp": "One mystery sip, coming right up.",
+        "id": "story_3",
+        "category": "story",
+        "text": "In the old quarter every house had a key that opened no door. The keys were the point.",
         "contexts": [
           "any"
         ],
@@ -305,11 +463,9 @@
         "createdAt": null
       },
       {
-        "id": "menu_5",
-        "category": "menu",
-        "male": "I counted the menu twice and got two different numbers.",
-        "female": "That is because you counted the pictures as drinks.",
-        "followUp": "The pictures are very convincing.",
+        "id": "story_4",
+        "category": "story",
+        "text": "A sailor carried a candle through nine storms. It never lit, and it never went out.",
         "contexts": [
           "any"
         ],
@@ -319,11 +475,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_1",
-        "category": "funny",
-        "male": "I tried to take a nap behind the counter, but the blender had opinions.",
-        "female": "The blender is the real manager.",
-        "followUp": "Then I want a raise.",
+        "id": "story_5",
+        "category": "story",
+        "text": "The fortune teller kept one card face down her whole life. Her last words were, not yet.",
         "contexts": [
           "any"
         ],
@@ -333,11 +487,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_2",
-        "category": "funny",
-        "male": "A customer asked if our ice is organic.",
-        "female": "What did you tell them?",
-        "followUp": "I said it's locally frozen.",
+        "id": "story_6",
+        "category": "story",
+        "text": "A crow learned a single word and refused to use it. The village waited years, and the crow enjoyed every moment.",
         "contexts": [
           "any"
         ],
@@ -347,11 +499,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_3",
-        "category": "funny",
-        "male": "I dropped a cup earlier and it bounced.",
-        "female": "We should not be proud of that.",
-        "followUp": "Too late. I'm telling everyone.",
+        "id": "tarot_1",
+        "category": "tarot",
+        "text": "The Moon is not a warning. It is an invitation to walk carefully through what you cannot see.",
         "contexts": [
           "any"
         ],
@@ -361,11 +511,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_4",
-        "category": "funny",
-        "male": "Why does the register beep so aggressively?",
-        "female": "It's excited about money.",
-        "followUp": "Same, honestly.",
+        "id": "tarot_2",
+        "category": "tarot",
+        "text": "The Tower frightens people, but it only removes what was already falling.",
         "contexts": [
           "any"
         ],
@@ -375,11 +523,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_5",
-        "category": "funny",
-        "male": "I named the mop Kevin.",
-        "female": "Of course you did. Does Kevin get a break?",
-        "followUp": "Kevin gets one bucket a day.",
+        "id": "tarot_3",
+        "category": "tarot",
+        "text": "Death in the cards is rarely about endings. It is the quiet after a long fever.",
         "contexts": [
           "any"
         ],
@@ -389,11 +535,9 @@
         "createdAt": null
       },
       {
-        "id": "funny_6",
-        "category": "funny",
-        "male": "The health inspector asked if I have a system.",
-        "female": "Please tell me you said yes.",
-        "followUp": "I said the ice knows where it belongs.",
+        "id": "tarot_4",
+        "category": "tarot",
+        "text": "The Star asks for nothing but your attention. That is why it is so often missed.",
         "contexts": [
           "any"
         ],
@@ -403,11 +547,9 @@
         "createdAt": null
       },
       {
-        "id": "teasing_1",
-        "category": "teasing",
-        "male": "You've been humming the same song for an hour.",
-        "female": "It's a good song!",
-        "followUp": "It was. Twenty minutes ago.",
+        "id": "tarot_5",
+        "category": "tarot",
+        "text": "The Hermit carries a lamp, not a torch. Some truths only survive a small light.",
         "contexts": [
           "any"
         ],
@@ -417,11 +559,9 @@
         "createdAt": null
       },
       {
-        "id": "teasing_2",
-        "category": "teasing",
-        "male": "Sarah says my drinks are 'a little sweet.'",
-        "female": "I said that with love.",
-        "followUp": "You said it with a straw.",
+        "id": "tarot_6",
+        "category": "tarot",
+        "text": "Every suit has a season. Cups for what we feel, swords for what we think, wands for what we chase, pentacles for what we carry.",
         "contexts": [
           "any"
         ],
@@ -431,11 +571,9 @@
         "createdAt": null
       },
       {
-        "id": "teasing_3",
-        "category": "teasing",
-        "male": "I'm the fastest pour in the shop.",
-        "female": "You're the fastest spill.",
-        "followUp": "That was one time.",
+        "id": "engagement_1",
+        "category": "engagement",
+        "text": "Tell me what has been on your mind today. The cards are patient, and so am I.",
         "contexts": [
           "any"
         ],
@@ -445,11 +583,9 @@
         "createdAt": null
       },
       {
-        "id": "teasing_4",
-        "category": "teasing",
-        "male": "You always take the last cherry.",
-        "female": "Because I'm the closer. Closers get cherries.",
-        "followUp": "That's not in the handbook.",
+        "id": "engagement_2",
+        "category": "engagement",
+        "text": "If you could ask one question and be guaranteed a true answer, what would it be?",
         "contexts": [
           "any"
         ],
@@ -459,11 +595,9 @@
         "createdAt": null
       },
       {
-        "id": "teasing_5",
-        "category": "teasing",
-        "male": "I fixed the shelf.",
-        "female": "You put a book under it.",
-        "followUp": "A very stable book.",
+        "id": "engagement_3",
+        "category": "engagement",
+        "text": "Type the first word that comes to you. We will see what it stirs.",
         "contexts": [
           "any"
         ],
@@ -473,11 +607,105 @@
         "createdAt": null
       },
       {
-        "id": "greetings_1",
-        "category": "greetings",
-        "male": "Welcome in! You picked a good time. The ice is fresh.",
-        "female": "And the music is questionable, but the drinks are great.",
-        "followUp": "Hey. I picked the music.",
+        "id": "engagement_4",
+        "category": "engagement",
+        "text": "Some of you are here for the reading. Some of you are here for the quiet. Both are welcome.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "engagement_5",
+        "category": "engagement",
+        "text": "What is one thing you are ready to leave behind this month?",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "engagement_6",
+        "category": "engagement",
+        "text": "The chat is part of the circle tonight. Say something, and I will answer.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "reading_1",
+        "category": "reading",
+        "text": "If a question has been circling you for days, a reading may give it somewhere to land.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "reading_2",
+        "category": "reading",
+        "text": "One card is enough for a single question. Three cards are for a story that has not finished.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "reading_3",
+        "category": "reading",
+        "text": "I can draw for you whenever you are ready. The deck does not judge the question.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "reading_4",
+        "category": "reading",
+        "text": "A reading is not a verdict. It is a lantern held at a different angle.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "reading_5",
+        "category": "reading",
+        "text": "Send your question, and I will let the cards answer in their own slow language.",
+        "contexts": [
+          "any"
+        ],
+        "enabled": true,
+        "custom": false,
+        "edited": false,
+        "createdAt": null
+      },
+      {
+        "id": "greeting_1",
+        "category": "greeting",
+        "text": "Welcome, {viewer}. The circle opens a little wider for you.",
         "contexts": [
           "newViewer",
           "quiet",
@@ -489,11 +717,9 @@
         "createdAt": null
       },
       {
-        "id": "greetings_2",
-        "category": "greetings",
-        "male": "New faces at the counter! Come say hi in the chat.",
-        "female": "We don't bite. We do hand out samples.",
-        "followUp": "Only if you ask nicely.",
+        "id": "greeting_2",
+        "category": "greeting",
+        "text": "{viewer} has arrived. The candles noticed.",
         "contexts": [
           "newViewer",
           "empty"
@@ -504,57 +730,9 @@
         "createdAt": null
       },
       {
-        "id": "greetings_3",
-        "category": "greetings",
-        "male": "Hey @{viewer}! Welcome to the sunny side.",
-        "female": "We saved you a spot and a straw.",
-        "followUp": "The good straw. The bendy one.",
-        "contexts": [
-          "newViewer",
-          "quiet"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "greetings_4",
-        "category": "greetings",
-        "male": "Good to see you again, friends.",
-        "female": "Same seats, same sunshine, fresh drinks.",
-        "followUp": "We even cleaned the counter.",
-        "contexts": [
-          "newViewer",
-          "quiet",
-          "empty"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "greetings_5",
-        "category": "greetings",
-        "male": "If this is your first time here, welcome.",
-        "female": "If it's not, welcome back. We missed you.",
-        "followUp": "Both work. Both get a drink.",
-        "contexts": [
-          "newViewer",
-          "empty"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "greetings_6",
-        "category": "greetings",
-        "male": "Look who just walked in! @{viewer}, welcome.",
-        "female": "Perfect timing. We were just talking about drinks.",
-        "followUp": "We are always talking about drinks.",
+        "id": "greeting_3",
+        "category": "greeting",
+        "text": "Ah, {viewer}. I was wondering when you would find your way back.",
         "contexts": [
           "newViewer",
           "quiet"
@@ -565,13 +743,12 @@
         "createdAt": null
       },
       {
-        "id": "busy_1",
-        "category": "busy",
-        "male": "Whoa, the queue is moving! I need backup.",
-        "female": "Backup is here. I brought ice and attitude.",
-        "followUp": "Perfect. We need both.",
+        "id": "greeting_4",
+        "category": "greeting",
+        "text": "Come closer, {viewer}. The cards have been restless tonight.",
         "contexts": [
-          "busy"
+          "newViewer",
+          "quiet"
         ],
         "enabled": true,
         "custom": false,
@@ -579,69 +756,11 @@
         "createdAt": null
       },
       {
-        "id": "busy_2",
-        "category": "busy",
-        "male": "Three orders at once. Stay with me, Sarah.",
-        "female": "I've got the smoothies. You take the coffees.",
-        "followUp": "Teamwork makes the drinks work.",
+        "id": "greeting_5",
+        "category": "greeting",
+        "text": "Welcome, {viewer}. Whatever you carry in, you may set it down here.",
         "contexts": [
-          "busy"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "busy_3",
-        "category": "busy",
-        "male": "We're getting slammed, and I love it.",
-        "female": "Tell your face that. You look terrified.",
-        "followUp": "This is my excited face.",
-        "contexts": [
-          "busy"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "busy_4",
-        "category": "busy",
-        "male": "Order up, order up! Who had the lemonade?",
-        "female": "That one's mine. Coming through!",
-        "followUp": "Careful. The straw is armed.",
-        "contexts": [
-          "busy"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "busy_5",
-        "category": "busy",
-        "male": "Everybody stay patient, we're getting to every order.",
-        "female": "We're working as fast as the blender allows.",
-        "followUp": "The blender is doing its best.",
-        "contexts": [
-          "busy"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "quiet_1",
-        "category": "quiet",
-        "male": "It's quiet. Too quiet.",
-        "female": "You're about to do something weird, aren't you?",
-        "followUp": "I was thinking a karaoke hour.",
-        "contexts": [
-          "quiet",
+          "newViewer",
           "empty"
         ],
         "enabled": true,
@@ -650,14 +769,12 @@
         "createdAt": null
       },
       {
-        "id": "quiet_2",
-        "category": "quiet",
-        "male": "Slow afternoon. Should we wipe the counter?",
-        "female": "We wiped it four minutes ago.",
-        "followUp": "Then we wipe it with purpose.",
+        "id": "follow_1",
+        "category": "follow",
+        "text": "A new soul has joined the circle. {viewer}, the light is brighter for it.",
         "contexts": [
-          "quiet",
-          "empty"
+          "follower",
+          "newViewer"
         ],
         "enabled": true,
         "custom": false,
@@ -665,14 +782,11 @@
         "createdAt": null
       },
       {
-        "id": "quiet_3",
-        "category": "quiet",
-        "male": "I can hear the fridge. That's how quiet it is.",
-        "female": "Let's give the chat something to talk about.",
-        "followUp": "I'll start. Favorite drink, anyone?",
+        "id": "follow_2",
+        "category": "follow",
+        "text": "{viewer} follows the path now. The spirits keep good company.",
         "contexts": [
-          "quiet",
-          "empty"
+          "follower"
         ],
         "enabled": true,
         "custom": false,
@@ -680,14 +794,11 @@
         "createdAt": null
       },
       {
-        "id": "quiet_4",
-        "category": "quiet",
-        "male": "Quiet shop, fresh ice, no line.",
-        "female": "This is the calm before the smoothie storm.",
-        "followUp": "I'll hold onto the counter.",
+        "id": "follow_3",
+        "category": "follow",
+        "text": "Thank you, {viewer}. A follow is a small vow, and I do not take it lightly.",
         "contexts": [
-          "quiet",
-          "empty"
+          "follower"
         ],
         "enabled": true,
         "custom": false,
@@ -695,14 +806,12 @@
         "createdAt": null
       },
       {
-        "id": "quiet_5",
-        "category": "quiet",
-        "male": "Should we practice our customer service smile?",
-        "female": "Mine is already perfect.",
-        "followUp": "Mine looks like I'm thinking about pizza.",
+        "id": "follow_4",
+        "category": "follow",
+        "text": "{viewer} has bound their thread to ours. Welcome to the weave.",
         "contexts": [
-          "quiet",
-          "empty"
+          "follower",
+          "newViewer"
         ],
         "enabled": true,
         "custom": false,
@@ -710,14 +819,11 @@
         "createdAt": null
       },
       {
-        "id": "quiet_6",
-        "category": "quiet",
-        "male": "What do you want to drink today, chat?",
-        "female": "Pick something cold. It is a beautiful day for ice.",
-        "followUp": "And for a little friendly peer pressure.",
+        "id": "follow_5",
+        "category": "follow",
+        "text": "The circle grows. {viewer}, may the cards speak kindly to you tonight.",
         "contexts": [
-          "quiet",
-          "empty"
+          "follower"
         ],
         "enabled": true,
         "custom": false,
@@ -725,203 +831,10 @@
         "createdAt": null
       },
       {
-        "id": "weather_1",
-        "category": "weather",
-        "male": "It is officially hot enough to fry an egg on the sidewalk.",
-        "female": "Let's not test that. Let's make lemonade instead.",
-        "followUp": "Science can wait. Lemonade can't.",
+        "id": "gift_1",
+        "category": "gift",
+        "text": "A gift arrives, and the flame leans toward it. Thank you, {viewer}.",
         "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weather_2",
-        "category": "weather",
-        "male": "Another scorcher out there. People need cold drinks.",
-        "female": "And a little shade, and maybe a nap.",
-        "followUp": "We sell two of those.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weather_3",
-        "category": "weather",
-        "male": "The sun is doing the absolute most today.",
-        "female": "That's why we're the sunny side. We planned for this.",
-        "followUp": "Somebody plan me a fan.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weather_4",
-        "category": "weather",
-        "male": "Summer is here, and the slushie machine knows it.",
-        "female": "It's been showing off all morning.",
-        "followUp": "Let it. It earned it.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weather_5",
-        "category": "weather",
-        "male": "Hot day, cold drink, good music. That is the whole plan.",
-        "female": "You forgot friendly service.",
-        "followUp": "I was getting to that.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weekend_1",
-        "category": "weekend",
-        "male": "It's the weekend! You know what that means.",
-        "female": "Long lines and extra cherries?",
-        "followUp": "You read my mind.",
-        "contexts": [
-          "weekend",
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weekend_2",
-        "category": "weekend",
-        "male": "Saturday energy in the shop today.",
-        "female": "Saturdays get the good ice.",
-        "followUp": "Every day gets the good ice. Don't tell the other days.",
-        "contexts": [
-          "weekend",
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weekend_3",
-        "category": "weekend",
-        "male": "Weekend plans? Mine is making drinks and listening to you talk.",
-        "female": "That's not a plan, that's a job.",
-        "followUp": "Best job I've had.",
-        "contexts": [
-          "weekend",
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weekend_4",
-        "category": "weekend",
-        "male": "Sunday is for slow sips and good company.",
-        "female": "And for pretending Monday isn't coming.",
-        "followUp": "We don't say that word here.",
-        "contexts": [
-          "weekend",
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "weekend_5",
-        "category": "weekend",
-        "male": "The weekend crowd is always ready to try something new.",
-        "female": "So let them try the weird combo.",
-        "followUp": "The people asked. We deliver.",
-        "contexts": [
-          "weekend",
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "supporter_1",
-        "category": "supporter",
-        "male": "Shout out to everyone who followed today. You are the best.",
-        "female": "Every follow puts a little sparkle in the shop.",
-        "followUp": "We see you. We appreciate you.",
-        "contexts": [
-          "any",
-          "supporter"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "supporter_2",
-        "category": "supporter",
-        "male": "Somebody just sent a gift, and the whole counter lit up.",
-        "female": "That is the good stuff. Thank you from both of us.",
-        "followUp": "We will make the next drink extra special.",
-        "contexts": [
-          "gift",
-          "supporter"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "supporter_3",
-        "category": "supporter",
-        "male": "Look at our supporters go! This shop runs on good people.",
-        "female": "And a surprising amount of ice.",
-        "followUp": "Mostly good people, though.",
-        "contexts": [
-          "any",
-          "supporter"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "supporter_4",
-        "category": "supporter",
-        "male": "Whoa! Did everybody see that? {viewer} just went all in!",
-        "female": "We saw it! That calls for a victory lap around the blender.",
-        "followUp": "Make it two laps. And an extra-large smoothie!",
-        "contexts": [
-          "bigGift",
           "gift"
         ],
         "enabled": true,
@@ -930,13 +843,10 @@
         "createdAt": null
       },
       {
-        "id": "supporter_5",
-        "category": "supporter",
-        "male": "Hold up. {viewer} just dropped a legendary gift!",
-        "female": "Legendary! Somebody give that supporter a front-row stool.",
-        "followUp": "Already saving it. Best seat in the shop!",
+        "id": "gift_2",
+        "category": "gift",
+        "text": "{viewer}, your kindness has been received. The spirits are listening more closely now.",
         "contexts": [
-          "bigGift",
           "gift"
         ],
         "enabled": true,
@@ -945,13 +855,11 @@
         "createdAt": null
       },
       {
-        "id": "atmosphere_1",
-        "category": "atmosphere",
-        "male": "I love this little shop. The music, the ice, the chaos.",
-        "female": "It's home. With more straws.",
-        "followUp": "That's going on a mug.",
+        "id": "gift_3",
+        "category": "gift",
+        "text": "The candles flare for {viewer}. Generosity like that does not go unnoticed here.",
         "contexts": [
-          "any"
+          "gift"
         ],
         "enabled": true,
         "custom": false,
@@ -959,13 +867,11 @@
         "createdAt": null
       },
       {
-        "id": "atmosphere_2",
-        "category": "atmosphere",
-        "male": "Smell that? Fresh lemon and clean counter.",
-        "female": "We should bottle that.",
-        "followUp": "We bottle the lemon. The counter stays.",
+        "id": "gift_4",
+        "category": "gift",
+        "text": "Thank you, {viewer}. I will ask the cards to remember your name tonight.",
         "contexts": [
-          "any"
+          "gift"
         ],
         "enabled": true,
         "custom": false,
@@ -973,55 +879,11 @@
         "createdAt": null
       },
       {
-        "id": "atmosphere_3",
-        "category": "atmosphere",
-        "male": "The afternoon light in here is perfect.",
-        "female": "You're getting sentimental.",
-        "followUp": "It's the syrup fumes.",
+        "id": "gift_5",
+        "category": "gift",
+        "text": "A gift given freely carries its own light. Thank you, {viewer}.",
         "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "atmosphere_4",
-        "category": "atmosphere",
-        "male": "This is my favorite part of the day, right before the rush.",
-        "female": "You say that before every rush.",
-        "followUp": "It's always true.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "atmosphere_5",
-        "category": "atmosphere",
-        "male": "Good drinks, good people, good music. Not a bad way to spend a day.",
-        "female": "And the best coworker.",
-        "followUp": "I wasn't going to say it, but yes.",
-        "contexts": [
-          "any"
-        ],
-        "enabled": true,
-        "custom": false,
-        "edited": false,
-        "createdAt": null
-      },
-      {
-        "id": "atmosphere_6",
-        "category": "atmosphere",
-        "male": "Listen to the ice settle. This shop has a soundtrack.",
-        "female": "You are one cup away from writing poetry.",
-        "followUp": "One cup and a very small notebook.",
-        "contexts": [
-          "any"
+          "gift"
         ],
         "enabled": true,
         "custom": false,
@@ -1031,666 +893,1086 @@
     ],
     "history": [
       {
-        "runId": "run_1793661899744_r0ly",
-        "conversationId": "teasing_5",
-        "category": "teasing",
-        "status": "started",
-        "startedAt": "2026-11-02T23:24:59.744Z",
-        "endedAt": null,
+        "runId": "run_1793719547677_a4c2",
+        "conversationId": "welcome_4",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:25:47.677Z",
+        "endedAt": "2026-11-03T15:25:47.677Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I fixed the shelf."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "You put a book under it."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "A very stable book."
+            "speaker": "oracle",
+            "text": "Welcome, wanderer. Whatever brought you here brought you at the right time."
           }
         ]
       },
       {
-        "runId": "run_1793661865751_2hqd",
-        "conversationId": "atmosphere_3",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:24:25.751Z",
-        "endedAt": "2026-11-02T23:24:36.764Z",
+        "runId": "run_1793719501578_zpia",
+        "conversationId": "story_1",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:25:01.578Z",
+        "endedAt": "2026-11-03T15:25:01.578Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "The afternoon light in here is perfect."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "You're getting sentimental."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "It's the syrup fumes."
+            "speaker": "oracle",
+            "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
           }
         ]
       },
       {
-        "runId": "run_1793661863168_xv1o",
-        "conversationId": "drinks_4",
-        "category": "drinks",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:24:23.168Z",
-        "endedAt": "2026-11-02T23:24:36.761Z",
+        "runId": "run_1793719455523_js1a",
+        "conversationId": "engagement_4",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:24:15.523Z",
+        "endedAt": "2026-11-03T15:24:15.523Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Blue slushie or berry smoothie? Settle this for me."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Slushie for the vibes, smoothie for the actual fruit."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "So both. Got it."
+            "speaker": "oracle",
+            "text": "Some of you are here for the reading. Some of you are here for the quiet. Both are welcome."
           }
         ]
       },
       {
-        "runId": "run_1793661829779_322c",
-        "conversationId": "menu_4",
-        "category": "menu",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:23:49.779Z",
-        "endedAt": "2026-11-02T23:24:02.787Z",
+        "runId": "run_1793719132916_bnp2",
+        "conversationId": "engagement_6",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:18:52.916Z",
+        "endedAt": "2026-11-03T15:18:52.916Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Do we have a drink for somebody who cannot decide?"
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "That is what the mystery sip was invented for."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "One mystery sip, coming right up."
+            "speaker": "oracle",
+            "text": "The chat is part of the circle tonight. Say something, and I will answer."
           }
         ]
       },
       {
-        "runId": "run_1793661825165_1x8j",
-        "conversationId": "daily_1",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:23:45.165Z",
-        "endedAt": "2026-11-02T23:24:01.231Z",
+        "runId": "run_1793719075364_wnmn",
+        "conversationId": "story_2",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:17:55.364Z",
+        "endedAt": "2026-11-03T15:17:55.364Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Morning, Sarah! The ice machine is already humming. That's a good sign."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Best sound in the shop! I take it as a personal compliment."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Let's make today a busy one, then."
+            "speaker": "oracle",
+            "text": "They say a witch once traded her reflection for a single true answer. She never regretted it, and she never looked in mirrors again."
           }
         ]
       },
       {
-        "runId": "run_1793661793743_87mo",
-        "conversationId": "daily_1",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:23:13.743Z",
-        "endedAt": "2026-11-02T23:23:28.760Z",
+        "runId": "run_1793719029963_9uqu",
+        "conversationId": "story_1",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:17:09.963Z",
+        "endedAt": "2026-11-03T15:17:09.963Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Morning, Sarah! The ice machine is already humming. That's a good sign."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Best sound in the shop! I take it as a personal compliment."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Let's make today a busy one, then."
+            "speaker": "oracle",
+            "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
           }
         ]
       },
       {
-        "runId": "run_1793661790665_jcyq",
-        "conversationId": "quiet_1",
-        "category": "quiet",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:23:10.665Z",
-        "endedAt": "2026-11-02T23:23:23.260Z",
+        "runId": "run_1793718981837_0i12",
+        "conversationId": "story_6",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:16:21.837Z",
+        "endedAt": "2026-11-03T15:16:21.837Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "It's quiet. Too quiet."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "You're about to do something weird, aren't you?"
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "I was thinking a karaoke hour."
+            "speaker": "oracle",
+            "text": "A crow learned a single word and refused to use it. The village waited years, and the crow enjoyed every moment."
           }
         ]
       },
       {
-        "runId": "run_1793661758746_lib8",
-        "conversationId": "daily_4",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:22:38.746Z",
-        "endedAt": "2026-11-02T23:22:51.761Z",
+        "runId": "run_1793718936522_oql7",
+        "conversationId": "story_5",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:15:36.523Z",
+        "endedAt": "2026-11-03T15:15:36.523Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "First customer of the day gets my famous welcome speech."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Please don't do the robot again."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Too late. The robot is happening."
+            "speaker": "oracle",
+            "text": "The fortune teller kept one card face down her whole life. Her last words were, not yet."
           }
         ]
       },
       {
-        "runId": "run_1793661746665_pan0",
-        "conversationId": "greetings_1",
-        "category": "greetings",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:22:26.665Z",
-        "endedAt": "2026-11-02T23:22:47.765Z",
+        "runId": "run_1793718890484_b75n",
+        "conversationId": "welcome_2",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:14:50.484Z",
+        "endedAt": "2026-11-03T15:14:50.484Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Welcome in! You picked a good time. The ice is fresh."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "And the music is questionable, but the drinks are great."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Hey. I picked the music."
+            "speaker": "oracle",
+            "text": "You found your way here again. The spirits noticed before I did."
           }
         ]
       },
       {
-        "runId": "run_1793661720274_yxvx",
-        "conversationId": "atmosphere_1",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:22:00.274Z",
-        "endedAt": "2026-11-02T23:22:12.786Z",
+        "runId": "run_1793718844646_ply9",
+        "conversationId": "engagement_5",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:14:04.647Z",
+        "endedAt": "2026-11-03T15:14:04.647Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I love this little shop. The music, the ice, the chaos."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "It's home. With more straws."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "That's going on a mug."
+            "speaker": "oracle",
+            "text": "What is one thing you are ready to leave behind this month?"
           }
         ]
       },
       {
-        "runId": "run_1793661712168_7e8x",
-        "conversationId": "teasing_2",
-        "category": "teasing",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:21:52.169Z",
-        "endedAt": "2026-11-02T23:22:03.753Z",
+        "runId": "run_1793718798497_q89r",
+        "conversationId": "reading_2",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:13:18.497Z",
+        "endedAt": "2026-11-03T15:13:18.497Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Sarah says my drinks are 'a little sweet.'"
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "I said that with love."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "You said it with a straw."
+            "speaker": "oracle",
+            "text": "One card is enough for a single question. Three cards are for a story that has not finished."
           }
         ]
       },
       {
-        "runId": "run_1793661686268_dd40",
-        "conversationId": "menu_2",
-        "category": "menu",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:21:26.268Z",
-        "endedAt": "2026-11-02T23:21:39.300Z",
+        "runId": "run_1793718752347_uqsx",
+        "conversationId": "tarot_1",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:12:32.347Z",
+        "endedAt": "2026-11-03T15:12:32.347Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "We should rename the mystery drink 'Trust Me.'"
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Absolutely not. People will think it's a dare."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "It is a dare. That's the fun part."
+            "speaker": "oracle",
+            "text": "The Moon is not a warning. It is an invitation to walk carefully through what you cannot see."
           }
         ]
       },
       {
-        "runId": "run_1793661675164_4ngj",
-        "conversationId": "menu_4",
-        "category": "menu",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:21:15.164Z",
-        "endedAt": "2026-11-02T23:21:29.255Z",
+        "runId": "run_1793718707129_c79d",
+        "conversationId": "engagement_2",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:11:47.130Z",
+        "endedAt": "2026-11-03T15:11:47.130Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Do we have a drink for somebody who cannot decide?"
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "That is what the mystery sip was invented for."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "One mystery sip, coming right up."
+            "speaker": "oracle",
+            "text": "If you could ask one question and be guaranteed a true answer, what would it be?"
           }
         ]
       },
       {
-        "runId": "run_1793661651258_vd53",
-        "conversationId": "busy_4",
-        "category": "busy",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:20:51.258Z",
-        "endedAt": "2026-11-02T23:21:03.757Z",
+        "runId": "run_1793718661035_ua3w",
+        "conversationId": "welcome_5",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:11:01.035Z",
+        "endedAt": "2026-11-03T15:11:01.035Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Order up, order up! Who had the lemonade?"
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "That one's mine. Coming through!"
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Careful. The straw is armed."
+            "speaker": "oracle",
+            "text": "The door was never locked. Welcome to Mystic Witch Live."
           }
         ]
       },
       {
-        "runId": "run_1793661639164_47c0",
-        "conversationId": "daily_4",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:20:39.164Z",
-        "endedAt": "2026-11-02T23:20:53.239Z",
+        "runId": "run_1793718614330_czbz",
+        "conversationId": "engagement_3",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:10:14.330Z",
+        "endedAt": "2026-11-03T15:10:14.330Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "First customer of the day gets my famous welcome speech."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Please don't do the robot again."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Too late. The robot is happening."
+            "speaker": "oracle",
+            "text": "Type the first word that comes to you. We will see what it stirs."
           }
         ]
       },
       {
-        "runId": "run_1793661619266_czjs",
-        "conversationId": "teasing_1",
-        "category": "teasing",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:20:19.266Z",
-        "endedAt": "2026-11-02T23:20:29.791Z",
+        "runId": "run_1793718568862_sphk",
+        "conversationId": "greeting_3",
+        "category": "greeting",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:09:28.862Z",
+        "endedAt": "2026-11-03T15:09:28.862Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "You've been humming the same song for an hour."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "It's a good song!"
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "It was. Twenty minutes ago."
+            "speaker": "oracle",
+            "text": "Ah, friend. I was wondering when you would find your way back."
           }
         ]
       },
       {
-        "runId": "run_1793661604665_1vqb",
-        "conversationId": "atmosphere_1",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:20:04.665Z",
-        "endedAt": "2026-11-02T23:20:17.747Z",
+        "runId": "run_1793718523569_8zu0",
+        "conversationId": "tarot_5",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:08:43.569Z",
+        "endedAt": "2026-11-03T15:08:43.569Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I love this little shop. The music, the ice, the chaos."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "It's home. With more straws."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "That's going on a mug."
+            "speaker": "oracle",
+            "text": "The Hermit carries a lamp, not a torch. Some truths only survive a small light."
           }
         ]
       },
       {
-        "runId": "run_1793661584766_6ohm",
-        "conversationId": "daily_5",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:19:44.766Z",
-        "endedAt": "2026-11-02T23:19:58.353Z",
+        "runId": "run_1793718477340_8dur",
+        "conversationId": "reading_3",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:07:57.340Z",
+        "endedAt": "2026-11-03T15:07:57.340Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I think the syrup shelf is judging me."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "It's definitely the blue raspberry. It's been staring all morning."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "I'm moving it to the back."
+            "speaker": "oracle",
+            "text": "I can draw for you whenever you are ready. The deck does not judge the question."
           }
         ]
       },
       {
-        "runId": "run_1793661565682_hjf0",
-        "conversationId": "drinks_2",
-        "category": "drinks",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:19:25.682Z",
-        "endedAt": "2026-11-02T23:19:40.283Z",
+        "runId": "run_1793718431820_mkic",
+        "conversationId": "reading_5",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:07:11.820Z",
+        "endedAt": "2026-11-03T15:07:11.820Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I made a lemonade so fresh it slapped me."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "That's not how lemonade works."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Tell that to my face. It's still recovering."
+            "speaker": "oracle",
+            "text": "Send your question, and I will let the cards answer in their own slow language."
           }
         ]
       },
       {
-        "runId": "run_1793661548310_sbjw",
-        "conversationId": "daily_3",
-        "category": "daily",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:19:08.310Z",
-        "endedAt": "2026-11-02T23:19:23.332Z",
+        "runId": "run_1793718019536_ln91",
+        "conversationId": "tarot_2",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-03T15:00:19.536Z",
+        "endedAt": "2026-11-03T15:00:19.536Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I just organized the straws by color, and honestly? It's beautiful."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "You need a hobby, Marcus."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "I have a hobby. It's organizing straws."
+            "speaker": "oracle",
+            "text": "The Tower frightens people, but it only removes what was already falling."
           }
         ]
       },
       {
-        "runId": "run_1793661528664_gyf4",
-        "conversationId": "drinks_1",
-        "category": "drinks",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:18:48.664Z",
-        "endedAt": "2026-11-02T23:19:02.243Z",
+        "runId": "run_1793717959156_8x0l",
+        "conversationId": "ambient_1",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:59:19.156Z",
+        "endedAt": "2026-11-03T14:59:19.156Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "What's your go-to right now? I need inspiration."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Strawberry smoothie. Cold, creamy, and a little dramatic."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Dramatic? It's a drink."
+            "speaker": "oracle",
+            "text": "The candles are lit and the cards are resting. We begin whenever you are ready."
           }
         ]
       },
       {
-        "runId": "run_1793661512250_8pg1",
-        "conversationId": "funny_1",
-        "category": "funny",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:18:32.250Z",
-        "endedAt": "2026-11-02T23:18:45.292Z",
+        "runId": "run_1793717913903_1c1s",
+        "conversationId": "greeting_2",
+        "category": "greeting",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:58:33.903Z",
+        "endedAt": "2026-11-03T14:58:33.903Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I tried to take a nap behind the counter, but the blender had opinions."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "The blender is the real manager."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Then I want a raise."
+            "speaker": "oracle",
+            "text": "friend has arrived. The candles noticed."
           }
         ]
       },
       {
-        "runId": "run_1793661493166_2r0i",
-        "conversationId": "atmosphere_2",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:18:13.166Z",
-        "endedAt": "2026-11-02T23:18:25.741Z",
+        "runId": "run_1793717867898_5zgf",
+        "conversationId": "greeting_5",
+        "category": "greeting",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:57:47.898Z",
+        "endedAt": "2026-11-03T14:57:47.898Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Smell that? Fresh lemon and clean counter."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "We should bottle that."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "We bottle the lemon. The counter stays."
+            "speaker": "oracle",
+            "text": "Welcome, friend. Whatever you carry in, you may set it down here."
           }
         ]
       },
       {
-        "runId": "run_1793661479283_q8fn",
-        "conversationId": "atmosphere_2",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:17:59.283Z",
-        "endedAt": "2026-11-02T23:18:10.764Z",
+        "runId": "run_1793717773263_9jdu",
+        "conversationId": "reading_4",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:56:13.264Z",
+        "endedAt": "2026-11-03T14:56:13.264Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Smell that? Fresh lemon and clean counter."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "We should bottle that."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "We bottle the lemon. The counter stays."
+            "speaker": "oracle",
+            "text": "A reading is not a verdict. It is a lantern held at a different angle."
           }
         ]
       },
       {
-        "runId": "run_1793661457177_i538",
-        "conversationId": "busy_5",
-        "category": "busy",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:17:37.177Z",
-        "endedAt": "2026-11-02T23:17:51.415Z",
+        "runId": "run_1793717772816_mhvy",
+        "conversationId": "welcome_3",
+        "category": "welcome",
+        "status": "failed",
+        "startedAt": "2026-11-03T14:56:12.816Z",
+        "endedAt": "2026-11-03T14:56:12.816Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Everybody stay patient, we're getting to every order."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "We're working as fast as the blender allows."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "The blender is doing its best."
+            "speaker": "oracle",
+            "text": "Come in, sit close. The room is quiet and the cards are listening."
           }
         ]
       },
       {
-        "runId": "run_1793661444773_295q",
-        "conversationId": "menu_1",
-        "category": "menu",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:17:24.773Z",
-        "endedAt": "2026-11-02T23:17:37.769Z",
+        "runId": "run_1793717727492_4oid",
+        "conversationId": "story_3",
+        "category": "story",
+        "status": "failed",
+        "startedAt": "2026-11-03T14:55:27.492Z",
+        "endedAt": "2026-11-03T14:55:27.492Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Somebody asked if we have anything warm."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "We have a warm personality and a hot coffee machine."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "I'll put that on the menu."
+            "speaker": "oracle",
+            "text": "In the old quarter every house had a key that opened no door. The keys were the point."
           }
         ]
       },
       {
-        "runId": "run_1793661424673_u8uh",
-        "conversationId": "atmosphere_3",
-        "category": "atmosphere",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:17:04.673Z",
-        "endedAt": "2026-11-02T23:17:16.297Z",
+        "runId": "run_1793717726472_v6i7",
+        "conversationId": "greeting_1",
+        "category": "greeting",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:55:26.472Z",
+        "endedAt": "2026-11-03T14:55:26.472Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "The afternoon light in here is perfect."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "You're getting sentimental."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "It's the syrup fumes."
+            "speaker": "oracle",
+            "text": "Welcome, friend. The circle opens a little wider for you."
           }
         ]
       },
       {
-        "runId": "run_1793661410753_5zt1",
-        "conversationId": "busy_1",
-        "category": "busy",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:16:50.753Z",
-        "endedAt": "2026-11-02T23:17:03.259Z",
+        "runId": "run_1793717681257_56v5",
+        "conversationId": "tarot_2",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-03T14:54:41.257Z",
+        "endedAt": "2026-11-03T14:54:41.257Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "Whoa, the queue is moving! I need backup."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Backup is here. I brought ice and attitude."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "Perfect. We need both."
+            "speaker": "oracle",
+            "text": "The Tower frightens people, but it only removes what was already falling."
           }
         ]
       },
       {
-        "runId": "run_1793661390176_w1ay",
-        "conversationId": "menu_3",
-        "category": "menu",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:16:30.176Z",
-        "endedAt": "2026-11-02T23:16:43.226Z",
+        "runId": "run_1793717681255_e3yq",
+        "conversationId": "reading_1",
+        "category": "reading",
+        "status": "failed",
+        "startedAt": "2026-11-03T14:54:41.255Z",
+        "endedAt": "2026-11-03T14:54:41.255Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "The menu board looks crooked again."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "It's not crooked. It's leaning into the summer theme."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "You're a genius."
+            "speaker": "oracle",
+            "text": "If a question has been circling you for days, a reading may give it somewhere to land."
           }
         ]
       },
       {
-        "runId": "run_1793661349749_ek46",
-        "conversationId": "quiet_3",
-        "category": "quiet",
-        "status": "completed",
-        "startedAt": "2026-11-02T23:15:49.749Z",
-        "endedAt": "2026-11-02T23:16:28.792Z",
+        "runId": "run_1793717635920_kha0",
+        "conversationId": "welcome_2",
+        "category": "welcome",
+        "status": "failed",
+        "startedAt": "2026-11-03T14:53:55.920Z",
+        "endedAt": "2026-11-03T14:53:55.920Z",
         "lines": [
           {
-            "speaker": "maleSeller",
-            "text": "I can hear the fridge. That's how quiet it is."
-          },
-          {
-            "speaker": "femaleSeller",
-            "text": "Let's give the chat something to talk about."
-          },
-          {
-            "speaker": "maleSeller",
-            "text": "I'll start. Favorite drink, anyone?"
+            "speaker": "oracle",
+            "text": "You found your way here again. The spirits noticed before I did."
           }
         ]
       }
-    ]
+    ],
+    "version": 2
+  },
+  "tarot": {
+    "enabled": true,
+    "aiInterpretation": true,
+    "ai": {
+      "at": "2026-11-03T15:05:54.946Z",
+      "ok": false,
+      "enabled": true,
+      "source": "builtin",
+      "provider": "OpenRouter",
+      "providerId": "openrouter",
+      "model": "openrouter/free",
+      "httpStatus": 403,
+      "latencyMs": 0,
+      "sections": 0,
+      "reason": "OpenRouter HTTP 429: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day | TokenRouter HTTP 403: User's credit limit is insufficient, remaining credit limit: ＄0.000000 (request id: 20261103150"
+    },
+    "commentCooldownSeconds": 20,
+    "perViewerCooldownSeconds": 120,
+    "maxQueue": 8,
+    "capacity": 100,
+    "giftRules": [
+      {
+        "minCoins": 1,
+        "spread": "one"
+      },
+      {
+        "minCoins": 25,
+        "spread": "three"
+      }
+    ],
+    "topics": [
+      {
+        "id": "family_reading",
+        "label": "Family Reading",
+        "theme": "family",
+        "keywords": [
+          "family",
+          "mom",
+          "mother",
+          "dad",
+          "father",
+          "parents",
+          "sister",
+          "brother",
+          "siblings",
+          "child",
+          "children",
+          "home",
+          "grandma",
+          "grandpa",
+          "relatives"
+        ],
+        "enabled": true,
+        "order": 0
+      },
+      {
+        "id": "personality_reading",
+        "label": "Personality Reading",
+        "theme": "personality",
+        "keywords": [
+          "personality",
+          "myself",
+          "who am i",
+          "character",
+          "traits",
+          "strengths",
+          "weaknesses",
+          "my nature",
+          "about me"
+        ],
+        "enabled": true,
+        "order": 1
+      },
+      {
+        "id": "name_reading",
+        "label": "Name Reading",
+        "theme": "personality",
+        "keywords": [
+          "name",
+          "my name",
+          "name meaning",
+          "surname",
+          "nickname",
+          "rename"
+        ],
+        "enabled": true,
+        "order": 2
+      },
+      {
+        "id": "this_weeks_fortune",
+        "label": "This Week's Fortune",
+        "theme": "future",
+        "keywords": [
+          "this week",
+          "week ahead",
+          "weekly",
+          "next 7 days",
+          "coming week",
+          "the week"
+        ],
+        "enabled": true,
+        "order": 3
+      },
+      {
+        "id": "todays_fortune",
+        "label": "Today's Fortune",
+        "theme": "general",
+        "keywords": [
+          "today",
+          "tonight",
+          "this day",
+          "this morning",
+          "this evening",
+          "right now"
+        ],
+        "enabled": true,
+        "order": 4
+      },
+      {
+        "id": "my_question",
+        "label": "My Question",
+        "theme": "general",
+        "keywords": [
+          "my question",
+          "i have a question",
+          "question for the cards",
+          "ask the cards",
+          "question"
+        ],
+        "enabled": true,
+        "order": 5
+      },
+      {
+        "id": "love_reading",
+        "label": "Love Reading",
+        "theme": "love",
+        "keywords": [
+          "love",
+          "relationship",
+          "partner",
+          "boyfriend",
+          "girlfriend",
+          "romance",
+          "marriage",
+          "soulmate",
+          "dating",
+          "breakup",
+          "ex",
+          "heart"
+        ],
+        "enabled": true,
+        "order": 6
+      },
+      {
+        "id": "crush_reading",
+        "label": "Crush Reading",
+        "theme": "love",
+        "keywords": [
+          "crush",
+          "secret love",
+          "someone i like",
+          "does he like me",
+          "does she like me",
+          "admirer",
+          "feelings for"
+        ],
+        "enabled": true,
+        "order": 7
+      },
+      {
+        "id": "future_partner",
+        "label": "Future Partner",
+        "theme": "love",
+        "keywords": [
+          "future partner",
+          "future husband",
+          "future wife",
+          "who will i marry",
+          "marriage partner",
+          "future lover",
+          "soul mate"
+        ],
+        "enabled": true,
+        "order": 8
+      },
+      {
+        "id": "career_reading",
+        "label": "Career Reading",
+        "theme": "career",
+        "keywords": [
+          "career",
+          "job",
+          "work",
+          "business",
+          "boss",
+          "promotion",
+          "interview",
+          "profession",
+          "office",
+          "project",
+          "coworker"
+        ],
+        "enabled": true,
+        "order": 9
+      },
+      {
+        "id": "wealth_reading",
+        "label": "Wealth Reading",
+        "theme": "wealth",
+        "keywords": [
+          "wealth",
+          "money",
+          "finance",
+          "financial",
+          "rich",
+          "income",
+          "salary",
+          "debt",
+          "investment",
+          "savings",
+          "prosperity"
+        ],
+        "enabled": true,
+        "order": 10
+      },
+      {
+        "id": "study_reading",
+        "label": "Study Reading",
+        "theme": "study",
+        "keywords": [
+          "study",
+          "exam",
+          "school",
+          "university",
+          "college",
+          "grades",
+          "learning",
+          "student",
+          "test",
+          "class",
+          "homework"
+        ],
+        "enabled": true,
+        "order": 11
+      }
+    ],
+    "topicSettings": {
+      "enabled": true,
+      "rotationSeconds": 6,
+      "columns": 2,
+      "rows": 3
+    },
+    "promotion": {
+      "enabled": true,
+      "waitEnabled": true,
+      "waitIntervalSeconds": 90,
+      "waitAmount": 1,
+      "giftEnabled": true,
+      "giftCoinsPerStep": 5,
+      "likeEnabled": true,
+      "likeAmount": 1,
+      "likeThreshold": 10,
+      "mapping": [
+        {
+          "id": "rose",
+          "name": "Rose",
+          "label": "Rose",
+          "icon": "rose.webp",
+          "url": "/assets/gift_icon/rose.webp",
+          "coins": 1,
+          "promote": 2,
+          "aliases": [
+            "rose",
+            "rosa"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "rosa10",
+          "name": "Rosa",
+          "label": "Rosa",
+          "icon": "rosa10.webp",
+          "url": "/assets/gift_icon/rosa10.webp",
+          "coins": 10,
+          "promote": 4,
+          "aliases": [
+            "rosa10",
+            "rosa",
+            "rosa 10"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "prayercandle",
+          "name": "Prayer Candle",
+          "label": "Prayer Candle",
+          "icon": "PrayerCandle.webp",
+          "url": "/assets/gift_icon/PrayerCandle.webp",
+          "coins": 5,
+          "promote": 3,
+          "aliases": [
+            "prayercandle",
+            "prayer candle"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "embroidered5",
+          "name": "Embroidered",
+          "label": "Embroidered",
+          "icon": "embroidered5.webp",
+          "url": "/assets/gift_icon/embroidered5.webp",
+          "coins": 5,
+          "promote": 3,
+          "aliases": [
+            "embroidered5",
+            "embroidered"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "flowergarland15",
+          "name": "Flower Garland",
+          "label": "Flower Garland",
+          "icon": "flowergarland15.webp",
+          "url": "/assets/gift_icon/flowergarland15.webp",
+          "coins": 15,
+          "promote": 5,
+          "aliases": [
+            "flowergarland15",
+            "flower garland",
+            "flowergarland"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "bouquet20",
+          "name": "Bouquet",
+          "label": "Bouquet",
+          "icon": "Bouquet20.webp",
+          "url": "/assets/gift_icon/Bouquet20.webp",
+          "coins": 20,
+          "promote": 6,
+          "aliases": [
+            "bouquet20",
+            "bouquet"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "grandceremony",
+          "name": "Grand Ceremony",
+          "label": "Grand Ceremony",
+          "icon": "grandCeremony.webp",
+          "url": "/assets/gift_icon/grandCeremony.webp",
+          "coins": 100,
+          "promote": 12,
+          "aliases": [
+            "grandceremony",
+            "grand ceremony"
+          ],
+          "enabled": true
+        }
+      ]
+    },
+    "ticker": {
+      "enabled": true,
+      "durationMs": 6000,
+      "speedMs": 900
+    },
+    "result": {
+      "displaySeconds": 45,
+      "interpretation": "ai",
+      "showFortune": true
+    },
+    "queueState": {
+      "capacity": 100,
+      "seq": 106,
+      "waitIntervalSeconds": 90,
+      "waitAmount": 1,
+      "served": 44,
+      "dropped": 0,
+      "current": null,
+      "entries": [
+        {
+          "id": "q_1793717072401_56",
+          "key": "u:sim.viewer.1793717072401",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717072401",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 24,
+          "waitSteps": 10,
+          "joinedAt": 1793717072401,
+          "seq": 90,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717075931_57",
+          "key": "u:sim.viewer.1793717075930",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717075930",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717075931,
+          "seq": 91,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717077045_58",
+          "key": "u:sim.viewer.1793717077045",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717077045",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717077045,
+          "seq": 92,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717078165_59",
+          "key": "u:sim.viewer.1793717078165",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717078165",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717078165,
+          "seq": 93,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717078462_60",
+          "key": "u:sim.viewer.1793717078461",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717078461",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717078462,
+          "seq": 94,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717078678_61",
+          "key": "u:sim.viewer.1793717078678",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717078678",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717078678,
+          "seq": 95,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717078847_62",
+          "key": "u:sim.viewer.1793717078846",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717078846",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717078847,
+          "seq": 96,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717079024_63",
+          "key": "u:sim.viewer.1793717079024",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717079024",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717079024,
+          "seq": 97,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717079197_64",
+          "key": "u:sim.viewer.1793717079196",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717079196",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717079197,
+          "seq": 98,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717079371_65",
+          "key": "u:sim.viewer.1793717079370",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717079370",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717079371,
+          "seq": 99,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717079558_66",
+          "key": "u:sim.viewer.1793717079558",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717079558",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717079558,
+          "seq": 100,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717079731_67",
+          "key": "u:sim.viewer.1793717079731",
+          "user": "Sophia",
+          "uniqueId": "sim.viewer.1793717079731",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "Love Reading",
+          "question": "What does my love life hold?",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717079731,
+          "seq": 101,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717092330_68",
+          "key": "u:gift.1793717092327",
+          "user": "Sophia",
+          "uniqueId": "gift.1793717092327",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "",
+          "question": "",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717092330,
+          "seq": 102,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717093044_69",
+          "key": "u:gift.1793717093036",
+          "user": "Sophia",
+          "uniqueId": "gift.1793717093036",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "",
+          "question": "",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717093044,
+          "seq": 103,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717093681_70",
+          "key": "u:gift.1793717093678",
+          "user": "Sophia",
+          "uniqueId": "gift.1793717093678",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "",
+          "question": "",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717093681,
+          "seq": 104,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717093867_71",
+          "key": "u:gift.1793717093863",
+          "user": "Sophia",
+          "uniqueId": "gift.1793717093863",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "",
+          "question": "",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717093867,
+          "seq": 105,
+          "promotions": []
+        },
+        {
+          "id": "q_1793717094042_72",
+          "key": "u:gift.1793717094038",
+          "user": "Sophia",
+          "uniqueId": "gift.1793717094038",
+          "avatar": "",
+          "topicId": "",
+          "topicLabel": "",
+          "question": "",
+          "spread": "three",
+          "boost": 0,
+          "waitSteps": 10,
+          "joinedAt": 1793717094042,
+          "seq": 106,
+          "promotions": []
+        }
+      ]
+    }
   },
   "reactive": {
     "settings": {
@@ -1729,7 +2011,7 @@
           "reasoningMode": "auto",
           "headers": {},
           "createdAt": "2026-11-02T19:14:56.850Z",
-          "updatedAt": "2026-11-02T23:24:59.257Z"
+          "updatedAt": "2026-11-03T15:25:46.855Z"
         },
         {
           "id": "tokenrouter",
@@ -1745,7 +2027,7 @@
           "reasoningMode": "auto",
           "headers": {},
           "createdAt": "2026-11-02T19:14:56.850Z",
-          "updatedAt": "2026-11-02T23:24:59.257Z"
+          "updatedAt": "2026-11-03T15:25:46.855Z"
         }
       ],
       "primaryProviderId": "openrouter",
