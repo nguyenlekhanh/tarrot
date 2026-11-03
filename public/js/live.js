@@ -168,27 +168,14 @@
   // player retries on the first pointer/key gesture.
   audio.startMusic();
 
-  // Automatic shop announcer: speaks through the same Piper queue.
-  const announcer = window.ShopAnnouncer
-    ? new window.ShopAnnouncer({
-        audio,
-        getContext: () => ({
-          stats: {
-            customers: game.customers ? game.customers.length : 0,
-            waiting: game.queue ? game.queue.length : 0,
-            serving: Boolean(game.servingId)
-          },
-          viewers: game.viewers ? game.viewers.size : 0
-        })
-      })
-    : null;
-  window.shopAnnouncer = announcer;
-
-  // Two-seller conversations: one stage scheduler, one line at a time.
-  const conversations = window.ShopConversationEngine
-    ? new window.ShopConversationEngine({
-        audio,
-        announcer,
+  // Ambient Oracle dialogue: the single conversation scheduler.
+  const conversations = window.MysticConversationEngine
+    ? new window.MysticConversationEngine({
+        speak: (entry) =>
+          callRpc('conversation.speak', { id: entry.id }).then((res) =>
+            res && res.result ? res.result : { ok: false, error: 'rpc failed' }
+          ),
+        isBusy: () => audio.ttsPlaying || (Array.isArray(audio.ttsQueue) && audio.ttsQueue.length > 0),
         getContext: () => ({
           stats: {
             customers: game.customers ? game.customers.length : 0,
@@ -201,10 +188,10 @@
     : null;
   window.shopConversations = conversations;
 
-  // Validated TikTok comment replies. The server decides; this stage module
-  // only speaks them through the shared audio queue and reports playback.
+  // Validated TikTok comment replies: the server decides, this module only
+  // speaks them through the shared audio queue and reports playback.
   const reactive = window.ShopReactiveSeller
-    ? new window.ShopReactiveSeller({ audio, announcer, conversations })
+    ? new window.ShopReactiveSeller({ audio, conversations })
     : null;
   window.shopReactive = reactive;
   window.addEventListener('error', (e) => console.error('[ShopError]', e.message));
@@ -578,9 +565,6 @@
       }
       if (typeof st.settings.ttsSpeed === 'number') audio.ttsSpeed = st.settings.ttsSpeed;
       // Announcements stop with the shop, and never talk over a paused game.
-      if (announcer && st.tts) announcer.setVoiceCatalog(st.tts.catalog || st.tts.voices);
-      if (announcer && st.voiceProfiles) announcer.setVoiceProfiles(st.voiceProfiles);
-      if (announcer) announcer.setPaused(Boolean(st.settings.paused) || st.settings.running === false);
       if (conversations && st.voiceProfiles) conversations.setVoiceProfiles(st.voiceProfiles);
       if (conversations && st.conversations) conversations.applySnapshot(st.conversations);
       if (conversations) conversations.setPaused(Boolean(st.settings.paused) || st.settings.running === false);
@@ -699,23 +683,11 @@
       return;
     }
     if (conversations) {
-      if (ev.type === 'giftOrder' || ev.type === 'partyOrder') conversations.notifyGift(ev);
-      else if (ev.type === 'followGuest' || ev.type === 'freeDrink' || ev.type === 'mysteryDrink') {
-        conversations.notifyPriority(ev.type === 'followGuest' || ev.type === 'freeDrink' ? 'vip' : 'gift');
-      } else if (ev.type === 'viewerJoin') {
-        conversations.notifyViewerJoin(ev.user);
-      } else if (ev.type === 'serveDrink') {
-        conversations.notifyServed(ev);
-      }
+      if (ev.type === 'giftOrder' || ev.type === 'partyOrder') conversations.notifyGift();
+      else if (ev.type === 'followGuest') conversations.notifyFollow();
+      else if (ev.type === 'viewerJoin') conversations.notifyViewerJoin(ev.user);
     }
     game.handleEvent(ev);
-    if (
-      announcer &&
-      ['giftOrder', 'partyOrder', 'followGuest', 'commentOrder', 'likeBurst', 'mysteryDrink'].includes(ev.type)
-    ) {
-      // Personalized replies take the stage first — no generic line right after.
-      announcer.notifyPersonalized();
-    }
 
     switch (ev.type) {
       case 'serveDrink':

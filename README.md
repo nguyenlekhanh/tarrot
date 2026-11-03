@@ -253,26 +253,25 @@ username, connection duration, viewer count and the last received LIVE event.
   in the environment; the server passes it as `signApiKey`. Without such a key TikTok LIVE
   events cannot be received, and the UI reports that exact error.
 
-## 📣 Automatic Shop Announcer
+## 🔮 Mystic Conversation System
 
-A context-aware announcer keeps the stream talking even when nobody interacts.
+The Oracle keeps the room alive between readings, including the hours when nobody is watching.
 
-- **Scheduler**: starts with the shop, speaks every 5–8 s by default (5/8/10/15/20 s
-  selectable), never interrupts a sentence, waits for the Piper queue to empty, never
-  repeats the previous line, and stops while the shop is paused.
-- **Context**: empty shop → welcome + invite; waiting customers → drink promos; a drink
-  being served → atmosphere; quiet chat → call-to-action; new viewer → an occasional
-  username greeting. Generic lines stay quiet for a few seconds after a personalized
-  TikTok event so thank-yous never duplicate.
-- **Catalog**: 26 editable English + Vietnamese sentences in five categories
-  (welcome, drinks, call to action, atmosphere, supporter appreciation), stored in
-  `localStorage` and managed from the admin panel (add/edit/delete/enable, filter,
-  search, test individual lines).
-- **Voices**: local Piper models only (`config/piper/en`, `config/piper/vn`), with
-  female/male/random seller selection, language, speed and volume controls.
-- **Shared speech queue**: priority 0 gifts/VIP, 1 viewer replies, 2 announcements.
-  Announcements are skipped rather than queued behind speech; important lines clear
-  queued chatter; music and SFX keep their own volumes.
+- **Scheduler**: one scheduler only (`public/js/conversation.js`), running on the stage. It speaks every
+  45 / 60 / 90 / 120 / 180 s (60 s default), never queues behind speech already playing, never repeats a
+  line until the recent pool is used up, and stops with the shop.
+- **Priority**: tarot narration → gift reactions → viewer interactions (greetings, follows, comment
+  replies) → ambient dialogue. Ambient lines only start when the shared TTS queue is empty, so clips can
+  never overlap, and a tarot reading is never interrupted. Dialogue resumes a few seconds after the
+  reading's narration drains.
+- **Catalog**: 49 English lines in nine categories — ambient musings, welcome messages, mystical stories,
+  tarot knowledge, audience engagement, reading promotion, viewer greetings, follow reactions and gift
+  reactions — seeded from `mystic-conversation.js` and managed from Admin (add/edit/delete/enable,
+  per-category switch, restore defaults).
+- **Voice**: Kokoro `af_alloy` is the Oracle voice; Piper is the automatic fallback. Speech rides the
+  existing `tts.play` broadcast, so music ducking and the single audio path are unchanged.
+- **Admin**: enable/disable, AI dialogue toggle, interval, category switches, test dialogue, live status
+  (speaking / reading / next in Ns) and dialogue history.
 
 ## 🎵 Background Music Playlist
 

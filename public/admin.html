@@ -492,67 +492,37 @@
       </section>
 
       <section class="card" style="grid-column: 1 / -1">
-        <h2>💬 SELLER CONVERSATION SYSTEM</h2>
+        <h2>🔮 MYSTIC CONVERSATION SYSTEM</h2>
         <div class="row">
-          <button class="btn on" id="btnConvToggle">Conversations: ON</button>
+          <button class="btn on" id="btnConvToggle">Conversation: ON</button>
+          <button class="btn" id="btnConvAi">AI dialogue: OFF</button>
           <button class="btn" id="btnConvStartStop">⏸ Stop</button>
           <div>
-            <div class="label-line"><span>Conversation interval</span></div>
+            <div class="label-line"><span>Dialogue interval</span></div>
             <select id="convInterval"></select>
           </div>
-          <button class="btn on" id="btnConvShuffle">🔀 Shuffle: ON</button>
-          <button class="btn gold" id="btnConvTest">🎧 Test Conversation</button>
-          <button class="btn danger" id="btnConvRestore">↺ Restore Default Conversations</button>
+          <button class="btn gold" id="btnConvTest">🎧 Test dialogue</button>
+          <button class="btn danger" id="btnConvRestore">↺ Restore defaults</button>
         </div>
         <div class="conv-status">
           <span class="pill" id="convState">Loading…</span>
           <span>Currently speaking: <strong id="convNow">—</strong></span>
-          <span>Next conversation: <strong id="convNext">—</strong></span>
+          <span>Next dialogue: <strong id="convNext">—</strong></span>
           <span id="convCount" class="hint"></span>
         </div>
         <audio id="convAudio" controls style="width: 100%; height: 38px;"></audio>
-        <div class="hint" id="convHint">The scheduler runs on the live stage and speaks one line at a time through the shared Piper queue. Gifts, VIP lines and viewer replies always go first.</div>
-        <div class="row">
-          <button class="btn" id="btnConvPreviewMale">🧑‍🍳 Male Seller preview</button>
-          <button class="btn" id="btnConvPreviewFemale">👩‍🍳 Female Seller preview</button>
-          <span class="hint" id="convPreviewHint">Previews use the current 🎭 profile voice, speed and volume.</span>
+        <div class="hint" id="convHint">
+          The Oracle speaks between readings through the shared voice queue — Kokoro <strong>af_alloy</strong> first,
+          Piper as the fallback. Gift, follow and viewer lines always go first, and a tarot reading is never
+          interrupted.
         </div>
-        <div class="label-line"><span>Conversation categories</span><span class="hint">Disabled categories are never scheduled</span></div>
+        <div class="label-line"><span>Dialogue categories</span><span class="hint">Disabled categories are never scheduled</span></div>
         <div class="conv-cats" id="convCategories"></div>
-        <div class="label-line"><span>Conversation manager</span><span class="hint" id="convManagerCount"></span></div>
-        <div class="row">
-          <input type="text" id="convSearch" placeholder="Search dialogue, ID or category…" />
-          <select id="convFilter"><option value="">All categories</option></select>
-        </div>
-        <div class="conv-list" id="convList"></div>
-        <details class="conv-add">
-          <summary>➕ Add a conversation</summary>
-          <div class="row">
-            <div>
-              <div class="label-line"><span>Category</span></div>
-              <select id="convAddCategory"></select>
-            </div>
-            <div>
-              <div class="label-line"><span>Contexts (optional)</span></div>
-              <input type="text" id="convAddContexts" placeholder="any, quiet, busy…" />
-            </div>
-          </div>
-          <div class="label-line"><span>🧑‍🍳 Male Seller</span></div>
-          <textarea id="convAddMale" placeholder="Male Seller line"></textarea>
-          <div class="label-line"><span>👩‍🍳 Female Seller</span></div>
-          <textarea id="convAddFemale" placeholder="Female Seller response"></textarea>
-          <div class="label-line"><span>Follow-up (optional)</span></div>
-          <textarea id="convAddFollow" placeholder="Optional follow-up line"></textarea>
-          <div class="row">
-            <button class="btn gold" id="btnConvAdd">Add conversation</button>
-            <span class="hint" id="convAddHint"></span>
-          </div>
-        </details>
         <div class="label-line">
-          <span>Conversation history</span>
+          <span>Dialogue history</span>
           <button class="btn" id="btnConvClearHistory">Clear history</button>
         </div>
-        <div class="conv-history" id="convHistory"><div class="hint">No conversations recorded yet.</div></div>
+        <div class="conv-history" id="convHistory"><div class="hint">No dialogue recorded yet.</div></div>
       </section>
 
       <section class="card" id="reactiveSection" style="grid-column: 1 / -1">
@@ -778,87 +748,6 @@
       </section>
 
       <section class="card" style="grid-column: 1 / -1">
-        <h2>📣 AI SHOP ANNOUNCER</h2>
-        <div class="row">
-          <button class="btn on" id="btnAnnEnable">Enabled</button>
-          <button class="btn" id="btnAnnRun">▶ Start</button>
-          <button class="btn gold" id="btnAnnTest">🔊 Test voice</button>
-          <div>
-            <div class="label-line"><span>Interval</span></div>
-            <select id="annInterval">
-              <option value="5">5 seconds</option>
-              <option value="8">8 seconds</option>
-              <option value="10">10 seconds</option>
-              <option value="15">15 seconds</option>
-              <option value="20">20 seconds</option>
-            </select>
-          </div>
-          <div>
-            <div class="label-line"><span>Language</span></div>
-            <select id="annLanguage">
-              <option value="en">English</option>
-              <option value="vi">Vietnamese</option>
-            </select>
-          </div>
-          <div>
-            <div class="label-line"><span>Seller voice</span></div>
-            <select id="annVoiceMode">
-              <option value="female">Female seller</option>
-              <option value="male">Male seller</option>
-              <option value="random">Random seller</option>
-            </select>
-          </div>
-          <div>
-            <div class="label-line"><span>Exact voice</span></div>
-            <select id="annVoice">
-              <option value="">Auto (by seller gender)</option>
-            </select>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <div class="label-line"><span>Speech speed</span><strong id="valAnnSpeed">1.00×</strong></div>
-            <input type="range" id="annSpeed" min="50" max="200" step="5" value="100" />
-          </div>
-          <div>
-            <div class="label-line"><span>Speech volume</span><strong id="valAnnVol">90%</strong></div>
-            <input type="range" id="annVol" min="0" max="100" step="5" value="90" />
-          </div>
-          <div>
-            <div class="label-line"><span>Order</span></div>
-            <button class="btn on" id="btnAnnShuffle">Shuffle: ON</button>
-          </div>
-        </div>
-        <div class="hint" id="annStatus">Waiting for the live stage…</div>
-        <div class="hint" id="annProfileNote">Voice, language, speed and volume come from the 🎭 Voice Character Profiles section.</div>
-
-        <div class="label-line"><span>Announcement manager</span><strong id="annCount">0</strong></div>
-        <div class="row">
-          <select id="annFilter"><option value="">All categories</option></select>
-          <input type="text" id="annSearch" placeholder="Search English or Vietnamese text" />
-        </div>
-        <div class="ann-list" id="annList"></div>
-        <div class="row">
-          <select id="annNewCategory"></select>
-          <select id="annNewLanguage">
-            <option value="both">English + Vietnamese</option>
-            <option value="en">English only</option>
-            <option value="vi">Vietnamese only</option>
-          </select>
-        </div>
-        <div class="row">
-          <input type="text" id="annNewEn" placeholder="New English sentence" />
-          <input type="text" id="annNewVi" placeholder="Vietnamese version" />
-          <button class="btn gold" id="btnAnnAdd">＋ Add sentence</button>
-          <button class="btn" id="btnAnnReset">Restore defaults</button>
-        </div>
-        <div class="hint">
-          Automatic announcements use the local Piper models only, never cloud TTS. They wait for the current
-          sentence to finish, never repeat the previous line, and pause with the shop.
-        </div>
-      </section>
-
-      <section class="card" style="grid-column: 1 / -1">
         <h2>👑 6. VIP &amp; Supporters</h2>
         <div class="row">
           <div>
@@ -899,7 +788,6 @@
     </div>
   </div>
 
-  <script src="/js/announcer.js"></script>
   <script src="/js/music.js"></script>
   <script src="/js/llm-provider-manager-ui.js"></script>
   <script>
@@ -2003,27 +1891,20 @@
       }
     })();
 
-    // ------------------------------------------------- seller conversations
+    // ------------------------------------------------- mystic conversation
     let conversationState = null;
-    let convListSignature = '';
     let convCategorySignature = '';
     let convHistorySignature = '';
     let convTestToken = 0;
 
-    const CONV_SPEAKER_LABELS = { maleSeller: '🧑‍🍳 Male Seller', femaleSeller: '👩‍🍳 Female Seller' };
-
     function convCategory(id) {
       const list = (conversationState && conversationState.categories) || [];
-      return list.find((category) => category.id === id) || { id, label: id, icon: '💬' };
+      return list.find((category) => category.id === id) || { id, label: id, icon: '🕯️' };
     }
 
     function convCategoryLabel(id) {
       const category = convCategory(id);
-      return `${category.icon || '💬'} ${category.label || id}`;
-    }
-
-    function convSpeakerLabel(id) {
-      return CONV_SPEAKER_LABELS[id] || '—';
+      return `${category.icon || '🕯️'} ${category.label || id}`;
     }
 
     function renderConvStatus() {
@@ -2035,38 +1916,39 @@
       const nextEl = document.getElementById('convNext');
       const countEl = document.getElementById('convCount');
       if (countEl) {
-        countEl.textContent = `${conversationState.enabledTotal}/${conversationState.total} exchanges enabled · ${conversationState.defaultTotal} defaults`;
+        countEl.textContent = `${conversationState.enabledTotal}/${conversationState.total} lines enabled · ${conversationState.defaultTotal} defaults`;
       }
       if (stateEl) {
-        stateEl.textContent = settings.enabled === false
-          ? 'DISABLED'
-          : settings.running === false
-            ? 'STOPPED'
-            : runtime.status === 'speaking'
-              ? 'SPEAKING'
-              : runtime.status === 'paused'
-                ? 'SHOP PAUSED'
-                : 'SCHEDULED';
+        stateEl.textContent =
+          settings.enabled === false
+            ? 'DISABLED'
+            : settings.running === false
+              ? 'STOPPED'
+              : runtime.reading
+                ? 'READING'
+                : runtime.status === 'speaking'
+                  ? 'SPEAKING'
+                  : runtime.status === 'paused'
+                    ? 'SHOP PAUSED'
+                    : runtime.updatedAt
+                      ? 'SCHEDULED'
+                      : 'WAITING FOR STAGE';
       }
       if (nowEl) {
-        nowEl.textContent = runtime.currentSpeaker
-          ? convSpeakerLabel(runtime.currentSpeaker)
-          : runtime.phase === 'waiting'
-            ? 'pause between lines'
+        nowEl.textContent = runtime.currentId
+          ? `${convCategoryLabel(runtime.category)} · ${runtime.currentId}`
+          : runtime.reading
+            ? 'a tarot reading has the stage'
             : '—';
       }
       if (nextEl) {
         let text = '—';
         if (settings.enabled === false) text = 'disabled';
         else if (settings.running === false) text = 'stopped';
-        else if (runtime.status === 'paused') text = 'shop paused';
+        else if (runtime.reading) text = 'after the reading';
         else if (runtime.status === 'speaking') text = 'speaking now';
-        else if (runtime.nextAt > 0) {
-          const seconds = Math.max(0, Math.ceil((runtime.nextAt - Date.now()) / 1000));
-          text = `in ${seconds}s`;
-        } else if (!runtime.updatedAt) {
-          text = 'waiting for stage';
-        }
+        else if (runtime.nextAt > 0) text = `in ${Math.max(0, Math.ceil((runtime.nextAt - Date.now()) / 1000))}s`;
+        else if (!runtime.updatedAt) text = 'waiting for stage';
         nextEl.textContent = text;
       }
     }
@@ -2076,7 +1958,9 @@
       if (!grid || !conversationState) return;
       const categories = conversationState.categories || [];
       const settings = conversationState.settings || {};
-      const signature = JSON.stringify(categories.map((category) => [category.id, category.count])) + JSON.stringify(settings.categories || {});
+      const signature =
+        JSON.stringify(categories.map((category) => [category.id, category.count])) +
+        JSON.stringify(settings.categories || {});
       if (signature === convCategorySignature) return;
       convCategorySignature = signature;
       grid.innerHTML = categories
@@ -2084,98 +1968,9 @@
           (category) =>
             `<label class="conv-cat"><input type="checkbox" data-conv-cat="${escapeHtml(category.id)}" ${
               settings.categories && settings.categories[category.id] !== false ? 'checked' : ''
-            } /> <span>${escapeHtml(category.icon || '💬')} ${escapeHtml(category.label)}</span><span class="hint">${Number(category.count) || 0}</span></label>`
+            } /> <span>${escapeHtml(category.icon || '🕯️')} ${escapeHtml(category.label)}</span><span class="hint">${Number(category.count) || 0}</span></label>`
         )
         .join('');
-
-      const filter = document.getElementById('convFilter');
-      if (filter) {
-        const value = filter.value;
-        filter.innerHTML =
-          '<option value="">All categories</option>' +
-          categories
-            .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)} (${Number(category.count) || 0})</option>`)
-            .join('');
-        filter.value = [...filter.options].some((option) => option.value === value) ? value : '';
-      }
-      const add = document.getElementById('convAddCategory');
-      if (add) {
-        const value = add.value || 'daily';
-        add.innerHTML = categories
-          .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)}</option>`)
-          .join('');
-        add.value = [...add.options].some((option) => option.value === value) ? value : 'daily';
-      }
-    }
-
-    function renderConvList(force = false) {
-      const list = document.getElementById('convList');
-      if (!list || !conversationState) return;
-      if (document.querySelector('#convList .conv-row.editing') && !force) return;
-      const search = String((document.getElementById('convSearch') || {}).value || '').trim().toLowerCase();
-      const filter = String((document.getElementById('convFilter') || {}).value || '');
-      const entries = conversationState.list || [];
-      const signature = JSON.stringify(entries.map((entry) => [entry.id, entry.enabled, entry.male, entry.female, entry.followUp, entry.category, entry.contexts]));
-      if (!force && signature === convListSignature && !search && !filter) return;
-      convListSignature = signature;
-
-      const visible = entries.filter((entry) => {
-        if (filter && entry.category !== filter) return false;
-        if (!search) return true;
-        return [entry.id, entry.category, entry.male, entry.female, entry.followUp, (entry.contexts || []).join(' ')]
-          .join(' ')
-          .toLowerCase()
-          .includes(search);
-      });
-      if (!visible.length) {
-        list.innerHTML = '<div class="hint" style="padding:10px">No conversations match that search or category.</div>';
-        return;
-      }
-      const categories = conversationState.categories || [];
-      const categoryOptions = categories
-        .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)}</option>`)
-        .join('');
-      list.innerHTML = visible
-        .map((entry) => {
-          const contexts = Array.isArray(entry.contexts) ? entry.contexts.join(', ') : 'any';
-          return `
-          <div class="conv-row${entry.enabled === false ? ' disabled' : ''}" data-conv-id="${escapeHtml(entry.id)}">
-            <div class="conv-body">
-              <div class="conv-row-head">
-                <label class="hint"><input type="checkbox" data-conv-enable ${entry.enabled === false ? '' : 'checked'} /> enabled</label>
-                <span class="ann-cat">${escapeHtml(convCategoryLabel(entry.category))}</span>
-                <span class="conv-id">${escapeHtml(entry.id)}${entry.custom ? ' · custom' : entry.edited ? ' · edited' : ''}</span>
-                <span class="conv-actions">
-                  <button class="btn" data-conv-edit>✏️ Edit</button>
-                  <button class="btn danger" data-conv-delete>🗑</button>
-                </span>
-              </div>
-              <div class="conv-line"><strong>🧑‍🍳 M</strong> ${escapeHtml(entry.male)}</div>
-              <div class="conv-line"><strong>👩‍🍳 F</strong> ${escapeHtml(entry.female)}</div>
-              ${entry.followUp ? `<div class="conv-line follow"><strong>🧑‍🍳 M</strong> ${escapeHtml(entry.followUp)}</div>` : ''}
-              <div class="hint">Context: ${escapeHtml(contexts)}</div>
-            </div>
-            <div class="conv-editor">
-              <select data-conv-category>${categoryOptions}</select>
-              <textarea data-conv-male>${escapeHtml(entry.male)}</textarea>
-              <textarea data-conv-female>${escapeHtml(entry.female)}</textarea>
-              <textarea data-conv-follow placeholder="Optional follow-up line">${escapeHtml(entry.followUp || '')}</textarea>
-              <input type="text" data-conv-contexts value="${escapeHtml(contexts)}" placeholder="any, quiet, busy…" />
-              <div class="row">
-                <button class="btn gold" data-conv-save>💾 Save</button>
-                <button class="btn" data-conv-cancel>Cancel</button>
-              </div>
-            </div>
-          </div>`;
-        })
-        .join('');
-      for (const row of list.querySelectorAll('.conv-row')) {
-        const entry = entries.find((item) => item.id === row.dataset.convId);
-        const select = row.querySelector('[data-conv-category]');
-        if (entry && select) select.value = entry.category;
-      }
-      const count = document.getElementById('convManagerCount');
-      if (count) count.textContent = `${visible.length} shown · ${entries.length} total`;
     }
 
     function renderConvHistory() {
@@ -2186,7 +1981,7 @@
       if (signature === convHistorySignature) return;
       convHistorySignature = signature;
       if (!history.length) {
-        box.innerHTML = '<div class="hint">No conversations recorded yet.</div>';
+        box.innerHTML = '<div class="hint">No dialogue recorded yet.</div>';
         return;
       }
       box.innerHTML = history
@@ -2197,8 +1992,8 @@
           return `<div class="conv-hist-row">
             <strong>${escapeHtml(convCategoryLabel(entry.category))}</strong>
             <span class="hint">${escapeHtml(String(first).slice(0, 90))}</span>
-            <span class="conv-hist-status ${escapeHtml(entry.status || '')}">${escapeHtml(entry.status || 'started')}</span>
-            <span class="hint">${escapeHtml(when)} · ${Array.isArray(entry.lines) ? entry.lines.length : 0} lines</span>
+            <span class="conv-hist-status ${escapeHtml(entry.status || '')}">${escapeHtml(entry.status || 'spoken')}</span>
+            <span class="hint">${escapeHtml(when)}</span>
           </div>`;
         })
         .join('');
@@ -2210,28 +2005,28 @@
       const settings = snapshot.settings;
       const toggle = document.getElementById('btnConvToggle');
       if (toggle) {
-        toggle.textContent = `Conversations: ${settings.enabled === false ? 'OFF' : 'ON'}`;
+        toggle.textContent = `Conversation: ${settings.enabled === false ? 'OFF' : 'ON'}`;
         toggle.classList.toggle('on', settings.enabled !== false);
+      }
+      const ai = document.getElementById('btnConvAi');
+      if (ai) {
+        ai.textContent = `AI dialogue: ${settings.aiDialogue ? 'ON' : 'OFF'}`;
+        ai.classList.toggle('on', Boolean(settings.aiDialogue));
       }
       const startStop = document.getElementById('btnConvStartStop');
       if (startStop) startStop.textContent = settings.running === false ? '▶ Start' : '⏸ Stop';
-      const shuffle = document.getElementById('btnConvShuffle');
-      if (shuffle) {
-        shuffle.textContent = `🔀 Shuffle: ${settings.shuffle === false ? 'OFF' : 'ON'}`;
-        shuffle.classList.toggle('on', settings.shuffle !== false);
-      }
       const interval = document.getElementById('convInterval');
       if (interval) {
-        const values = snapshot.intervals || [20, 30, 45, 60, 90];
+        const values = snapshot.intervals || [45, 60, 90, 120, 180];
         if (interval.options.length !== values.length) {
           interval.innerHTML = values.map((value) => `<option value="${value}">${value} seconds</option>`).join('');
         }
-        interval.value = String(settings.interval || 30);
+        interval.value = String(settings.interval || 60);
       }
       renderConvCategories();
-      renderConvList(force);
       renderConvHistory();
       renderConvStatus();
+      if (force) convCategorySignature = '';
     }
 
     async function applyConvSettings(patch) {
@@ -2239,10 +2034,10 @@
       const data = await sendRpc('conversation.updateSettings', patch);
       const result = data && data.result;
       if (result && result.conversations) renderConversations(result.conversations, true);
-      if (hint) {
-        hint.textContent = result && result.ok
-          ? 'Conversation settings saved on the server.'
-          : 'Could not save conversation settings: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+      if (hint && !(result && result.ok)) {
+        hint.textContent =
+          'Could not save conversation settings: ' +
+          ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
       }
     }
 
@@ -2279,59 +2074,40 @@
       const usable = (conversationState.list || []).filter(
         (entry) => entry.enabled !== false && categories[entry.category] !== false
       );
-      return usable.find((entry) => entry.category === 'daily') || usable[0] || null;
-    }
-
-    async function playConversationPreview(profile, text, label) {
-      const hint = document.getElementById('convPreviewHint');
-      const token = ++convTestToken;
-      if (hint) hint.textContent = `Synthesizing ${label} through Piper…`;
-      const data = await sendRpc('voice.test', { profile, text, broadcast: false });
-      const result = data && data.result;
-      if (token !== convTestToken) return;
-      if (!result || !result.ok || !result.url) {
-        if (hint) hint.textContent = 'Voice failed: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
-        return;
-      }
-      if (hint) {
-        hint.textContent = `${label} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ${Math.round((result.volume ?? 0.9) * 100)}%`;
-      }
-      await playConvClip(result);
+      return usable.find((entry) => entry.category === 'ambient') || usable[0] || null;
     }
 
     async function testConversation() {
       const entry = firstConversationForTest();
-      if (!entry) {
-        document.getElementById('convHint').textContent = 'No enabled conversation is available to test.';
+      const hint = document.getElementById('convHint');
+      const token = ++convTestToken;
+      if (hint) {
+        hint.textContent = entry
+          ? `Speaking "${entry.text.slice(0, 60)}…"`
+          : 'No enabled dialogue is available to test.';
+      }
+      const data = await sendRpc('conversation.test', entry ? { id: entry.id } : {});
+      const result = data && data.result;
+      if (token !== convTestToken) return;
+      if (!result || !result.ok || !result.url) {
+        if (hint) {
+          hint.textContent =
+            'Test dialogue failed: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+        }
         return;
       }
-      const token = ++convTestToken;
-      const clips = [{ profile: 'maleSeller', text: entry.male }];
-      clips.push({ profile: 'femaleSeller', text: entry.female });
-      if (entry.followUp) clips.push({ profile: 'maleSeller', text: entry.followUp });
-      document.getElementById('convHint').textContent = `Testing "${entry.id}" with both seller profiles…`;
-      for (const clip of clips) {
-        if (token !== convTestToken) return;
-        const data = await sendRpc('voice.test', { profile: clip.profile, text: clip.text, broadcast: false });
-        const result = data && data.result;
-        if (token !== convTestToken) return;
-        if (!result || !result.ok || !result.url) {
-          document.getElementById('convHint').textContent =
-            'Conversation test failed: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
-          return;
-        }
-        document.getElementById('convPreviewHint').textContent =
-          `${convSpeakerLabel(clip.profile)} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ${Math.round((result.volume ?? 0.9) * 100)}%`;
-        await playConvClip(result);
-        if (token !== convTestToken) return;
-        await new Promise((resolve) => setTimeout(resolve, 600));
+      if (hint) {
+        hint.textContent = `Spoken with ${result.engine === 'kokoro' ? 'Kokoro' : 'Piper'} · ${result.voice} · ${convCategoryLabel(result.category)}`;
       }
-      document.getElementById('convHint').textContent = `Conversation test complete · "${entry.id}" used Male Seller then Female Seller.`;
+      await playConvClip(result);
     }
 
     (function wireConversations() {
       document.getElementById('btnConvToggle')?.addEventListener('click', () => {
         applyConvSettings({ enabled: !(conversationState && conversationState.settings.enabled !== false) });
+      });
+      document.getElementById('btnConvAi')?.addEventListener('click', () => {
+        applyConvSettings({ aiDialogue: !(conversationState && conversationState.settings.aiDialogue) });
       });
       document.getElementById('btnConvStartStop')?.addEventListener('click', () => {
         const running = Boolean(conversationState && conversationState.settings.running !== false);
@@ -2340,128 +2116,23 @@
       document.getElementById('convInterval')?.addEventListener('change', (event) => {
         applyConvSettings({ interval: Number(event.target.value) });
       });
-      document.getElementById('btnConvShuffle')?.addEventListener('click', () => {
-        applyConvSettings({ shuffle: !(conversationState && conversationState.settings.shuffle !== false) });
-      });
       document.getElementById('btnConvTest')?.addEventListener('click', testConversation);
-      document.getElementById('btnConvPreviewMale')?.addEventListener('click', () => {
-        const entry = firstConversationForTest();
-        playConversationPreview('maleSeller', entry ? entry.male : 'Welcome to Mystic Witch Live!', 'Male Seller');
-      });
-      document.getElementById('btnConvPreviewFemale')?.addEventListener('click', () => {
-        const entry = firstConversationForTest();
-        playConversationPreview('femaleSeller', entry ? entry.female : 'Welcome to Mystic Witch Live!', 'Female Seller');
-      });
       document.getElementById('btnConvRestore')?.addEventListener('click', async () => {
-        if (!confirm('Restore all default conversations? Custom conversations and edits will be removed.')) return;
+        if (!confirm('Restore the default Mystic conversation lines? Custom lines and edits will be removed.')) return;
         const data = await sendRpc('conversation.restoreDefaults');
         const result = data && data.result;
         if (result && result.conversations) renderConversations(result.conversations, true);
       });
       document.getElementById('btnConvClearHistory')?.addEventListener('click', async () => {
-        if (!confirm('Clear the conversation history?')) return;
+        if (!confirm('Clear the dialogue history?')) return;
         const data = await sendRpc('conversation.clearHistory');
         const result = data && data.result;
         if (result && result.conversations) renderConversations(result.conversations, true);
       });
-      document.getElementById('btnConvAdd')?.addEventListener('click', async () => {
-        const male = document.getElementById('convAddMale').value.trim();
-        const female = document.getElementById('convAddFemale').value.trim();
-        const hint = document.getElementById('convAddHint');
-        if (!male || !female) {
-          if (hint) hint.textContent = 'Both seller lines are required.';
-          return;
-        }
-        const contexts = document.getElementById('convAddContexts').value
-          .split(',')
-          .map((value) => value.trim())
-          .filter(Boolean);
-        const data = await sendRpc('conversation.addExchange', {
-          category: document.getElementById('convAddCategory').value,
-          male,
-          female,
-          followUp: document.getElementById('convAddFollow').value.trim(),
-          contexts
-        });
-        const result = data && data.result;
-        if (result && result.ok) {
-          document.getElementById('convAddMale').value = '';
-          document.getElementById('convAddFemale').value = '';
-          document.getElementById('convAddFollow').value = '';
-          document.getElementById('convAddContexts').value = '';
-          if (hint) hint.textContent = `Added ${result.id} · saved on the server.`;
-          renderConversations(result.conversations, true);
-        } else if (hint) {
-          hint.textContent = 'Could not add: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
-        }
-      });
-      document.getElementById('convSearch')?.addEventListener('input', () => renderConvList(true));
-      document.getElementById('convFilter')?.addEventListener('change', () => renderConvList(true));
       document.getElementById('convCategories')?.addEventListener('change', (event) => {
         const id = event.target && event.target.dataset ? event.target.dataset.convCat : '';
         if (!id) return;
         applyConvSettings({ categories: { [id]: Boolean(event.target.checked) } });
-      });
-      document.getElementById('convList')?.addEventListener('click', async (event) => {
-        const row = event.target.closest('.conv-row');
-        if (!row) return;
-        const id = row.dataset.convId;
-        const entry = conversationState && conversationState.list.find((item) => item.id === id);
-        if (event.target.closest('[data-conv-edit]')) {
-          row.classList.add('editing');
-          return;
-        }
-        if (event.target.closest('[data-conv-cancel]')) {
-          row.classList.remove('editing');
-          return;
-        }
-        if (event.target.closest('[data-conv-delete]')) {
-          if (!confirm(`Delete conversation ${id}?`)) return;
-          const data = await sendRpc('conversation.deleteExchange', { id });
-          const result = data && data.result;
-          if (result && result.conversations) renderConversations(result.conversations, true);
-          return;
-        }
-        if (event.target.closest('[data-conv-save]')) {
-          const male = row.querySelector('[data-conv-male]').value.trim();
-          const female = row.querySelector('[data-conv-female]').value.trim();
-          if (!male || !female) {
-            alert('Both seller lines are required.');
-            return;
-          }
-          const contexts = row.querySelector('[data-conv-contexts]').value
-            .split(',')
-            .map((value) => value.trim())
-            .filter(Boolean);
-          const data = await sendRpc('conversation.updateExchange', {
-            id,
-            patch: {
-              male,
-              female,
-              followUp: row.querySelector('[data-conv-follow]').value.trim(),
-              category: row.querySelector('[data-conv-category]').value,
-              contexts
-            }
-          });
-          const result = data && data.result;
-          if (result && result.conversations) {
-            row.classList.remove('editing');
-            renderConversations(result.conversations, true);
-          } else {
-            alert('Could not save: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error'));
-          }
-        }
-      });
-      document.getElementById('convList')?.addEventListener('change', async (event) => {
-        if (!event.target.matches('[data-conv-enable]')) return;
-        const row = event.target.closest('.conv-row');
-        if (!row) return;
-        const data = await sendRpc('conversation.updateExchange', {
-          id: row.dataset.convId,
-          patch: { enabled: Boolean(event.target.checked) }
-        });
-        const result = data && data.result;
-        if (result && result.conversations) renderConversations(result.conversations, true);
       });
       setInterval(renderConvStatus, 1000);
     })();
@@ -2722,284 +2393,6 @@
         if (data && data.result && data.result.reactive) renderReactive(data.result.reactive);
       });
     })();
-
-    // ------------------------------------------------------- shop announcer
-    const announcerChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mystic-witch-announcer') : null;
-    const annStore = window.ShopAnnouncerStore;
-    let annSettings = annStore.loadSettings();
-    let annStatus = null;
-
-    const annCategories = window.SHOP_ANNOUNCER_CATEGORIES || [];
-
-    function categoryLabel(id) {
-      const found = annCategories.find((c) => c.id === id);
-      return found ? found.label : id;
-    }
-
-    function annTestVoice() {
-      const list = annStore.loadList().filter((a) => a.enabled !== false);
-      const item = list[0];
-      const text = item ? (annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi) : 'Welcome to Mystic Witch Live!';
-      // Once profiles are loaded the announcer speaks through profile C.
-      if (voiceProfilesState) {
-        testVoiceProfile('announcer', text);
-        return;
-      }
-      const voice = annVoicePreview();
-      sendRpc('shop.speak', {
-        text,
-        language: annSettings.language,
-        speed: annSettings.speed,
-        voice: voice || undefined,
-        broadcast: true
-      });
-    }
-
-    function annVoicePreview() {
-      if (annSettings.voice) return annSettings.voice;
-      const lang = annSettings.language === 'vi' ? 'vi' : 'en';
-      const pool = ttsVoices.filter((voice) => voice.language === lang && voice.valid !== false);
-      if (!pool.length) return '';
-      if (annSettings.voiceMode === 'random') {
-        return pool[Math.floor(Math.random() * pool.length)].id;
-      }
-      const byGender = pool.filter((voice) => voice.gender === annSettings.voiceMode);
-      const choice = (byGender.length ? byGender : pool)[0];
-      return choice ? choice.id : '';
-    }
-
-    function populateAnnVoiceOptions() {
-      const select = document.getElementById('annVoice');
-      if (!select) return;
-      const lang = annSettings.language === 'vi' ? 'vi' : 'en';
-      const current = annSettings.voice || '';
-      const list = ttsVoices.filter((voice) => voice.language === lang && voice.valid !== false);
-      select.innerHTML =
-        '<option value="">Auto (by seller gender)</option>' +
-        list
-          .map(
-            (voice) =>
-              `<option value="${escapeHtml(voice.id)}">${escapeHtml(voiceOptionLabel(voice))}</option>`
-          )
-          .join('');
-      select.value = list.some((voice) => voice.id === current) ? current : '';
-    }
-
-    function saveAnnSettings(patch) {
-      annSettings = annStore.saveSettings(patch);
-      if (announcerChannel) {
-        announcerChannel.postMessage({ type: 'refresh' });
-        announcerChannel.postMessage({ type: 'status-request' });
-      }
-      renderAnnControls();
-    }
-
-    function renderAnnControls() {
-      const intervalSelect = document.getElementById('annInterval');
-      const allowed = Array.from(intervalSelect.options).map((o) => Number(o.value));
-      if (!allowed.includes(Number(annSettings.interval))) {
-        annSettings = annStore.saveSettings({ interval: 8 });
-      }
-      intervalSelect.value = String(annSettings.interval);
-      document.getElementById('annLanguage').value = annSettings.language;
-      document.getElementById('annVoiceMode').value = annSettings.voiceMode;
-      populateAnnVoiceOptions();
-      document.getElementById('annSpeed').value = String(Math.round((annSettings.speed || 1) * 100));
-      document.getElementById('valAnnSpeed').textContent = Number(annSettings.speed || 1).toFixed(2) + '×';
-      document.getElementById('annVol').value = String(Math.round((annSettings.volume ?? 0.9) * 100));
-      document.getElementById('valAnnVol').textContent = Math.round((annSettings.volume ?? 0.9) * 100) + '%';
-
-      const enableBtn = document.getElementById('btnAnnEnable');
-      enableBtn.textContent = annSettings.enabled ? 'Enabled' : 'Disabled';
-      enableBtn.classList.toggle('on', Boolean(annSettings.enabled));
-      const runBtn = document.getElementById('btnAnnRun');
-      runBtn.textContent = annSettings.running ? '⏸ Stop' : '▶ Start';
-      runBtn.classList.toggle('on', Boolean(annSettings.running));
-      const shuffleBtn = document.getElementById('btnAnnShuffle');
-      shuffleBtn.textContent = 'Shuffle: ' + (annSettings.shuffle ? 'ON' : 'OFF');
-      shuffleBtn.classList.toggle('on', Boolean(annSettings.shuffle));
-
-      const status = document.getElementById('annStatus');
-      if (!annStatus) {
-        status.textContent = 'Waiting for the live stage…';
-      } else if (!annStatus.enabled) {
-        status.textContent = 'Announcer disabled.';
-      } else if (annStatus.paused) {
-        status.textContent = 'Paused with the shop.';
-      } else if (annStatus.speaking) {
-        status.textContent = `Speaking now: “${annStatus.currentText}”`;
-      } else {
-        const wait = Math.max(0, Math.ceil((annStatus.nextDueAt - Date.now()) / 1000));
-        status.textContent =
-          `Idle · next start in ~${wait}s` + (annStatus.next ? ` · next: “${annStatus.next.text}”` : '');
-      }
-    }
-
-    function renderAnnList() {
-      const list = annStore.loadList();
-      const filter = document.getElementById('annFilter').value;
-      const search = document.getElementById('annSearch').value.trim().toLowerCase();
-      const rows = list.filter(
-        (a) =>
-          (!filter || a.category === filter) &&
-          (!search || `${a.textEn || ''} ${a.textVi || ''}`.toLowerCase().includes(search))
-      );
-      document.getElementById('annCount').textContent =
-        `${list.filter((a) => a.enabled !== false).length}/${list.length} enabled`;
-      const container = document.getElementById('annList');
-      container.innerHTML = rows.length
-        ? rows
-            .map(
-              (a) => `
-          <div class="ann-row${a.enabled === false ? ' disabled' : ''}">
-            <label class="ann-toggle"><input type="checkbox" data-ann-toggle="${a.id}" ${a.enabled !== false ? 'checked' : ''} /></label>
-            <div class="ann-text">
-              <span class="ann-cat">${escapeHtml(categoryLabel(a.category))}</span>
-              <div>${escapeHtml(a.textEn || '')}</div>
-              <div class="ann-vi">${escapeHtml(a.textVi || '')}</div>
-            </div>
-            <button class="btn" data-ann-test="${a.id}" title="Speak this sentence">🔊</button>
-            <button class="btn" data-ann-edit="${a.id}" title="Edit">✏️</button>
-            <button class="btn danger" data-ann-del="${a.id}" title="Delete">🗑</button>
-          </div>`
-            )
-            .join('')
-        : '<div class="hint">No announcements match this filter.</div>';
-
-      container.querySelectorAll('[data-ann-toggle]').forEach((box) => {
-        box.onchange = () => {
-          annStore.updateItem(box.getAttribute('data-ann-toggle'), { enabled: box.checked });
-          renderAnnList();
-          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
-        };
-      });
-      container.querySelectorAll('[data-ann-test]').forEach((btn) => {
-        btn.onclick = () => {
-          const item = annStore.loadList().find((a) => a.id === btn.getAttribute('data-ann-test'));
-          if (!item) return;
-          const text = annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi;
-          if (voiceProfilesState) {
-            testVoiceProfile('announcer', text);
-            return;
-          }
-          sendRpc('shop.speak', {
-            text,
-            language: annSettings.language,
-            speed: annSettings.speed,
-            voice: annVoicePreview() || undefined,
-            broadcast: true
-          });
-        };
-      });
-      container.querySelectorAll('[data-ann-edit]').forEach((btn) => {
-        btn.onclick = () => {
-          const id = btn.getAttribute('data-ann-edit');
-          const item = annStore.loadList().find((a) => a.id === id);
-          if (!item) return;
-          const textEn = prompt('English sentence:', item.textEn || '');
-          if (textEn === null) return;
-          const textVi = prompt('Vietnamese sentence:', item.textVi || '');
-          if (textVi === null) return;
-          annStore.updateItem(id, { textEn: textEn.trim(), textVi: textVi.trim() });
-          renderAnnList();
-          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
-        };
-      });
-      container.querySelectorAll('[data-ann-del]').forEach((btn) => {
-        btn.onclick = () => {
-          const id = btn.getAttribute('data-ann-del');
-          if (!confirm('Delete this announcement?')) return;
-          annStore.removeItem(id);
-          renderAnnList();
-          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
-        };
-      });
-    }
-
-    function fillAnnCategoryOptions() {
-      const filter = document.getElementById('annFilter');
-      const adder = document.getElementById('annNewCategory');
-      filter.innerHTML =
-        '<option value="">All categories</option>' +
-        annCategories.map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join('');
-      adder.innerHTML = annCategories
-        .map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`)
-        .join('');
-    }
-
-    fillAnnCategoryOptions();
-    renderAnnControls();
-    renderAnnList();
-
-    document.getElementById('btnAnnEnable').onclick = () =>
-      saveAnnSettings({ enabled: !annSettings.enabled });
-    document.getElementById('btnAnnRun').onclick = () => saveAnnSettings({ running: !annSettings.running });
-    document.getElementById('btnAnnTest').onclick = annTestVoice;
-    document.getElementById('btnAnnShuffle').onclick = () =>
-      saveAnnSettings({ shuffle: !annSettings.shuffle });
-    document.getElementById('annInterval').onchange = (e) =>
-      saveAnnSettings({ interval: Number(e.target.value) });
-    document.getElementById('annLanguage').onchange = (e) =>
-      saveAnnSettings({ language: e.target.value });
-    document.getElementById('annVoiceMode').onchange = (e) =>
-      saveAnnSettings({ voiceMode: e.target.value });
-    document.getElementById('annVoice').onchange = (e) =>
-      saveAnnSettings({ voice: e.target.value });
-    document.getElementById('annSpeed').oninput = (e) => {
-      document.getElementById('valAnnSpeed').textContent =
-        (Number(e.target.value) / 100).toFixed(2) + '×';
-    };
-    document.getElementById('annSpeed').onchange = (e) =>
-      saveAnnSettings({ speed: Number(e.target.value) / 100 });
-    document.getElementById('annVol').oninput = (e) => {
-      document.getElementById('valAnnVol').textContent = e.target.value + '%';
-    };
-    document.getElementById('annVol').onchange = (e) => {
-      const volume = Number(e.target.value) / 100;
-      saveAnnSettings({ volume });
-      sendRpc('temple.updateSettings', { ttsVolume: volume });
-    };
-    document.getElementById('annFilter').onchange = renderAnnList;
-    document.getElementById('annSearch').oninput = renderAnnList;
-    document.getElementById('btnAnnAdd').onclick = () => {
-      const textEn = document.getElementById('annNewEn').value.trim();
-      const textVi = document.getElementById('annNewVi').value.trim();
-      if (!textEn && !textVi) {
-        alert('Please type an English or Vietnamese sentence first.');
-        return;
-      }
-      annStore.addItem({
-        category: document.getElementById('annNewCategory').value,
-        language: document.getElementById('annNewLanguage').value,
-        textEn,
-        textVi
-      });
-      document.getElementById('annNewEn').value = '';
-      document.getElementById('annNewVi').value = '';
-      renderAnnList();
-      if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
-    };
-    document.getElementById('btnAnnReset').onclick = () => {
-      if (!confirm('Restore the default announcement sentences?')) return;
-      annStore.resetList();
-      renderAnnList();
-      if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
-    };
-
-    if (announcerChannel) {
-      announcerChannel.onmessage = (event) => {
-        const data = event.data || {};
-        if (data.type === 'status' && data.status) {
-          annStatus = data.status;
-          renderAnnControls();
-        }
-      };
-      announcerChannel.postMessage({ type: 'status-request' });
-      setInterval(() => {
-        announcerChannel.postMessage({ type: 'status-request' });
-        renderAnnControls();
-      }, 2000);
-    }
 
     // ---------------------------------------------------------- crowd diagnostics
     let adminCrowdChannel = null;

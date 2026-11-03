@@ -13,7 +13,6 @@
   class ShopReactiveSeller {
     constructor(options = {}) {
       this.audio = options.audio || null;
-      this.announcer = options.announcer || null;
       this.conversations = options.conversations || null;
       this.snapshot = null;
       this.lastReply = null;
@@ -51,7 +50,6 @@
       // A viewer comment is a priority-1 interaction. It stops the rest of an
       // automatic seller exchange, but never interrupts audio already playing.
       if (this.conversations) this.conversations.notifyPriority('viewer');
-      if (this.announcer) this.announcer.notifyPersonalized();
 
       if (this.audio && event.ttsText) {
         this.audio.enqueueTts(event.ttsText, {

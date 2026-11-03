@@ -13,10 +13,19 @@ const {
   normalizeLikeBatching
 } = require('./live-event-engine');
 const {
-  CONVERSATION_CATEGORIES,
-  CONVERSATION_INTERVALS,
-  DEFAULT_CONVERSATIONS
-} = require('./conversation-catalog');
+  ORACLE_VOICE,
+  CONVERSATION_VERSION,
+  MYSTIC_CATEGORIES,
+  MYSTIC_INTERVALS,
+  CATEGORY_IDS,
+  DEFAULT_CONVERSATIONS,
+  mysticText,
+  mysticCategory,
+  mysticContexts,
+  normalizeMysticSettings,
+  normalizeMysticLine,
+  defaultMysticLines
+} = require('./mystic-conversation');
 const {
   LlmProviderManager,
   OPENROUTER_BASE_URL,
@@ -3198,112 +3207,38 @@ function round2(value) {
 }
 
 // ============================================================================
-// 4b. SELLER CONVERSATION SYSTEM
-// Server owns the catalog, scheduler settings and history so Admin and Stage
-// agree and every edit survives a restart. Playback stays in the stage client,
-// where it can follow the existing Piper speech queue line by line.
+// 4b. MYSTIC CONVERSATION SYSTEM
+// The Oracle's ambient dialogue. Catalog, settings and history live on the
+// server so Admin and Stage agree and every edit survives a restart. The stage
+// owns the timing (it sees the shared TTS queue); this module owns the words,
+// the duplicate protection and the spoken broadcast.
 // ============================================================================
-const CONVERSATION_CATEGORY_IDS = CONVERSATION_CATEGORIES.map((category) => category.id);
-const CONVERSATION_CONTEXTS = [
-  'any',
-  'empty',
-  'quiet',
-  'busy',
-  'newViewer',
-  'gift',
-  'bigGift',
-  'supporter',
-  'weekend'
-];
+const CONVERSATION_CATEGORY_IDS = CATEGORY_IDS;
 
-function defaultConversationSettings() {
-  const categories = {};
-  for (const id of CONVERSATION_CATEGORY_IDS) categories[id] = true;
-  return { enabled: true, running: true, interval: 30, shuffle: true, categories };
-}
-
-function normalizeConversationSettings(raw) {
-  const defaults = defaultConversationSettings();
-  const source = raw && typeof raw === 'object' ? raw : {};
-  const categories = { ...defaults.categories };
-  if (source.categories && typeof source.categories === 'object') {
-    for (const id of CONVERSATION_CATEGORY_IDS) {
-      if (typeof source.categories[id] === 'boolean') categories[id] = source.categories[id];
-    }
-  }
-  const requested = Number(source.interval);
-  return {
-    enabled: source.enabled !== false,
-    running: source.running !== false,
-    interval: CONVERSATION_INTERVALS.includes(requested) ? requested : defaults.interval,
-    shuffle: source.shuffle !== false,
-    categories,
-    savedAt: typeof source.savedAt === 'string' ? source.savedAt : null
-  };
-}
-
-function conversationText(value, maxLength = 260) {
-  return String(value == null ? '' : value)
-    .replace(/[<>]/g, '')
-    .replace(/[\u0000-\u001f\u007f]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, maxLength);
-}
-
-function conversationCategory(value) {
-  const id = String(value || '').trim();
-  return CONVERSATION_CATEGORY_IDS.includes(id) ? id : 'daily';
-}
-
-function conversationContexts(raw) {
-  const list = Array.isArray(raw) ? raw : ['any'];
-  const cleaned = list
-    .map((context) => String(context || '').trim())
-    .filter((context) => CONVERSATION_CONTEXTS.includes(context));
-  return cleaned.length ? [...new Set(cleaned)] : ['any'];
-}
-
-function normalizeConversationEntry(raw, index = 0) {
-  if (!raw || typeof raw !== 'object') return null;
-  const male = conversationText(raw.male);
-  const female = conversationText(raw.female);
-  if (!male || !female) return null;
-  const baseId = String(raw.id || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]/g, '_')
-    .slice(0, 48);
-  return {
-    id: baseId || `chat_${index + 1}`,
-    category: conversationCategory(raw.category),
-    male,
-    female,
-    followUp: conversationText(raw.followUp, 220),
-    contexts: conversationContexts(raw.contexts),
-    enabled: raw.enabled !== false,
-    custom: raw.custom === true,
-    edited: raw.edited === true,
-    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : null
-  };
-}
-
-function defaultConversationList() {
-  return DEFAULT_CONVERSATIONS.map((entry, index) =>
-    normalizeConversationEntry({ ...entry, enabled: true, custom: false, edited: false }, index)
-  ).filter(Boolean);
-}
+// One Oracle line at a time, across every open stage tab.
+let conversationSpeech = { text: '', at: 0 };
 
 function ensureConversations() {
   if (!state.conversations || typeof state.conversations !== 'object') state.conversations = {};
   const store = state.conversations;
-  store.settings = normalizeConversationSettings(store.settings);
 
-  // Seed only when the list has never existed. An intentionally empty list is
-  // a valid user choice and must not be re-seeded on restart.
-  if (!Array.isArray(store.list)) store.list = defaultConversationList();
+  // Version 1 held two-seller exchanges; version 2 holds single Oracle lines.
+  // Migrating must not leave the old café script behind, so the list is rebuilt.
+  if (store.version !== CONVERSATION_VERSION) {
+    store.version = CONVERSATION_VERSION;
+    store.settings = normalizeMysticSettings(null);
+    store.list = defaultMysticLines();
+    store.history = [];
+    return store;
+  }
+
+  store.settings = normalizeMysticSettings(store.settings);
+
+  // An intentionally empty list stays empty; only a missing list is seeded.
+  if (!Array.isArray(store.list)) store.list = defaultMysticLines();
   const seen = new Set();
   store.list = store.list
-    .map((entry, index) => normalizeConversationEntry(entry, index))
+    .map((entry, index) => normalizeMysticLine(entry, index))
     .filter(Boolean)
     .map((entry) => {
       let id = entry.id;
@@ -3329,12 +3264,12 @@ ensureConversations();
 // Ephemeral runtime reported by the stage scheduler; never persisted.
 let conversationRuntime = {
   status: 'idle',
-  currentSpeaker: '',
-  conversationId: '',
+  currentId: '',
   category: '',
   phase: 'idle',
   nextAt: null,
   queue: 0,
+  reading: false,
   reason: '',
   updatedAt: null
 };
@@ -3351,11 +3286,12 @@ function conversationSnapshot() {
   }
   return {
     settings: { ...store.settings, categories: { ...store.settings.categories } },
-    categories: CONVERSATION_CATEGORIES.map((category) => ({
+    categories: MYSTIC_CATEGORIES.map((category) => ({
       ...category,
       count: counts[category.id] || 0
     })),
-    intervals: [...CONVERSATION_INTERVALS],
+    intervals: [...MYSTIC_INTERVALS],
+    oracle: { voice: ORACLE_VOICE, engine: state.settings.ttsEngine === 'piper' ? 'piper' : 'kokoro' },
     list: store.list.map((entry) => ({ ...entry, contexts: [...entry.contexts] })),
     history: store.history.map((entry) => ({ ...entry })),
     runtime: conversationRuntimeSnapshot(),
@@ -3372,38 +3308,34 @@ function findConversation(id) {
 
 function recordConversationRun(params = {}) {
   const store = ensureConversations();
-  const runId = String(params.runId || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+  const runId = String(params.runId || `run_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`)
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, 64);
   if (!runId) return { ok: false, error: 'Missing runId' };
   const conversation = findConversation(String(params.conversationId || ''));
   const now = new Date().toISOString();
-  const rawLines = Array.isArray(params.lines) ? params.lines.slice(0, 6) : [];
-  const lines = rawLines
-    .map((line) => ({
-      speaker: line && line.speaker === 'femaleSeller' ? 'femaleSeller' : 'maleSeller',
-      text: conversationText(line && line.text, 220)
-    }))
-    .filter((line) => line.text);
+  const text = mysticText((params.lines && params.lines[0] && params.lines[0].text) || params.text, 220);
   const existing = store.history.find((entry) => entry.runId === runId);
-  const status = ['started', 'completed', 'interrupted', 'blocked'].includes(params.status)
+  const status = ['started', 'spoken', 'completed', 'failed', 'interrupted'].includes(params.status)
     ? params.status
-    : 'started';
-  // A reload/close can strand an older run as "started". Reconcile it as soon
-  // as any new run reports, so the Admin history never shows a ghost speaker.
-  const nowIso = new Date().toISOString();
+    : 'spoken';
+
+  // A reload can strand an older run as "started"; reconcile it on any new run.
   for (const old of store.history) {
     if (old.runId !== runId && old.status === 'started') {
       old.status = 'interrupted';
-      old.endedAt = nowIso;
+      old.endedAt = now;
     }
   }
+
   const entry = {
     runId,
     conversationId: conversation ? conversation.id : String(params.conversationId || '').slice(0, 48),
-    category: conversation ? conversation.category : conversationCategory(params.category),
+    category: conversation ? conversation.category : mysticCategory(params.category),
     status,
     startedAt: existing && existing.startedAt ? existing.startedAt : typeof params.startedAt === 'string' ? params.startedAt : now,
-    endedAt: status === 'started' ? null : now,
-    lines: lines.length ? lines : existing ? existing.lines : []
+    endedAt: now,
+    lines: text ? [{ speaker: 'oracle', text }] : existing ? existing.lines : []
   };
   if (existing) Object.assign(existing, entry);
   else store.history.unshift(entry);
@@ -3418,17 +3350,15 @@ function reportConversationRuntime(params = {}) {
     status: ['idle', 'scheduled', 'speaking', 'paused', 'disabled'].includes(params.status)
       ? params.status
       : conversationRuntime.status,
-    currentSpeaker: ['maleSeller', 'femaleSeller'].includes(params.currentSpeaker)
-      ? params.currentSpeaker
-      : '',
-    conversationId: String(params.conversationId || '').slice(0, 48),
-    category: conversationCategory(params.category || conversationRuntime.category),
-    phase: ['idle', 'waiting', 'male', 'female', 'followUp', 'paused'].includes(params.phase)
+    currentId: String(params.currentId || '').slice(0, 48),
+    category: mysticCategory(params.category || conversationRuntime.category),
+    phase: ['idle', 'scheduled', 'speaking', 'reading', 'paused', 'waiting'].includes(params.phase)
       ? params.phase
       : 'idle',
     nextAt: Number.isFinite(nextAt) && nextAt > 0 ? Math.min(nextAt, Date.now() + 86_400_000) : null,
     queue: Math.max(0, Math.min(99, Number(params.queue) || 0)),
-    reason: conversationText(params.reason, 120),
+    reading: params.reading === true,
+    reason: mysticText(params.reason, 120),
     updatedAt: new Date().toISOString()
   };
   return { ok: true, runtime: conversationRuntimeSnapshot() };
@@ -4687,7 +4617,7 @@ const Actions = {
     };
   },
 
-  // ------------------------------------------------ seller conversations
+  // ------------------------------------------------ mystic conversation
   getConversations() {
     return conversationSnapshot();
   },
@@ -4697,10 +4627,11 @@ const Actions = {
     const settings = store.settings;
     if (typeof params.enabled === 'boolean') settings.enabled = params.enabled;
     if (typeof params.running === 'boolean') settings.running = params.running;
+    if (typeof params.aiDialogue === 'boolean') settings.aiDialogue = params.aiDialogue;
     if (params.interval !== undefined) {
       const interval = Number(params.interval);
-      if (!CONVERSATION_INTERVALS.includes(interval)) {
-        return { ok: false, error: `Interval must be one of ${CONVERSATION_INTERVALS.join(', ')} seconds` };
+      if (!MYSTIC_INTERVALS.includes(interval)) {
+        return { ok: false, error: `Interval must be one of ${MYSTIC_INTERVALS.join(', ')} seconds` };
       }
       settings.interval = interval;
     }
@@ -4720,21 +4651,15 @@ const Actions = {
     const id = String(params.id || params.conversationId || '').trim();
     const store = ensureConversations();
     const entry = store.list.find((item) => item.id === id);
-    if (!entry) return { ok: false, error: `Unknown conversation: ${id || '(none)'}` };
+    if (!entry) return { ok: false, error: `Unknown dialogue line: ${id || '(none)'}` };
     const patch = params.patch && typeof params.patch === 'object' ? params.patch : params;
-    if (patch.male !== undefined) {
-      const male = conversationText(patch.male);
-      if (!male) return { ok: false, error: 'Male Seller dialogue cannot be empty' };
-      entry.male = male;
+    if (patch.text !== undefined) {
+      const text = mysticText(patch.text);
+      if (!text) return { ok: false, error: 'Dialogue text cannot be empty' };
+      entry.text = text;
     }
-    if (patch.female !== undefined) {
-      const female = conversationText(patch.female);
-      if (!female) return { ok: false, error: 'Female Seller dialogue cannot be empty' };
-      entry.female = female;
-    }
-    if (patch.followUp !== undefined) entry.followUp = conversationText(patch.followUp, 220);
-    if (patch.category !== undefined) entry.category = conversationCategory(patch.category);
-    if (patch.contexts !== undefined) entry.contexts = conversationContexts(patch.contexts);
+    if (patch.category !== undefined) entry.category = mysticCategory(patch.category);
+    if (patch.contexts !== undefined) entry.contexts = mysticContexts(patch.contexts);
     if (typeof patch.enabled === 'boolean') entry.enabled = patch.enabled;
     entry.edited = true;
     entry.createdAt = entry.createdAt || new Date().toISOString();
@@ -4744,18 +4669,15 @@ const Actions = {
   },
 
   addConversation(params = {}) {
-    const male = conversationText(params.male);
-    const female = conversationText(params.female);
-    if (!male || !female) return { ok: false, error: 'Both Male and Female dialogue are required' };
+    const text = mysticText(params.text);
+    if (!text) return { ok: false, error: 'Dialogue text is required' };
     const store = ensureConversations();
-    const id = `chat_custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+    const id = `mystic_custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const entry = {
       id,
-      category: conversationCategory(params.category),
-      male,
-      female,
-      followUp: conversationText(params.followUp, 220),
-      contexts: conversationContexts(params.contexts),
+      category: mysticCategory(params.category),
+      text,
+      contexts: mysticContexts(params.contexts),
       enabled: params.enabled !== false,
       custom: true,
       edited: false,
@@ -4772,7 +4694,7 @@ const Actions = {
     const store = ensureConversations();
     const before = store.list.length;
     store.list = store.list.filter((entry) => entry.id !== id);
-    if (store.list.length === before) return { ok: false, error: `Unknown conversation: ${id || '(none)'}` };
+    if (store.list.length === before) return { ok: false, error: `Unknown dialogue line: ${id || '(none)'}` };
     saveState();
     broadcastNotification('temple.state', getPublicState());
     return { ok: true, conversations: conversationSnapshot() };
@@ -4780,8 +4702,9 @@ const Actions = {
 
   restoreConversations() {
     const store = ensureConversations();
-    store.list = defaultConversationList();
+    store.list = defaultMysticLines();
     store.history = [];
+    store.settings = normalizeMysticSettings(store.settings);
     saveState();
     broadcastNotification('temple.state', getPublicState());
     return { ok: true, restored: store.list.length, conversations: conversationSnapshot() };
@@ -4800,7 +4723,139 @@ const Actions = {
     store.history = [];
     saveState();
     return { ok: true, conversations: conversationSnapshot() };
+  },
+
+  /**
+   * With AI dialogue enabled the Oracle may rephrase a curated line through the
+   * already-configured reactive LLM. Any failure falls back to the catalog line,
+   * so the stream never goes silent because a provider is missing or slow.
+   */
+  async composeMysticLine(seed) {
+    const settings = normalizeReactiveSettings(ensureReactive().settings);
+    const endpoint = reactiveChatEndpoint(settings.baseUrl);
+    if (!endpoint) return '';
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), 6000) : null;
+    try {
+      // keyFor() takes the provider object, not its id. A missing provider or
+      // key just means "no AI dialogue right now" and falls back to the catalog.
+      const provider = llmProviders.activeProvider();
+      if (!provider) return '';
+      const keyInfo = llmProviders.keyFor(provider);
+      const key = (keyInfo && keyInfo.key) || '';
+      if (provider.requiresKey && !key) return '';
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(key ? { Authorization: `Bearer ${key}` } : {})
+        },
+        body: JSON.stringify({
+          model: settings.model,
+          temperature: 0.9,
+          max_tokens: 80,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are the Oracle of a quiet tarot livestream. Reply with ONE short spoken English sentence, ' +
+                'under 30 words, mystical and calm. No greetings to the model, no emoji, no quotation marks, ' +
+                'never mention drinks, shops, coffee, products or selling anything.'
+            },
+            { role: 'user', content: `Restate this idea in your own words: ${seed}` }
+          ]
+        }),
+        signal: controller ? controller.signal : undefined
+      });
+      if (!response.ok) return '';
+      const data = await response.json();
+      const raw =
+        data && data.choices && data.choices[0] && data.choices[0].message
+          ? String(data.choices[0].message.content || '')
+          : '';
+      const text = mysticText(raw.replace(/^["'\s]+|["'\s]+$/g, ''), 200);
+      if (text.length < 20) return '';
+      if (/\b(coffee|lemonade|smoothie|slushie|drink|menu|cafe|seller|price|order now)\b/i.test(text)) return '';
+      return text;
+    } catch (_) {
+      return '';
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  },
+
+  /**
+   * Speak one Oracle line. The stage decides when; the server synthesizes with
+   * the Oracle voice (Kokoro af_alloy, Piper as fallback) and broadcasts the
+   * existing tts.play message, so there is one audio path and one duck.
+   */
+  async speakConversationLine(params = {}) {
+    const store = ensureConversations();
+    const settings = store.settings;
+    const force = params.force === true;
+    if (!force && (settings.enabled === false || settings.running === false)) {
+      return { ok: false, error: 'Mystic conversation is disabled' };
+    }
+    if (state.settings.ttsEnabled === false) return { ok: false, error: 'Voice is off' };
+    const entry = params.id ? findConversation(String(params.id)) : null;
+    const raw = entry ? entry.text : String(params.text || '');
+    if (!raw) return { ok: false, error: 'Unknown dialogue line' };
+    const viewer = String(params.viewer || '')
+      .replace(/[^\w @.-]/g, '')
+      .trim()
+      .slice(0, 40);
+    let text = mysticText(raw.replace(/\{viewer\}/gi, viewer || 'friend'), 220);
+    const now = Date.now();
+
+    // AI dialogue is opt-in and always falls back to the curated line.
+    if (settings.aiDialogue === true && entry && params.improvise !== false) {
+      const composed = await this.composeMysticLine(text);
+      if (composed) text = composed;
+    }
+
+    // Two stage tabs must never speak the same line twice.
+    if (!force && conversationSpeech.text === text && now - conversationSpeech.at < 20000) {
+      return { ok: false, duplicate: true };
+    }
+    if (!force && now - conversationSpeech.at < 3000) return { ok: false, throttled: true };
+    conversationSpeech = { text, at: now };
+
+    const useKokoro = state.settings.ttsEngine !== 'piper';
+    const result = await synthesizeSpeech(text, {
+      engine: useKokoro ? 'kokoro' : 'piper',
+      voice: useKokoro ? ORACLE_VOICE : state.settings.ttsVoice,
+      piperVoice: state.settings.ttsVoice,
+      language: 'en',
+      speed: state.settings.ttsSpeed,
+      allowFallback: true
+    });
+    if (!result || !result.ok) return { ok: false, error: (result && result.error) || 'TTS unavailable' };
+
+    const category = entry ? entry.category : mysticCategory(params.category);
+    broadcastNotification('tts.play', {
+      text,
+      engine: result.engine,
+      requestedEngine: result.requestedEngine,
+      voice: result.voice,
+      language: result.language,
+      speed: result.speed,
+      volume: state.settings.ttsVolume,
+      url: result.url,
+      fallback: Boolean(result.fallback),
+      category,
+      conversationId: entry ? entry.id : ''
+    });
+    return {
+      ok: true,
+      id: entry ? entry.id : '',
+      category,
+      text,
+      voice: result.voice,
+      engine: result.engine,
+      url: result.url
+    };
   }
+
 };
 
 // ============================================================================
@@ -6148,6 +6203,12 @@ async function handleRpcCall(method, params = {}) {
 
     case 'conversation.clearHistory':
       return Actions.clearConversationHistory();
+
+    case 'conversation.speak':
+      return Actions.speakConversationLine(params);
+
+    case 'conversation.test':
+      return Actions.speakConversationLine({ ...params, force: true });
 
     case 'reactive.get':
     case 'reactive.status':

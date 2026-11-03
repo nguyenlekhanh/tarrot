@@ -205,6 +205,7 @@
   const ttsQueue = [];
   let currentClip = null;
   let ttsPlaying = false;
+  let readingHold = false;
 
   function pumpTts() {
     if (ttsPlaying || !ttsQueue.length) return;
@@ -227,6 +228,12 @@
       // Stay ducked until the queue is empty so back-to-back lines do not pump
       // the music up and down between sentences.
       if (music && !ttsQueue.length) music.setDuck(false);
+      // The reading is over once its narration has drained: ambient dialogue
+      // resumes on its own relaxed interval.
+      if (!ttsQueue.length && readingHold) {
+        readingHold = false;
+        if (conversation) conversation.notifyReading(false);
+      }
       pumpTts();
     };
     audio.onended = finish;
@@ -243,6 +250,43 @@
     ttsQueue.push({ url, volume: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0.9 });
     pumpTts();
   }
+
+  // ------------------------------------------------------- mystic dialogue
+  // The Oracle speaks between readings. It never queues behind anything: a line
+  // only starts when the TTS queue is empty, so narration clips cannot stack.
+  const conversation = window.MysticConversationEngine
+    ? new window.MysticConversationEngine({
+        speak: (entry) =>
+          callRpc('conversation.speak', { id: entry.id, improvise: true }).then((res) =>
+            res && res.result
+              ? res.result
+              : { ok: false, error: (res && res.error && res.error.message) || 'rpc failed' }
+          ),
+        isBusy: () => ttsPlaying || ttsQueue.length > 0,
+        getContext: () => ({ viewers: currentViewers }),
+        onStatus: (status) => {
+          callRpc('conversation.status', {
+            status: status.status,
+            phase: status.phase,
+            currentId: status.currentId,
+            category: status.category,
+            nextAt: status.nextAt,
+            queue: status.queue,
+            reading: status.reading,
+            reason: status.reason
+          });
+        },
+        onRecord: (record) => {
+          callRpc('conversation.record', {
+            conversationId: record.conversationId,
+            category: record.category,
+            status: record.status === 'spoken' ? 'spoken' : 'failed',
+            text: record.text
+          });
+        }
+      })
+    : null;
+  window.mysticConversation = conversation;
 
   // ---------------------------------------------------------------- readings
   let revealTimer = null;
@@ -293,10 +337,15 @@
 
   // ---------------------------------------------------------------- state
   let tarotEnabled = true;
+  let currentViewers = 0;
 
   function applyState(state) {
     if (!state) return;
     applyMusicSettings(state.settings);
+    if (state.conversations && conversation) conversation.applySnapshot(state.conversations);
+    if (conversation && state.settings) {
+      conversation.setPaused(Boolean(state.settings.paused) || state.settings.running === false);
+    }
     const likes = Number(state.likes) || 0;
     const gifts = Number(state.gifts) || 0;
     $('countLikes').textContent = likes.toLocaleString('en-US');
@@ -310,6 +359,7 @@
     }
     document.body.classList.toggle('is-paused', Boolean(state.tarot && state.tarot.enabled === false));
     const tiktok = state.tiktok || {};
+    currentViewers = Number(tiktok.viewerCount) || 0;
     const pill = $('livePill');
     const label = tiktok.connected ? 'LIVE' : tiktok.connecting ? 'CONNECTING' : tiktok.reconnecting ? 'RECONNECTING' : 'OFFLINE';
     $('liveStatusText').textContent = label;
@@ -341,16 +391,21 @@
         break;
       case 'giftOrder':
       case 'partyOrder':
+        if (conversation) conversation.notifyGift();
         if (fx) fx.confetti(90);
         spawnSpirit({ x: 540, y: 1200, count: 8, bright: true });
         showBanner(`🎁 ${event.giftName || 'Gift'}`, `${event.user || 'A supporter'} feeds the flame`);
         break;
       case 'followGuest':
+        if (conversation) conversation.notifyFollow();
         showBanner(`✦ ${event.user || 'A new soul'} joined`, 'A new spirit enters the circle');
         spawnSpirit({ x: 540, y: 1000, count: 8, bright: true });
         if (fx) fx.fireworks(2);
         break;
       case 'tarotReading':
+        break;
+      case 'viewerJoin':
+        if (conversation) conversation.notifyViewerJoin(event.user);
         break;
       default:
         break;
@@ -390,6 +445,9 @@
         // The broadcast snapshot is the settings object itself, with no wrapper.
         applyState({ tarot: msg.params });
       } else if (msg.method === 'tarot.reading') {
+        // The reading owns the voice; ambient dialogue holds until it drains.
+        readingHold = true;
+        if (conversation) conversation.notifyReading(true, 25000);
         showReading(msg.params && msg.params.reading);
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
       } else if (msg.method === 'temple.event') {
