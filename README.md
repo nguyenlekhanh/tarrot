@@ -273,6 +273,74 @@ The Oracle keeps the room alive between readings, including the hours when nobod
 - **Admin**: enable/disable, AI dialogue toggle, interval, category switches, test dialogue, live status
   (speaking / reading / next in Ns) and dialogue history.
 
+## 🔮 Live Tarot Experience (queue, topics, promotion, result)
+
+The stage now runs a full interactive queue, not just single readings.
+
+### Live queue box (top of the 9:16 stage)
+
+Three lines, updated from the server on every change: **current reading** (`NOW READING: EMILY`, or
+`THE READING TABLE IS WAITING` when idle) with the live count (`84 / 100 WAITING`), **next in line**
+(`NEXT: SOPHIA → OLIVIA`) and the **latest movement** (`🎁 EMILY SENT A GIFT! MOVED UP: #77 → #71`).
+Empty queues read `NEXT: THE LINE IS OPEN` and `✨ THE LINE IS QUIET TONIGHT` — the stage never prints
+`undefined`. Queue state is persisted in `data/game-state.json` and survives a restart
+(`tarot-queue.js`).
+
+### Choose your destiny (topics)
+
+`🔮 CHOOSE YOUR DESTINY` / `COMMENT + YOUR QUESTION`, then two columns of rotating topics. Twelve topics
+ship by default (family, personality, name, this week, today, my question, love, crush, future partner,
+career, wealth, study). Admin can add, edit, reorder, enable/disable and delete topics and set the
+rotation speed; duplicates are removed. A natural English comment is matched to a topic by keyword
+(longest match wins), the viewer's own words are kept as the question, and a bare question falls back to
+**My Question**. One comment can only ever create one reading (`tarot-topics.js`).
+
+### Priority promotion
+
+Viewers climb deterministically: gifts (mapped in Admin, e.g. `rose.webp` +2, `grandCeremony.webp` +12;
+unmapped gifts convert at coins-per-step), like bursts above a configurable threshold, and waiting time
+(one credit per configured interval). Ordering is score first, then arrival, so a long wait can overtake a
+fresh arrival. Gift combos are deduplicated by TikTok `groupId`, so one gift group promotes once
+(`GiftComboTracker` + the queue's own group set). Every climb emits one movement message.
+
+### Movement ticker
+
+Two lines above the footer animate one message at a time upward and out; old messages expire with the
+animation, so the DOM never accumulates them. Admin can disable it and set duration/speed.
+
+### Reading result box
+
+After the cards are revealed the stage shows `LOVE READING FOR EMILY`, the drawn cards (sigil card face,
+name, upright/reversed, spread position), two percentage bars (**GOOD FORTUNE** / **POINTS TO WATCH**),
+the personalised **THE ORACLE'S MESSAGE** and the closing line. Percentages are deterministic: they come
+from orientation, arcana weight, keyword polarity, topic affinity and spread position — never random
+(`tarot-reading-library.js`). The display duration is configurable and the stage returns to the waiting
+state on its own.
+
+### Interpretation sources
+
+- **Built-in library (default)**: explains all 78 cards in both orientations, specialised for general,
+love, family, personality, career, wealth, study and future readings. Works offline.
+- **AI (optional)**: reuses the provider configuration already set up for the reactive seller
+(OpenRouter / Ollama) — no second key, no hardcoded secret. The prompt contains the real cards,
+orientations, topic and percentages; the answer is rejected if it names a card that was not drawn,
+contains markdown, or is too short, and the built-in reading is used instead.
+
+### Narration
+
+The Oracle reads the sequence through the existing shared TTS queue with Kokoro `af_alloy`: welcome by
+name → topic → drawing → each card → the verdict → closing line. `public/js/tts-queue.js` plays one clip at
+a time, so a reading is never interrupted, music ducking still applies, and ambient Mystic Conversation
+resumes one interval after the audio ends (its own scheduler is unchanged).
+
+### Admin
+
+The **🔮 Live Tarot Experience** panel controls the queue (capacity, add/remove, manual priority, start
+next), topics, gift mappings and promotion rules, ticker, result duration/interpretation and has test
+buttons for a viewer joining, a tarot comment, a gift, likes and a complete reading. Everything persists
+across restarts. `npm test` covers queue FIFO/capacity/promotion/persistence, topic matching and rotation,
+all 78 cards, deterministic percentages, AI fallback, TTS serialization and the 9:16 stage markup.
+
 ## 🎵 Background Music Playlist
 
 `public/js/music.js` (`ShopMusicPlayer`) owns the background playlist; `public/js/audio.js` delegates all music playback to it and keeps the synthesized ambience only as a fallback. Music volume is independent from the Piper voice volume and is remembered in `localStorage` (`shop_music_vol`) together with the last track (`shop_music_track`).
