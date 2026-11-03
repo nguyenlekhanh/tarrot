@@ -5787,11 +5787,34 @@ function normalizeTarotResult(raw) {
   };
 }
 
+function normalizeTarotAiStatus(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const text = (value, max) => String(value == null ? '' : value).replace(/[\r\n]+/g, ' ').slice(0, max);
+  const number = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+  return {
+    at: typeof source.at === 'string' ? source.at : null,
+    ok: source.ok === true,
+    enabled: source.enabled === true,
+    source: source.source === 'ai' ? 'ai' : 'builtin',
+    provider: text(source.provider, 60),
+    providerId: text(source.providerId, 40),
+    model: text(source.model, 120),
+    httpStatus: Number.isFinite(Number(source.httpStatus)) ? Number(source.httpStatus) : null,
+    latencyMs: Number.isFinite(Number(source.latencyMs)) ? Math.max(0, Math.round(Number(source.latencyMs))) : null,
+    sections: Math.max(0, Math.round(number(source.sections, 0))),
+    reason: text(source.reason, 240)
+  };
+}
+
 function normalizeTarotState(raw) {
   const source = raw && typeof raw === 'object' ? raw : {};
   return {
     enabled: source.enabled !== false,
-    aiInterpretation: source.aiInterpretation === true,
+    aiInterpretation: source.aiInterpretation === true || (source.result && source.result.interpretation === 'ai'),
+    ai: normalizeTarotAiStatus(source.ai),
     commentCooldownSeconds: clampInt(source.commentCooldownSeconds, 20, 0, 600),
     perViewerCooldownSeconds: clampInt(source.perViewerCooldownSeconds, 120, 0, 3600),
     maxQueue: clampInt(source.maxQueue, 8, 1, 50),
@@ -5893,6 +5916,8 @@ function tarotSnapshot() {
   return {
     enabled: settings.enabled,
     aiInterpretation: settings.aiInterpretation,
+    ai: { ...normalizeTarotAiStatus(settings.ai), enabled: tarotAiEnabled(settings) },
+    aiProvider: tarotAiProviderSummary(),
     commentCooldownSeconds: settings.commentCooldownSeconds,
     perViewerCooldownSeconds: settings.perViewerCooldownSeconds,
     maxQueue: settings.maxQueue,
@@ -6224,16 +6249,77 @@ async function drainTarotQueue() {
   }
 }
 
+// ------------------------------------------------------------ tarot AI status
+// The Tarot panel reports what the last AI attempt actually did. It reuses the
+// existing provider manager and never stores or returns an API key.
+const TAROT_AI_MAX_ATTEMPTS = 2;
+
+function tarotAiEnabled(settings) {
+  return settings.result.interpretation === 'ai' || settings.aiInterpretation === true;
+}
+
+function sanitizeAiReason(value) {
+  return String(value || '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 240);
+}
+
+function recordTarotAiStatus(patch) {
+  const settings = tarotSettings();
+  settings.ai = normalizeTarotAiStatus({ ...(settings.ai || {}), ...patch, at: new Date().toISOString() });
+  return settings.ai;
+}
+
+function tarotAiProviderSummary() {
+  let manager;
+  try {
+    manager = llmProviders.snapshot();
+  } catch (_) {
+    return { configured: false, id: '', name: 'No provider configured', model: '', health: 'not_configured' };
+  }
+  let active = null;
+  try {
+    active = llmProviders.primaryProvider() || llmProviders.activeProvider();
+  } catch (_) {
+    active = null;
+  }
+  if (!active) {
+    return { configured: false, id: '', name: 'No provider configured', model: '', health: 'not_configured', primary: true };
+  }
+  const provider = llmProviders.publicProvider(active);
+  return {
+    id: provider.id,
+    name: provider.name,
+    model: provider.model,
+    configured: llmProviders.isConfigured(active),
+    primary: manager.primaryProviderId === provider.id,
+    enabled: provider.enabled,
+    keyConfigured: provider.keyConfigured,
+    keyMask: provider.keyMask,
+    health: provider.health,
+    lastHttpStatus: provider.lastHttpStatus,
+    lastLatencyMs: provider.lastLatencyMs,
+    lastError: sanitizeAiReason(provider.lastError),
+    fallbacks: [...manager.fallbackProviderIds]
+  };
+}
+
 // ------------------------------------------------------------ AI + narration
 /**
  * Optional LLM interpretation. Card selection already happened upstream, so a
  * provider outage can only shorten the prose — it can never change the draw.
  * The answer is validated against the actual spread before it is shown.
+ *
+ * Readiness comes from the provider manager itself, never from the reactive
+ * seller's switch: the two features share a provider and a key, not a toggle.
  */
 async function tarotAiNarration(reading, result) {
   const settings = tarotSettings();
-  if (!result || (settings.result.interpretation !== 'ai' && !settings.aiInterpretation)) {
-    return { ok: false, text: '', provider: '', reason: 'disabled' };
+  const enabled = tarotAiEnabled(settings);
+  if (!result || !enabled) {
+    return { ok: false, text: '', provider: '', reason: 'disabled', enabled: false };
   }
   let candidates = [];
   try {
@@ -6241,76 +6327,173 @@ async function tarotAiNarration(reading, result) {
   } catch (_) {
     candidates = [];
   }
-  if (!candidates.length) return { ok: false, text: '', provider: '', reason: 'no_llm_provider' };
-  const reactive = ensureReactive().settings;
-  const cardLines = reading.cards
-    .map((card) => `${card.position}: ${card.name}${card.reversed ? ' (reversed)' : ''} — ${card.meaning}`)
-    .join('\n');
+  if (!candidates.length) {
+    recordTarotAiStatus({ ok: false, enabled: true, source: 'builtin', reason: 'no_llm_provider' });
+    return { ok: false, text: '', provider: '', reason: 'no_llm_provider', enabled: true };
+  }
+  const cards = Array.isArray(reading.cards) ? reading.cards : (Array.isArray(result.cards) ? result.cards : []);
   const sectionLabels = (result.sections || []).map((section) => section.label);
+  const cardLines = cards
+    .map((card) => `${card.position}: ${card.name} — ${card.reversed ? 'reversed' : 'upright'} — ${card.meaning || ''}`)
+    .join('\n');
   const prompt = [
     `Viewer name: ${result.user}`,
     `Topic: ${result.topicLabel} (${reading.theme})`,
+    `Spread: ${cards.length === 1 ? 'one card' : `${cards.length} cards`}`,
     `Question: ${reading.question || 'a general reading'}`,
     `Good fortune ${result.fortune}%, points to watch ${result.caution}%`,
     `Sections: ${sectionLabels.join(' | ')}`,
+    'Drawn cards (position, card, orientation, meaning):',
     cardLines
   ].join('\n');
+  const systemPrompt =
+    'You are the Mystic Witch, an ancient tarot reader on a live stream. ' +
+    'Write exactly one line for EACH section label the user lists, in this exact format: "Section Label: one or two sentences". ' +
+    'Use the labels verbatim and keep their order. Write in second person, atmospheric but concrete, plain prose only. ' +
+    'Ground every section in the cards that were actually drawn, naming the card and saying whether it is upright or reversed and which spread position it fell in. ' +
+    'Use ONLY the cards listed by the user, never invent another card, never change the spread or the percentages, never contradict a stated orientation, ' +
+    'no markdown, no bullets, no emoji, and stay under 1400 characters in total.';
 
-  for (const providerConfig of candidates.slice(0, 2)) {
+  // One line per provider, so the panel shows the primary's 429 and the
+  // fallback's error instead of only the last one tried.
+  const failures = [];
+  let lastStatus = null;
+  for (const providerConfig of candidates.slice(0, TAROT_AI_MAX_ATTEMPTS)) {
+    if (!llmProviders.isConfigured(providerConfig)) {
+      failures.push(`${providerConfig.name}: base URL, model or API key is missing`);
+      continue;
+    }
+    const key = llmProviders.keyFor(providerConfig).key;
+    // Six prose sections need more than the seller's short-reply budget.
+    const timeoutMs = Math.min(30000, Math.max(15000, Number(providerConfig.timeoutMs) || 0));
+    const started = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const provider = reactiveProviderInfo(reactive, providerConfig.id);
-      if (!provider || provider.status !== 'ready') continue;
-      const key = llmProviders.keyFor(providerConfig).key;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), providerConfig.timeoutMs || reactive.timeoutMs || 8000);
-      let response;
-      try {
-        response = await fetch(provider.endpoint, {
-          method: 'POST',
-          headers: {
-            ...(providerConfig.headers || {}),
-            'Content-Type': 'application/json',
-            ...(key ? { Authorization: `Bearer ${key}` } : {})
-          },
-          body: JSON.stringify({
-            model: provider.model,
-            messages: [
-              {
-                role: 'system',
-                content:
-                  'You are the Mystic Witch, an ancient tarot reader on a live stream. Write one line for EACH section label the user lists, ' +
-                  'in this exact format: "Section Label: one or two sentences". Use the labels verbatim and keep their order. ' +
-                  'Write in second person, atmospheric but concrete, plain prose only. Ground every section in the cards that were actually drawn, ' +
-                  'naming the card and saying whether it is upright or reversed and which spread position it fell in. ' +
-                  'Use ONLY the cards listed by the user, never invent another card, never change the spread or the percentages, ' +
-                  'no markdown, no bullets, no emoji, and stay under 1100 characters in total.'
-              },
-              { role: 'user', content: prompt }
-            ],
-            temperature: 0.9,
-            max_tokens: 700
-          }),
-          signal: controller.signal
+      const response = await fetch(llmProviders.endpoint(providerConfig), {
+        method: 'POST',
+        headers: {
+          ...(providerConfig.headers || {}),
+          'Content-Type': 'application/json',
+          ...(key ? { Authorization: `Bearer ${key}` } : {})
+        },
+        body: JSON.stringify({
+          model: providerConfig.model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.9,
+          max_tokens: Math.min(2400, Math.max(900, Number(providerConfig.maxTokens) || 1200))
+        }),
+        signal: controller.signal
+      });
+      const raw = await response.text();
+      lastStatus = response.status;
+      if (!response.ok) {
+        let detail = '';
+        try {
+          const data = JSON.parse(raw);
+          detail = data && data.error ? String(data.error.message || data.error) : '';
+        } catch (_) {}
+        failures.push(`${providerConfig.name} HTTP ${response.status}${detail ? `: ${sanitizeAiReason(detail)}` : ''}`);
+        llmProviders.recordAttempt(providerConfig.id, {
+          ok: false,
+          httpStatus: response.status,
+          latencyMs: Date.now() - started,
+          error: failures[failures.length - 1] || 'LLM request failed',
+          model: providerConfig.model
         });
-      } finally {
-        clearTimeout(timer);
+        continue;
       }
-      if (!response.ok) continue;
-      const data = await response.json();
+      const data = JSON.parse(raw);
       const text = data && data.choices && data.choices[0] && data.choices[0].message
         ? String(data.choices[0].message.content || '').trim()
         : '';
-      if (!text) continue;
-      const merged = applyAiInterpretation(result, text, { provider: provider.name || provider.id });
-      if (merged && merged.source === 'ai') {
-        return { ok: true, text: merged.oracleMessage, provider: merged.provider, result: merged };
+      if (!text) {
+        failures.push(`${providerConfig.name} returned an empty answer`);
+        llmProviders.recordAttempt(providerConfig.id, {
+          ok: false,
+          httpStatus: response.status,
+          latencyMs: Date.now() - started,
+          error: failures[failures.length - 1] || 'LLM request failed',
+          model: providerConfig.model
+        });
+        continue;
       }
-      return { ok: false, text: '', provider: '', reason: merged ? merged.aiError : 'invalid_ai_text' };
-    } catch (_) {
-      // try the next candidate, then fall back to the built-in library
+      const merged = applyAiInterpretation(result, text, {
+        provider: providerConfig.name,
+        labels: sectionLabels
+      });
+      if (merged && merged.source === 'ai') {
+        const status = recordTarotAiStatus({
+          ok: true,
+          enabled: true,
+          source: 'ai',
+          provider: providerConfig.name,
+          providerId: providerConfig.id,
+          model: providerConfig.model,
+          httpStatus: response.status,
+          latencyMs: Date.now() - started,
+          sections: merged.sections.length,
+          reason: ''
+        });
+        llmProviders.recordAttempt(providerConfig.id, {
+          ok: true,
+          httpStatus: response.status,
+          latencyMs: status.latencyMs,
+          model: providerConfig.model
+        });
+        return {
+          ok: true,
+          text: merged.oracleMessage,
+          provider: merged.provider,
+          result: merged,
+          model: providerConfig.model,
+          httpStatus: response.status,
+          latencyMs: status.latencyMs
+        };
+      }
+      failures.push(`${providerConfig.name}: ${(merged && merged.aiError) || 'invalid_ai_text'}`);
+      llmProviders.recordAttempt(providerConfig.id, {
+        ok: false,
+        httpStatus: response.status,
+        latencyMs: Date.now() - started,
+        error: failures[failures.length - 1] || 'LLM request failed',
+        model: providerConfig.model
+      });
+    } catch (err) {
+      failures.push(`${providerConfig.name}: ${
+        err && err.name === 'AbortError'
+          ? `timed out after ${timeoutMs}ms`
+          : sanitizeAiReason(err && err.message) || 'request failed'
+      }`);
+      llmProviders.recordAttempt(providerConfig.id, {
+        ok: false,
+        httpStatus: lastStatus,
+        latencyMs: Date.now() - started,
+        error: failures[failures.length - 1] || 'LLM request failed',
+        model: providerConfig.model
+      });
+    } finally {
+      clearTimeout(timer);
     }
   }
-  return { ok: false, text: '', provider: '', reason: 'llm_unavailable' };
+  const primary = candidates[0] || {};
+  const reason = sanitizeAiReason(failures.join(' | ')) || 'llm_unavailable';
+  recordTarotAiStatus({
+    ok: false,
+    enabled: true,
+    source: 'builtin',
+    provider: primary.name || '',
+    providerId: primary.id || '',
+    model: primary.model || '',
+    httpStatus: lastStatus,
+    latencyMs: null,
+    sections: 0,
+    reason
+  });
+  return { ok: false, text: '', provider: '', reason, enabled: true };
 }
 
 const MAX_CEREMONY_PARTS = 20;
@@ -6557,6 +6740,12 @@ function updateTarotSettings(params = {}) {
     result: params.result === undefined ? current.result : { ...current.result, ...params.result },
     queueState: current.queueState
   });
+  // `AI enabled` and the Reading Result dropdown are one switch, not two.
+  if (params.result && params.result.interpretation !== undefined) {
+    next.aiInterpretation = next.result.interpretation === 'ai';
+  } else {
+    next.result.interpretation = next.aiInterpretation ? 'ai' : 'builtin';
+  }
   state.tarot = next;
   const queue = tarotLiveQueue();
   queue.setCapacity(next.capacity);
@@ -6641,7 +6830,13 @@ function updateTarotTicker(params = {}) {
 
 function updateTarotResult(params = {}) {
   const settings = tarotSettings();
-  state.tarot = normalizeTarotState({ ...settings, result: { ...settings.result, ...params } });
+  const result = { ...settings.result, ...params };
+  // The dropdown and the AI toggle are one switch.
+  state.tarot = normalizeTarotState({
+    ...settings,
+    result,
+    aiInterpretation: result.interpretation === 'ai'
+  });
   saveState();
   broadcastNotification('tarot.state', tarotSnapshot());
   return { ok: true, result: tarotSnapshot().result };
@@ -7050,6 +7245,32 @@ async function handleRpcCall(method, params = {}) {
 
     case 'tarot.clearHistory':
       return { ...tarotEngine.clearHistory(), tarot: tarotSnapshot() };
+
+    case 'tarot.aiStatus':
+      return {
+        enabled: tarotAiEnabled(tarotSettings()),
+        provider: tarotAiProviderSummary(),
+        status: normalizeTarotAiStatus(tarotSettings().ai),
+        candidates: (() => {
+          try {
+            return llmProviders.candidates().map((provider) => provider.id);
+          } catch (_) {
+            return [];
+          }
+        })()
+      };
+
+    case 'tarot.aiTest': {
+      const active = llmProviders.primaryProvider() || llmProviders.activeProvider();
+      if (!active) return { ok: false, error: 'No LLM provider is configured.', provider: tarotAiProviderSummary() };
+      const tested = await runLlmProviderTest(active.id);
+      return {
+        ...tested,
+        testedProvider: tested.provider,
+        provider: tarotAiProviderSummary(),
+        ai: normalizeTarotAiStatus(tarotSettings().ai)
+      };
+    }
 
     case 'tarot.updateSettings':
       return updateTarotSettings(params);

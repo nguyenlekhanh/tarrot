@@ -261,3 +261,63 @@ test('the AI prompt asks for the topic section labels and narration covers them'
   assert.match(server, /const MAX_CEREMONY_PARTS = 20;/);
   assert.match(server, /announceTarotReading\(reading, result, ceremonyClips\)/);
 });
+
+// ------------------------------------------------------- AI contract + wiring
+
+test('AI text that reverses a drawn card is rejected wholesale', () => {
+  const cards = [card('The Star', false, 'Future')];
+  const base = buildReadingResult(reading(cards, { theme: 'career', topicId: 'career_reading', topicLabel: 'Career Reading' }));
+  const text = 'Work Energy: The Star is reversed in your future, so the offer will not arrive this month at all.';
+  const merged = applyAiInterpretation(base, text, { provider: 'openrouter' });
+  assert.notEqual(merged.source, 'ai');
+  assert.match(merged.aiError, /orientation_conflict/);
+  assert.deepEqual(merged.sections, base.sections);
+});
+
+test('an AI answer must cover every topic section before it is used', () => {
+  const cards = [card('The Star', false, 'Past'), card('Two of Cups', false, 'Present'), card('The Chariot', true, 'Future')];
+  const base = buildReadingResult(reading(cards, { theme: 'love', topicId: 'love_reading', topicLabel: 'Love Reading' }));
+  const labels = base.sections.map((section) => section.label);
+  const partial = labels
+    .slice(0, 3)
+    .map((label) => `${label}: The Star upright in the past and the Chariot reversed ahead both ask for one honest conversation this week.`)
+    .join('\n');
+  const merged = applyAiInterpretation(base, partial, { provider: 'openrouter', labels });
+  assert.notEqual(merged.source, 'ai');
+  assert.match(merged.aiError, /missing_sections/);
+});
+
+test('AI sections keep the canonical topic labels and order', () => {
+  const cards = [card('The Star', false, 'Past'), card('Two of Cups', false, 'Present'), card('The Chariot', true, 'Future')];
+  const base = buildReadingResult(reading(cards, { theme: 'love', topicId: 'love_reading', topicLabel: 'Love Reading' }));
+  const labels = base.sections.map((section) => section.label);
+  const body = (label) => `${label}: The Star upright in the past and the Chariot reversed ahead both ask for one honest conversation this week.`;
+  const shuffled = [...labels].reverse().map(body).join('\n');
+  const merged = applyAiInterpretation(base, shuffled, { provider: 'OpenRouter', labels });
+  assert.equal(merged.source, 'ai');
+  assert.equal(merged.provider, 'OpenRouter');
+  assert.deepEqual(merged.sections.map((section) => section.label), labels);
+  assert.deepEqual(merged.sections.map((section) => section.key), base.sections.map((section) => section.key));
+  assert.equal(merged.sections.length, 6);
+  assert.ok(merged.sections.every((section) => section.text.includes('one honest conversation')));
+});
+
+test('tarot AI uses the provider manager directly and reports what happened', () => {
+  const server = read('server.js');
+  const start = server.indexOf('async function tarotAiNarration');
+  const end = server.indexOf('const MAX_CEREMONY_PARTS', start);
+  assert.ok(start > -1 && end > start, 'tarotAiNarration is missing');
+  const block = server.slice(start, end);
+  // The reactive seller's switch must not gate the Tarot interpretation.
+  assert.ok(!/reactiveProviderInfo/.test(block), 'tarot AI still depends on the reactive seller status');
+  assert.match(block, /llmProviders\.candidates\(\)/);
+  assert.match(block, /llmProviders\.isConfigured\(providerConfig\)/);
+  assert.match(block, /labels: sectionLabels/);
+  assert.match(block, /recordTarotAiStatus/);
+  assert.match(block, /llmProviders\.recordAttempt\(/);
+  // Diagnostics are exposed to the Admin panel, and keys never leave the server.
+  assert.match(server, /case 'tarot\.aiStatus'/);
+  assert.match(server, /case 'tarot\.aiTest'/);
+  assert.match(server, /function tarotAiProviderSummary\(\)/);
+  assert.ok(!/keyFor\([^)]*\)\.key[^;]*broadcast/.test(block));
+});

@@ -3056,6 +3056,21 @@
     <div class="lt-hint hint">AI reads the <em>existing</em> OpenRouter / Ollama provider settings above — there is no separate key here, and a failed call falls back to the built-in interpretation.</div>
     <div class="lt-status" id="lrStatus"></div>
 
+    <h3>AI Interpretation (OpenRouter)</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>AI enabled</label><input type="text" id="ltAiEnabledValue" readonly /></div>
+      <div class="lt-field"><label>Provider</label><input type="text" id="ltAiProvider" readonly /></div>
+      <div class="lt-field"><label>Selected model</label><input type="text" id="ltAiModel" readonly /></div>
+      <div class="lt-field"><label>Connection</label><input type="text" id="ltAiState" readonly /></div>
+      <div class="lt-field"><label>Last request</label><input type="text" id="ltAiLast" readonly /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="ltAiTest" type="button">Test OpenRouter connection</button>
+      <button id="ltAiRefresh" type="button">Refresh AI status</button>
+    </div>
+    <div class="lt-hint hint" id="ltAiError">AI reuses the LLM Provider Manager key; the key never reaches the browser or the logs.</div>
+    <div class="lt-status" id="ltAiStatus"></div>
+
     <h3>Testing</h3>
     <div class="lt-grid">
       <div class="lt-field"><label>Test viewer</label><input type="text" id="lxViewer" value="Sophia" /></div>
@@ -3174,6 +3189,29 @@
         $('lrFortune').classList.toggle('on', result.showFortune !== false);
       }
 
+      function renderAi() {
+        const ai = (snapshot && snapshot.ai) || {};
+        const provider = (snapshot && snapshot.aiProvider) || {};
+        $('ltAiEnabledValue').value = ai.enabled ? 'ON' : 'OFF (built-in library)';
+        $('ltAiProvider').value = provider.name
+          ? provider.name + (provider.primary ? ' · primary' : ' · fallback')
+          : 'No provider configured';
+        $('ltAiModel').value = provider.model || '—';
+        $('ltAiState').value = (provider.configured ? 'Configured' : 'Not configured') +
+          ' · ' + (provider.health || 'not_tested') +
+          (provider.lastHttpStatus ? ' · HTTP ' + provider.lastHttpStatus : '');
+        $('ltAiLast').value = ai.at
+          ? (ai.ok ? 'AI response' : 'Built-in fallback') + ' · ' + (ai.provider || '—') +
+            ' · ' + (ai.sections || 0) + ' sections · ' + Math.round(ai.latencyMs || 0) + 'ms · ' +
+            new Date(ai.at).toLocaleTimeString()
+          : 'No AI request yet';
+        $('ltAiError').textContent = ai.reason
+          ? 'Last error: ' + ai.reason
+          : provider.lastError
+            ? 'Provider error: ' + provider.lastError
+            : 'No AI errors recorded.';
+      }
+
       function apply(next) {
         if (!next) return;
         snapshot = next;
@@ -3181,6 +3219,7 @@
         if (snapshot.topics) renderTopics();
         if (snapshot.promotion) renderPromotion();
         if (snapshot.ticker) renderExtras();
+        if (snapshot.ai || snapshot.aiProvider) renderAi();
       }
 
       async function refresh() {
@@ -3309,6 +3348,19 @@
           refresh();
           status('lrStatus', 'Result settings saved.');
         } catch (err) { status('lrStatus', err.message); }
+      });
+      $('ltAiRefresh').addEventListener('click', () => refresh().then(() => status('ltAiStatus', 'AI status refreshed.')));
+      $('ltAiTest').addEventListener('click', async () => {
+        const provider = (snapshot && snapshot.aiProvider) || {};
+        if (!provider.id) return status('ltAiStatus', 'No provider configured in LLM Provider Manager.');
+        status('ltAiStatus', 'Testing ' + provider.name + '…');
+        try {
+          const result = await rpc('llm.test', { id: provider.id });
+          status('ltAiStatus', result.ok
+            ? provider.name + ' connection OK · ' + (result.model || '') + ' · ' + (result.latencyMs || 0) + 'ms'
+            : provider.name + ' failed: ' + (result.error || 'unknown error'));
+          refresh();
+        } catch (err) { status('ltAiStatus', err.message); }
       });
 
       // testing

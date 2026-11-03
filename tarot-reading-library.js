@@ -1068,8 +1068,35 @@ function buildReadingResult(reading, options = {}) {
 }
 
 /**
- * Reject AI prose that names a card which was not drawn, or that tries to change
- * the spread. Everything else is allowed; length is trimmed before display.
+ * A card's orientation is part of the draw. A sentence that gives a drawn card
+ * the opposite orientation is a contradiction, so the whole answer is rejected.
+ * Sentences naming several drawn cards are skipped, because the orientation
+ * cannot be attributed to one card safely.
+ */
+function orientationConflict(text, cards) {
+  const sentences = String(text || '').split(/(?<=[.!?])\s+/);
+  const list = Array.isArray(cards) ? cards : [];
+  for (const card of list) {
+    const name = String(card.name || '').toLowerCase();
+    if (!name) continue;
+    for (const sentence of sentences) {
+      const lower = sentence.toLowerCase();
+      if (!lower.includes(name)) continue;
+      const mentioned = list.filter((entry) => lower.includes(String(entry.name || '').toLowerCase())).length;
+      if (mentioned > 1) continue;
+      const stated = lower.match(/\b(?:is|sits|appears|lands|falls|lies|stands)\s+(?:in the [a-z]+ (?:position )?)?(upright|reversed)\b/);
+      if (!stated) continue;
+      const expected = card.reversed ? 'reversed' : 'upright';
+      if (stated[1] !== expected) return `${card.name} described as ${stated[1]}`;
+    }
+  }
+  return '';
+}
+
+/**
+ * Reject AI prose that names a card which was not drawn, reverses a card, or
+ * that tries to change the spread. Everything else is allowed; length is
+ * trimmed before display.
  */
 function validateAiText(text, reading) {
   const value = String(text || '').trim();
@@ -1090,6 +1117,8 @@ function validateAiText(text, reading) {
       }
     }
   }
+  const conflict = orientationConflict(value, reading.cards || []);
+  if (conflict) return { ok: false, reason: `orientation_conflict:${conflict}` };
   return { ok: true, text: value };
 }
 
@@ -1117,13 +1146,39 @@ function parseAiSections(text) {
   return whole ? [{ key: 'message', label: "Oracle's Message", text: whole, cards: [] }] : [];
 }
 
-/** Merge an AI section set into the result without touching cards or scores. */
+/**
+ * Merge an AI section set into the result without touching cards or scores.
+ * When the caller supplies the expected labels (the topic's six sections), the
+ * answer must cover every one of them, and the canonical labels and order win
+ * so a six-section reading never silently collapses to three.
+ */
 function applyAiInterpretation(result, aiText, options = {}) {
   if (!result) return null;
-  const checked = validateAiText(aiText, { cards: result.cards.map((card) => ({ name: card.name })) });
+  const checked = validateAiText(aiText, {
+    cards: result.cards.map((card) => ({ name: card.name, reversed: card.reversed }))
+  });
   if (!checked.ok) return { ...result, aiError: checked.reason };
-  const sections = parseAiSections(checked.text);
-  if (!sections.length) return { ...result, aiError: 'empty_sections' };
+  const parsed = parseAiSections(checked.text);
+  if (!parsed.length) return { ...result, aiError: 'empty_sections' };
+  const expected = Array.isArray(options.labels) ? options.labels.filter(Boolean) : [];
+  let sections = parsed;
+  if (expected.length) {
+    const normalize = (label) => String(label || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+    const byLabel = new Map(parsed.map((section) => [normalize(section.label), section]));
+    const missing = expected.filter((label) => !byLabel.has(normalize(label)));
+    if (missing.length) return { ...result, aiError: `missing_sections:${missing.join(' | ')}` };
+    sections = expected.map((label, index) => {
+      const match = byLabel.get(normalize(label));
+      const base = Array.isArray(result.sections) ? result.sections[index] : null;
+      return {
+        key: (base && base.key) || match.key,
+        label,
+        text: match.text,
+        spoken: firstSentence(match.text),
+        cards: Array.isArray(base && base.cards) ? [...base.cards] : []
+      };
+    });
+  }
   const paragraphs = [clean(checked.text, 1600), CLOSING_LINE];
   const merged = {
     ...result,
