@@ -374,6 +374,8 @@
   const queueCountEl = $('queueCount');
   const queueNextEl = $('queueNext');
   const queueMoveEl = $('queueMovement');
+  const queuePromoEl = $('queuePromo');
+  const queueRecentEl = $('queueRecent');
   const destinyColumnsEl = $('destinyColumns');
   const resultEl = $('readingResult');
   const moveLineEls = [$('moveLineA'), $('moveLineB')];
@@ -387,12 +389,37 @@
   let movementIndex = 0;
   let lastMovementId = '';
 
+  // Shrink the promotion until it fits its row on a single line.
+  function fitQueuePromo() {
+    if (!queuePromoEl || !queueMoveEl || queuePromoEl.classList.contains('is-hidden')) return;
+    const available = Math.max(120, queueMoveEl.clientWidth);
+    let size = Math.min(17, available / 52);
+    queuePromoEl.style.fontSize = `${size}px`;
+    let guard = 0;
+    // Icons are em-sized, so the labels and artwork shrink together.
+    while (size > 9 && queuePromoEl.scrollWidth > available && guard < 40) {
+      size -= 0.5;
+      queuePromoEl.style.fontSize = `${size}px`;
+      guard += 1;
+    }
+  }
+
   function renderQueue(queue) {
     if (!queue || !queue.lines) return;
     if (queueCurrentEl) queueCurrentEl.textContent = queue.lines.current;
     if (queueCountEl) queueCountEl.textContent = queue.lines.count;
     if (queueNextEl) queueNextEl.textContent = queue.lines.next;
-    if (queueMoveEl && queue.lines.recent) queueMoveEl.textContent = queue.lines.recent;
+    // The promotion only owns the row while the line is empty.
+    const empty = window.QueuePromo
+      ? !window.QueuePromo.hasWaiting(queue)
+      : !(Number(queue.count) > 0);
+    if (queuePromoEl) queuePromoEl.classList.toggle('is-hidden', !empty);
+    if (queueRecentEl) {
+      const recentText = queue.lines.recent || '';
+      queueRecentEl.textContent = recentText;
+      queueRecentEl.classList.toggle('is-hidden', empty || !recentText);
+    }
+    if (empty) fitQueuePromo();
   }
 
   // Two rotating columns of topics, one step per configured interval.
@@ -464,7 +491,9 @@
   function pushMovement(movement) {
     if (!movement || movement.id === lastMovementId) return;
     lastMovementId = movement.id;
-    if (queueMoveEl) queueMoveEl.textContent = movement.message || '';
+    // The row itself is markup now (promotion or live movement); only the text
+    // span changes, and renderQueue decides which of the two is visible.
+    if (queueRecentEl) queueRecentEl.textContent = movement.message || '';
     if (tarotState && tarotState.ticker && tarotState.ticker.enabled === false) return;
     const el = moveLineEls[movementIndex % moveLineEls.length];
     movementIndex += 1;

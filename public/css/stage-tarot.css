@@ -67,6 +67,44 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  justify-content: center;
+}
+
+/* Empty-queue promotion: one centred horizontal line, real gift artwork. */
+.queue-promo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+
+.queue-promo.is-hidden,
+.queue-recent.is-hidden { display: none; }
+
+.queue-promo-label { white-space: nowrap; }
+.queue-promo-sep { color: rgba(255, 217, 238, 0.4); }
+.queue-promo-free { color: #ffe6a6; }
+
+.queue-icon {
+  height: 1.2em;
+  width: auto;
+  flex: none;
+  display: block;
+}
+
+.queue-icon-emoji {
+  font-size: 1.05em;
+  line-height: 1;
+  flex: none;
+}
+
+.queue-recent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------------- choose your destiny ---------------- */

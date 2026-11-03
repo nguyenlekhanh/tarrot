@@ -5848,7 +5848,8 @@ function queueLines(snapshot) {
   const next = snapshot.next.length
     ? `NEXT: ${snapshot.next.map((name) => String(name).toUpperCase()).join(' → ')}`
     : 'NEXT: THE LINE IS OPEN';
-  const recent = snapshot.recent[0] ? snapshot.recent[0].message : '✨ THE LINE IS QUIET TONIGHT';
+  // An empty line is rendered as the promotion markup, so there is no copy here.
+  const recent = snapshot.recent[0] ? snapshot.recent[0].message : '';
   return {
     current,
     next,

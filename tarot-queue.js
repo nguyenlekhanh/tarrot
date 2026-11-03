@@ -351,7 +351,7 @@ class TarotQueue {
       lines: {
         current: this.current ? `NOW READING: ${this.current.user.toUpperCase()}` : 'THE READING TABLE IS WAITING',
         next: nextNames.length ? `NEXT: ${nextNames.map((name) => name.toUpperCase()).join(' → ')}` : 'NEXT: THE LINE IS OPEN',
-        recent: this.recent[0] ? this.recent[0].message : '✨ THE LINE IS QUIET TONIGHT',
+        recent: this.recent[0] ? this.recent[0].message : '',
         count: `${this.entries.length} / ${this.capacity} WAITING`
       },
       entries: ordered.slice(0, 50).map((item) => ({

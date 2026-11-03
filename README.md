@@ -282,7 +282,8 @@ The stage now runs a full interactive queue, not just single readings.
 Three lines, updated from the server on every change: **current reading** (`NOW READING: EMILY`, or
 `THE READING TABLE IS WAITING` when idle) with the live count (`84 / 100 WAITING`), **next in line**
 (`NEXT: SOPHIA → OLIVIA`) and the **latest movement** (`🎁 EMILY SENT A GIFT! MOVED UP: #77 → #71`).
-Empty queues read `NEXT: THE LINE IS OPEN` and `✨ THE LINE IS QUIET TONIGHT` — the stage never prints
+Empty queues read `NEXT: THE LINE IS OPEN` and one centered promotion line (`🌹 1 Rose = Move Up 1 Position | ❤️ 100 Likes = Move Up 1 Position | 🔮 FREE TAROT READING`, with the
+rose rendered from `public/assets/gift_icon/rose.webp`) — the stage never prints
 `undefined`. Queue state is persisted in `data/game-state.json` and survives a restart
 (`tarot-queue.js`).
 

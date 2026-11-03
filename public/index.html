@@ -59,7 +59,20 @@
             <span class="queue-count" id="queueCount">0 / 100 WAITING</span>
           </div>
           <div class="queue-row queue-next" id="queueNext">NEXT: THE LINE IS OPEN</div>
-          <div class="queue-row queue-move" id="queueMovement">&#10024; THE LINE IS QUIET TONIGHT</div>
+          <div class="queue-row queue-move" id="queueMovement">
+            <!-- Shown only while nobody is waiting; images come from gift_icon/. -->
+            <div class="queue-promo" id="queuePromo">
+              <img class="queue-icon" src="/assets/gift_icon/rose.webp" alt="Rose" />
+              <span class="queue-promo-label">1 Rose = Move Up 1 Position</span>
+              <span class="queue-promo-sep">|</span>
+              <span class="queue-icon queue-icon-emoji" aria-hidden="true">❤️</span>
+              <span class="queue-promo-label">100 Likes = Move Up 1 Position</span>
+              <span class="queue-promo-sep">|</span>
+              <span class="queue-icon queue-icon-emoji" aria-hidden="true">🔮</span>
+              <span class="queue-promo-label queue-promo-free">FREE TAROT READING</span>
+            </div>
+            <span class="queue-recent" id="queueRecent"></span>
+          </div>
         </section>
 
         <!-- 4c. CHOOSE YOUR DESTINY -->
@@ -207,6 +220,7 @@
   <script src="/js/particles.js"></script>
   <script src="/js/music.js"></script>
   <script src="/js/tts-queue.js"></script>
+  <script src="/js/queue-promo.js"></script>
   <script src="/js/tarot-card-view.js"></script>
   <script src="/js/reading-reset.js"></script>
   <script src="/js/conversation.js"></script>
