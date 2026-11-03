@@ -39,6 +39,9 @@ const DATA_DIR = path.join(__dirname, 'data');
 const TTS_CACHE_DIR = path.join(DATA_DIR, 'tts-cache');
 const STATE_FILE = path.join(DATA_DIR, 'game-state.json');
 const { TarotEngine } = require('./tarot-engine');
+const { TarotQueue } = require('./tarot-queue');
+const { normalizeTopics, normalizeTopicSettings, detectTopic, extractQuestion, rotateTopics } = require('./tarot-topics');
+const { buildReadingResult, applyAiInterpretation } = require('./tarot-reading-library');
 const tarotEngine = new TarotEngine({ historyFile: path.join(DATA_DIR, 'tarot-history.json') });
 
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
@@ -2656,6 +2659,17 @@ function ttsEngineStatus(engine) {
   return engine === 'kokoro' ? kokoroTts.getStatus() : piperTts.getStatus();
 }
 
+// A reading must keep one voice: while the Kokoro worker is still loading (the
+// ~28 s after a restart), wait briefly instead of switching the narration to the
+// Piper fallback mid-sentence.
+async function waitForKokoroReady(timeoutMs = 12000) {
+  const deadline = Date.now() + timeoutMs;
+  while (!kokoroTts.ready && Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return kokoroTts.ready;
+}
+
 // All speech goes through this adapter so Kokoro can fail over without touching
 // the browser's priority queue, profile settings or saved state.
 async function synthesizeSpeech(text, options = {}) {
@@ -2664,7 +2678,12 @@ async function synthesizeSpeech(text, options = {}) {
     const result = await piperTts.synthesize(text, options);
     return { ...result, engine: 'piper', requestedEngine: 'piper', fallback: false };
   }
-  const result = await kokoroTts.synthesize(text, options);
+  if (!kokoroTts.ready) await waitForKokoroReady(12000);
+  let result = await kokoroTts.synthesize(text, options);
+  if (!result.ok && /status|loading|starting|not ready/i.test(String(result.error || ''))) {
+    await waitForKokoroReady(8000);
+    result = await kokoroTts.synthesize(text, options);
+  }
   if (result.ok) return { ...result, requestedEngine: 'kokoro', fallback: false };
   const fallbackError = result.error || 'Kokoro is unavailable';
   if (options.allowFallback === false) {
@@ -2701,6 +2720,32 @@ async function synthesizeSpeech(text, options = {}) {
 // ============================================================================
 // 4. SHOP STATE
 // ============================================================================
+const TAROT_DEFAULT_GIFT_RULES = Object.freeze([
+  { minCoins: 1, spread: 'one' },
+  { minCoins: 25, spread: 'three' }
+]);
+
+// Gift art that actually exists in public/assets/gift_icon/.
+const TAROT_GIFT_ICONS = Object.freeze([
+  'rose.webp',
+  'rosa10.webp',
+  'PrayerCandle.webp',
+  'embroidered5.webp',
+  'flowergarland15.webp',
+  'Bouquet20.webp',
+  'grandCeremony.webp'
+]);
+
+const TAROT_DEFAULT_PROMOTION_MAPPING = Object.freeze([
+  { id: 'rose', name: 'Rose', label: 'Rose', icon: 'rose.webp', coins: 1, promote: 2, aliases: ['rose', 'rosa'] },
+  { id: 'rosa10', name: 'Rosa', label: 'Rosa', icon: 'rosa10.webp', coins: 10, promote: 4, aliases: ['rosa10', 'rosa 10'] },
+  { id: 'prayercandle', name: 'Prayer Candle', label: 'Prayer Candle', icon: 'PrayerCandle.webp', coins: 5, promote: 3, aliases: ['prayercandle', 'prayer candle'] },
+  { id: 'embroidered5', name: 'Embroidered', label: 'Embroidered', icon: 'embroidered5.webp', coins: 5, promote: 3, aliases: ['embroidered', 'embroidered5'] },
+  { id: 'flowergarland15', name: 'Flower Garland', label: 'Flower Garland', icon: 'flowergarland15.webp', coins: 15, promote: 5, aliases: ['flowergarland', 'flower garland'] },
+  { id: 'bouquet20', name: 'Bouquet', label: 'Bouquet', icon: 'Bouquet20.webp', coins: 20, promote: 6, aliases: ['bouquet', 'bouquet20'] },
+  { id: 'grandceremony', name: 'Grand Ceremony', label: 'Grand Ceremony', icon: 'grandCeremony.webp', coins: 100, promote: 12, aliases: ['grandceremony', 'grand ceremony'] }
+]);
+
 const DEFAULT_STATE = {
   customersServed: 0,
   drinksSold: 0,
@@ -3192,6 +3237,7 @@ function saveState() {
       settings: state.settings,
       voiceProfiles: state.voiceProfiles || null,
       conversations: state.conversations || null,
+      tarot: state.tarot || null,
       reactive: state.reactive
         ? { settings: state.reactive.settings, llmManager: state.reactive.llmManager || null }
         : null
@@ -3939,6 +3985,7 @@ const Actions = {
       ...speechFor('seller')
     });
 
+    applyLikePromotion(supporter.name, uniqueId, count);
     saveState();
     broadcastNotification('temple.event', { event });
     return params._lean ? { event } : { event, state: getPublicState() };
@@ -4966,6 +5013,7 @@ function processLikeBatch(batch) {
     );
     const { viewer } = ensureViewer({ user: supporter.name, uniqueId: supporter.uniqueId, avatar: supporter.avatar });
     recordViewerStats(viewer, { likes: count });
+    applyLikePromotion(supporter.name, supporter.uniqueId, count);
     if (!primaryViewer) primaryViewer = viewer;
   }
   if (batch.overflow && batch.overflow.count) {
@@ -5082,6 +5130,7 @@ async function handleQueuedEvent(entry) {
   const payload = entry.payload || {};
   switch (entry.type) {
     case 'GIFT':
+      applyGiftPromotion(payload);
       maybeHandleGiftTarot(payload);
       processGiftEvent(payload);
       return;
@@ -5633,10 +5682,6 @@ function configureAutoSim(enabled) {
 // Selection lives in tarot-engine.js; this section only decides *when* to ask
 // for a reading, rate-limits requests, and announces the result.
 // ============================================================================
-const TAROT_DEFAULT_GIFT_RULES = Object.freeze([
-  { minCoins: 1, spread: 'one' },
-  { minCoins: 25, spread: 'three' }
-]);
 const TAROT_THEME_WORDS = Object.freeze({
   love: 'love', crush: 'love', relationship: 'love', romance: 'love',
   career: 'career', job: 'career', work: 'career', money: 'career', business: 'career',
@@ -5645,7 +5690,6 @@ const TAROT_THEME_WORDS = Object.freeze({
 const TAROT_COMMAND_WORDS = Object.freeze(['tarot', 'reading', 'cards', 'card', 'fortune']);
 
 const tarotQueueState = {
-  queue: [],
   processing: false,
   served: 0,
   dropped: 0,
@@ -5653,6 +5697,15 @@ const tarotQueueState = {
   lastByViewer: new Map(),
   giftGroups: new Set()
 };
+
+let tarotQueue = null;
+let tarotWaitTimer = null;
+
+function clampInt(value, fallback, min, max) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(min, Math.min(max, Math.round(number)));
+}
 
 function normalizeGiftRules(raw) {
   const list = Array.isArray(raw) ? raw : TAROT_DEFAULT_GIFT_RULES;
@@ -5667,20 +5720,86 @@ function normalizeGiftRules(raw) {
   return rules.length ? rules : TAROT_DEFAULT_GIFT_RULES.map((rule) => ({ ...rule }));
 }
 
+function normalizePromotionMapping(raw) {
+  const list = Array.isArray(raw) && raw.length ? raw : TAROT_DEFAULT_PROMOTION_MAPPING;
+  return list
+    .map((item) => {
+      const fallback = TAROT_DEFAULT_PROMOTION_MAPPING.find(
+        (entry) => entry.id === String(item && item.id).toLowerCase() || entry.icon === item.icon
+      );
+      const id = String((item && item.id) || (fallback && fallback.id) || '').toLowerCase().slice(0, 40);
+      const label = String((item && (item.label || item.name)) || (fallback && fallback.name) || id).slice(0, 40);
+      if (!id || !label) return null;
+      const icon = TAROT_GIFT_ICONS.includes(String(item && item.icon))
+        ? String(item.icon)
+        : (fallback && fallback.icon) || 'rose.webp';
+      const aliases = Array.isArray(item && item.aliases) ? item.aliases : (fallback && fallback.aliases) || [id];
+      return {
+        id,
+        name: label,
+        label,
+        icon,
+        url: `/assets/gift_icon/${icon}`,
+        coins: clampInt(item && item.coins, (fallback && fallback.coins) || 1, 0, 100000),
+        promote: clampInt(item && item.promote, (fallback && fallback.promote) || 1, 0, 1000),
+        aliases: [...new Set([id, label.toLowerCase(), ...aliases.map((alias) => String(alias).toLowerCase())])],
+        enabled: !(item && item.enabled === false)
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 24);
+}
+
+function normalizeTarotPromotion(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    enabled: source.enabled !== false,
+    waitEnabled: source.waitEnabled !== false,
+    waitIntervalSeconds: clampInt(source.waitIntervalSeconds, 90, 10, 3600),
+    waitAmount: clampInt(source.waitAmount, 1, 0, 100),
+    giftEnabled: source.giftEnabled !== false,
+    giftCoinsPerStep: clampInt(source.giftCoinsPerStep, 5, 1, 1000),
+    likeEnabled: source.likeEnabled !== false,
+    likeAmount: clampInt(source.likeAmount, 1, 0, 100),
+    likeThreshold: clampInt(source.likeThreshold, 10, 1, 10000),
+    mapping: normalizePromotionMapping(source.mapping)
+  };
+}
+
+function normalizeTarotTicker(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    enabled: source.enabled !== false,
+    durationMs: clampInt(source.durationMs, 6000, 1500, 30000),
+    speedMs: clampInt(source.speedMs, 900, 200, 6000)
+  };
+}
+
+function normalizeTarotResult(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    displaySeconds: clampInt(source.displaySeconds, 45, 5, 300),
+    interpretation: String(source.interpretation || '').toLowerCase() === 'ai' ? 'ai' : 'builtin',
+    showFortune: source.showFortune !== false
+  };
+}
+
 function normalizeTarotState(raw) {
   const source = raw && typeof raw === 'object' ? raw : {};
-  const clampInt = (value, fallback, min, max) => {
-    const number = Number(value);
-    if (!Number.isFinite(number)) return fallback;
-    return Math.max(min, Math.min(max, Math.round(number)));
-  };
   return {
     enabled: source.enabled !== false,
     aiInterpretation: source.aiInterpretation === true,
     commentCooldownSeconds: clampInt(source.commentCooldownSeconds, 20, 0, 600),
     perViewerCooldownSeconds: clampInt(source.perViewerCooldownSeconds, 120, 0, 3600),
     maxQueue: clampInt(source.maxQueue, 8, 1, 50),
-    giftRules: normalizeGiftRules(source.giftRules)
+    capacity: clampInt(source.capacity, 100, 1, 1000),
+    giftRules: normalizeGiftRules(source.giftRules),
+    topics: normalizeTopics(source.topics),
+    topicSettings: normalizeTopicSettings(source.topicSettings),
+    promotion: normalizeTarotPromotion(source.promotion),
+    ticker: normalizeTarotTicker(source.ticker),
+    result: normalizeTarotResult(source.result),
+    queueState: source.queueState && typeof source.queueState === 'object' ? source.queueState : null
   };
 }
 
@@ -5698,29 +5817,110 @@ function tarotGiftRuleFor(coins) {
   return match;
 }
 
+// --------------------------------------------------------------- live queue
+function tarotLiveQueue() {
+  if (tarotQueue) return tarotQueue;
+  const settings = tarotSettings();
+  tarotQueue = new TarotQueue({
+    capacity: settings.capacity,
+    waitIntervalSeconds: settings.promotion.waitIntervalSeconds,
+    waitAmount: settings.promotion.waitAmount
+  });
+  if (settings.queueState) {
+    tarotQueue.hydrate(settings.queueState.entries || [], settings.queueState.seq || 0);
+    tarotQueue.served = clampInt(settings.queueState.served, 0, 0, 1000000);
+  }
+  return tarotQueue;
+}
+
+function syncTarotQueue() {
+  const queue = tarotLiveQueue();
+  const settings = tarotSettings();
+  settings.capacity = queue.capacity;
+  settings.queueState = queue.toJSON();
+  saveState();
+}
+
+function queueLines(snapshot) {
+  const current = snapshot.current
+    ? `NOW READING: ${String(snapshot.current.user || '').toUpperCase()}`
+    : 'THE READING TABLE IS WAITING';
+  const next = snapshot.next.length
+    ? `NEXT: ${snapshot.next.map((name) => String(name).toUpperCase()).join(' → ')}`
+    : 'NEXT: THE LINE IS OPEN';
+  const recent = snapshot.recent[0] ? snapshot.recent[0].message : '✨ THE LINE IS QUIET TONIGHT';
+  return {
+    current,
+    next,
+    recent,
+    count: `${snapshot.count} / ${snapshot.capacity} WAITING`
+  };
+}
+
+function tarotQueueSnapshot() {
+  const queue = tarotLiveQueue();
+  const snapshot = queue.snapshot();
+  const settings = tarotSettings();
+  return {
+    ...snapshot,
+    lines: queueLines(snapshot),
+    wait: {
+      enabled: settings.promotion.enabled && settings.promotion.waitEnabled,
+      intervalSeconds: settings.promotion.waitIntervalSeconds,
+      amount: settings.promotion.waitAmount
+    },
+    giftPromotion: {
+      enabled: settings.promotion.enabled && settings.promotion.giftEnabled,
+      coinsPerStep: settings.promotion.giftCoinsPerStep,
+      mapping: settings.promotion.mapping.map((item) => ({ ...item }))
+    },
+    likePromotion: {
+      enabled: settings.promotion.enabled && settings.promotion.likeEnabled,
+      amount: settings.promotion.likeAmount,
+      threshold: settings.promotion.likeThreshold
+    }
+  };
+}
+
 function tarotSnapshot() {
   const settings = tarotSettings();
   const history = tarotEngine.history(8);
+  const queue = tarotQueueSnapshot();
   return {
     enabled: settings.enabled,
     aiInterpretation: settings.aiInterpretation,
     commentCooldownSeconds: settings.commentCooldownSeconds,
     perViewerCooldownSeconds: settings.perViewerCooldownSeconds,
     maxQueue: settings.maxQueue,
+    capacity: settings.capacity,
     giftRules: settings.giftRules.map((rule) => ({ ...rule })),
+    topics: settings.topics.map((topic) => ({ ...topic })),
+    topicSettings: { ...settings.topicSettings },
+    rotation: rotateTopics(settings.topics, settings.topicSettings, Date.now()),
+    promotion: {
+      enabled: settings.promotion.enabled,
+      waitEnabled: settings.promotion.waitEnabled,
+      waitIntervalSeconds: settings.promotion.waitIntervalSeconds,
+      waitAmount: settings.promotion.waitAmount,
+      giftEnabled: settings.promotion.giftEnabled,
+      giftCoinsPerStep: settings.promotion.giftCoinsPerStep,
+      likeEnabled: settings.promotion.likeEnabled,
+      likeAmount: settings.promotion.likeAmount,
+      likeThreshold: settings.promotion.likeThreshold
+    },
+    giftIcons: TAROT_GIFT_ICONS.map((file) => ({ file, url: `/assets/gift_icon/${file}` })),
+    giftMapping: settings.promotion.mapping.map((item) => ({ ...item })),
+    ticker: { ...settings.ticker },
+    result: { ...settings.result },
+    queue,
     deckSize: tarotEngine.deckSize,
     history,
     total: tarotEngine.historyCount(),
-    lastReading: history[0] || null,
-    queue: {
-      pending: tarotQueueState.queue.length,
-      processing: tarotQueueState.processing,
-      served: tarotQueueState.served,
-      dropped: tarotQueueState.dropped
-    }
+    lastReading: history[0] || null
   };
 }
 
+// ---------------------------------------------------------------- detection
 /**
  * Recognize a tarot request in a chat comment.
  * Short commands (TAROT / LOVE / CAREER / FUTURE) map to a theme; longer
@@ -5760,54 +5960,250 @@ function detectTarotRequest(rawText) {
   return { theme, spread, question: text.slice(0, 200) };
 }
 
+/**
+ * A comment can select any enabled topic without saying "tarot": the topic
+ * keywords are the trigger. The viewer's own words stay the question.
+ */
+function detectLiveReadingRequest(rawText) {
+  const text = String(rawText || '').trim();
+  if (!text || text.length > 240) return null;
+  const settings = tarotSettings();
+  if (!settings.topicSettings.enabled) return detectTarotRequest(text);
+  const topic = detectTopic(text, settings.topics);
+  const legacy = detectTarotRequest(text);
+  if (!topic && !legacy) return null;
+  const theme = topic ? topic.theme : legacy.theme;
+  const spread = legacy
+    ? legacy.spread
+    : theme === 'love' || theme === 'career'
+      ? 'one'
+      : 'three';
+  return {
+    topicId: topic ? topic.topicId : '',
+    topicLabel: topic ? topic.label : '',
+    theme,
+    spread,
+    keyword: topic ? topic.keyword : '',
+    matched: Boolean(topic && topic.matched),
+    question: extractQuestion(text) || text.slice(0, 200)
+  };
+}
+
 function tarotViewerKey(user, uniqueId) {
   const id = String(uniqueId || '').trim().toLowerCase();
   return id ? `u:${id}` : `n:${String(user || 'guest').toLowerCase().slice(0, 40)}`;
 }
 
+function broadcastQueueMove(movement) {
+  if (!movement) return;
+  broadcastNotification('tarot.queue.move', { movement, queue: tarotQueueSnapshot() });
+  broadcastNotification('tarot.state', tarotSnapshot());
+}
+
+function applyWaitingPromotion() {
+  const settings = tarotSettings();
+  if (!settings.promotion.enabled || !settings.promotion.waitEnabled) return [];
+  const movements = tarotLiveQueue().accrueWait();
+  if (!movements.length) return [];
+  syncTarotQueue();
+  for (const movement of movements.slice(0, 4)) broadcastQueueMove(movement);
+  return movements;
+}
+
+function startTarotWaitTimer() {
+  if (tarotWaitTimer) clearInterval(tarotWaitTimer);
+  tarotWaitTimer = setInterval(() => {
+    try {
+      applyWaitingPromotion();
+    } catch (err) {
+      console.warn('[Tarot Queue] Waiting promotion failed:', err && err.message ? err.message : err);
+    }
+  }, 5000);
+  if (tarotWaitTimer.unref) tarotWaitTimer.unref();
+}
+startTarotWaitTimer();
+
+function applyGiftPromotion(payload = {}) {
+  const settings = tarotSettings();
+  if (!settings.promotion.enabled || !settings.promotion.giftEnabled) return null;
+  const queue = tarotLiveQueue();
+  const key = tarotViewerKey(payload.user, payload.uniqueId);
+  if (!queue.find(key)) return null;
+  const giftName = String(payload.giftName || '').toLowerCase();
+  const giftId = String(payload.giftId || '').toLowerCase();
+  const mapping = settings.promotion.mapping
+    .filter((item) => item.enabled !== false)
+    .map((item) => ({ id: item.id, name: item.name, promote: item.promote, icon: item.url, aliases: item.aliases }));
+  const gift = mapping.find((item) => {
+    const aliases = item.aliases || [];
+    return (
+      aliases.includes(giftName) ||
+      aliases.includes(giftId) ||
+      item.id === giftName ||
+      item.name.toLowerCase() === giftName
+    );
+  });
+  const result = queue.promoteGift({
+    key,
+    groupId: payload.groupId,
+    giftId: payload.giftId || giftName,
+    giftName,
+    coins: payload.giftCoins,
+    mapping: gift ? [{ ...gift, id: gift.id, name: gift.name }] : [],
+    coinsPerStep: settings.promotion.giftCoinsPerStep
+  });
+  if (!result || !result.movement) return null;
+  syncTarotQueue();
+  broadcastQueueMove(result.movement);
+  return result.movement;
+}
+
+function applyLikePromotion(user, uniqueId, count) {
+  const settings = tarotSettings();
+  if (!settings.promotion.enabled || !settings.promotion.likeEnabled) return null;
+  if (Number(count) < settings.promotion.likeThreshold) return null;
+  const queue = tarotLiveQueue();
+  const key = tarotViewerKey(user, uniqueId);
+  if (!queue.find(key)) return null;
+  const result = queue.promote(key, settings.promotion.likeAmount, 'like');
+  if (!result || !result.movement) return null;
+  syncTarotQueue();
+  broadcastQueueMove(result.movement);
+  return result.movement;
+}
+
+// ------------------------------------------------------------ queue actions
+function addViewerToQueue(params = {}) {
+  const queue = tarotLiveQueue();
+  const settings = tarotSettings();
+  const added = queue.add({
+    user: params.user || 'Guest',
+    uniqueId: params.uniqueId,
+    avatar: params.avatar,
+    topicId: params.topicId,
+    topicLabel: params.topicLabel,
+    question: params.question,
+    spread: params.spread
+  });
+  if (!added.ok) {
+    if (added.reason === 'queue_full') tarotQueueState.dropped += 1;
+    return { ...added, queue: tarotQueueSnapshot() };
+  }
+  syncTarotQueue();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ...added, queue: tarotQueueSnapshot() };
+}
+
+function removeViewerFromQueue(params = {}) {
+  const removed = tarotLiveQueue().remove(params.id || params.user || params.uniqueId);
+  if (removed.ok) {
+    syncTarotQueue();
+    broadcastNotification('tarot.state', tarotSnapshot());
+  }
+  return { ...removed, queue: tarotQueueSnapshot() };
+}
+
+function promoteViewerInQueue(params = {}) {
+  const settings = tarotSettings();
+  const amount = params.amount !== undefined ? params.amount : (settings.promotion.waitAmount || 1);
+  const result = tarotLiveQueue().promote(params.id || params.user || params.uniqueId, amount, params.kind || 'manual');
+  if (result.ok && result.movement) {
+    syncTarotQueue();
+    broadcastQueueMove(result.movement);
+  }
+  return { ...result, queue: tarotQueueSnapshot() };
+}
+
+function clearTarotQueue() {
+  const cleared = tarotLiveQueue().clear();
+  syncTarotQueue();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ...cleared, queue: tarotQueueSnapshot() };
+}
+
 function enqueueTarotRequest(request = {}) {
   const settings = tarotSettings();
-  if (!settings.enabled) return { accepted: false, reason: 'tarot_disabled' };
+  if (!settings.enabled) {
+    tarotQueueState.dropped += 1;
+    return { accepted: false, reason: 'tarot_disabled' };
+  }
   const now = Date.now();
   // Paid gifts and admin tests must not be throttled by the chat cooldown; they
-  // are already deduplicated per gift group and still respect maxQueue.
+  // are already deduplicated per gift group and still respect capacity.
   const bypassCooldowns = request.bypassCooldowns === true;
-  const viewerKey = tarotViewerKey(request.user, request.uniqueId);
+  const viewerKeyValue = tarotViewerKey(request.user, request.uniqueId);
   if (!bypassCooldowns && now - tarotQueueState.lastGlobalAt < settings.commentCooldownSeconds * 1000) {
     tarotQueueState.dropped += 1;
     return { accepted: false, reason: 'global_cooldown' };
   }
-  const viewerLast = Number(tarotQueueState.lastByViewer.get(viewerKey) || 0);
+  const viewerLast = Number(tarotQueueState.lastByViewer.get(viewerKeyValue) || 0);
   if (!bypassCooldowns && now - viewerLast < settings.perViewerCooldownSeconds * 1000) {
     tarotQueueState.dropped += 1;
     return { accepted: false, reason: 'viewer_cooldown' };
   }
-  if (tarotQueueState.queue.length >= settings.maxQueue) {
+  const added = addViewerToQueue({
+    user: request.user,
+    uniqueId: request.uniqueId,
+    avatar: request.avatar,
+    topicId: request.topicId,
+    topicLabel: request.topicLabel,
+    question: request.question,
+    spread: request.spread
+  });
+  if (!added.ok) {
     tarotQueueState.dropped += 1;
-    return { accepted: false, reason: 'queue_full' };
+    return { accepted: false, reason: added.reason || 'queue_full' };
   }
-
+  if (added.duplicate) {
+    return { accepted: false, reason: 'already_queued', position: added.position };
+  }
   tarotQueueState.lastGlobalAt = now;
-  tarotQueueState.lastByViewer.set(viewerKey, now);
+  tarotQueueState.lastByViewer.set(viewerKeyValue, now);
   while (tarotQueueState.lastByViewer.size > 500) {
     tarotQueueState.lastByViewer.delete(tarotQueueState.lastByViewer.keys().next().value);
   }
-  tarotQueueState.queue.push({ ...request, queuedAt: now });
   drainTarotQueue();
-  return { accepted: true, pending: tarotQueueState.queue.length };
+  return { accepted: true, position: added.position, pending: tarotLiveQueue().snapshot().count };
 }
 
 async function drainTarotQueue() {
   if (tarotQueueState.processing) return;
   tarotQueueState.processing = true;
   try {
-    while (tarotQueueState.queue.length) {
-      const request = tarotQueueState.queue.shift();
+    while (true) {
+      if (!tarotSettings().enabled) break;
+      const next = tarotLiveQueue().startNext();
+      if (!next) break;
+      syncTarotQueue();
+      broadcastNotification('tarot.state', tarotSnapshot());
       try {
-        await runTarotReading({ ...request, announce: true });
+        const outcome = await runTarotReading({
+          spread: next.spread,
+          question: next.question,
+          user: next.user,
+          uniqueId: next.uniqueId,
+          topicId: next.topicId,
+          topicLabel: next.topicLabel,
+          theme: next.theme,
+          source: 'queue',
+          trigger: 'chat',
+          announce: true,
+          fromQueue: true
+        });
         tarotQueueState.served += 1;
+        // Leave the result on the table long enough to read before the next one.
+        const waitMs = Math.min(300000, Math.max(0, tarotSettings().result.displaySeconds) * 1000);
+        if (outcome && tarotLiveQueue().snapshot().count > 0) {
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
+        }
       } catch (err) {
         console.warn('[Tarot] Reading failed:', err && err.message ? err.message : err);
+      } finally {
+        if (tarotLiveQueue().current) {
+          tarotLiveQueue().complete(tarotLiveQueue().current.key);
+          syncTarotQueue();
+          broadcastNotification('tarot.state', tarotSnapshot());
+        }
       }
     }
   } finally {
@@ -5815,39 +6211,43 @@ async function drainTarotQueue() {
   }
 }
 
+// ------------------------------------------------------------ AI + narration
 /**
- * Optional LLM narration. Card selection already happened upstream, so a
+ * Optional LLM interpretation. Card selection already happened upstream, so a
  * provider outage can only shorten the prose — it can never change the draw.
- * Any failure falls straight back to the built-in structured summary.
+ * The answer is validated against the actual spread before it is shown.
  */
-async function tarotAiNarration(reading) {
-  const fallback = { text: reading.summary, source: 'static', provider: '' };
-  if (!tarotSettings().aiInterpretation) return fallback;
+async function tarotAiNarration(reading, result) {
+  const settings = tarotSettings();
+  if (!result || (settings.result.interpretation !== 'ai' && !settings.aiInterpretation)) {
+    return { ok: false, text: '', provider: '', reason: 'disabled' };
+  }
   let candidates = [];
   try {
     candidates = llmProviders.candidates();
   } catch (_) {
     candidates = [];
   }
-  if (!candidates.length) return { ...fallback, reason: 'no_llm_provider' };
-  const settings = ensureReactive().settings;
+  if (!candidates.length) return { ok: false, text: '', provider: '', reason: 'no_llm_provider' };
+  const reactive = ensureReactive().settings;
   const cardLines = reading.cards
     .map((card) => `${card.position}: ${card.name}${card.reversed ? ' (reversed)' : ''} — ${card.meaning}`)
     .join('\n');
   const prompt = [
-    `Viewer: ${reading.user}`,
+    `Viewer name: ${result.user}`,
+    `Topic: ${result.topicLabel} (${reading.theme})`,
     `Question: ${reading.question || 'a general reading'}`,
-    `Theme: ${reading.theme}`,
+    `Good fortune ${result.fortune}%, points to watch ${result.caution}%`,
     cardLines
   ].join('\n');
 
   for (const providerConfig of candidates.slice(0, 2)) {
     try {
-      const provider = reactiveProviderInfo(settings, providerConfig.id);
+      const provider = reactiveProviderInfo(reactive, providerConfig.id);
       if (!provider || provider.status !== 'ready') continue;
       const key = llmProviders.keyFor(providerConfig).key;
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), providerConfig.timeoutMs || settings.timeoutMs || 8000);
+      const timer = setTimeout(() => controller.abort(), providerConfig.timeoutMs || reactive.timeoutMs || 8000);
       let response;
       try {
         response = await fetch(provider.endpoint, {
@@ -5862,12 +6262,15 @@ async function tarotAiNarration(reading) {
             messages: [
               {
                 role: 'system',
-                content: 'You are the Mystic Witch, an ancient supernatural tarot reader on a live stream. Speak in American English. Two short sentences, atmospheric but concrete, no markdown, no lists, never invent cards.'
+                content:
+                  'You are the Mystic Witch, an ancient tarot reader on a live stream. Write three short English sentences in second person, ' +
+                  'atmospheric but concrete, plain prose only. Use ONLY the cards listed by the user, never invent another card, ' +
+                  'never change the spread or the percentages, no markdown, no lists, no emoji.'
               },
               { role: 'user', content: prompt }
             ],
             temperature: 0.8,
-            max_tokens: 160
+            max_tokens: 220
           }),
           signal: controller.signal
         });
@@ -5879,50 +6282,65 @@ async function tarotAiNarration(reading) {
       const text = data && data.choices && data.choices[0] && data.choices[0].message
         ? String(data.choices[0].message.content || '').trim()
         : '';
-      if (text) return { text: text.slice(0, 400), source: 'ai', provider: provider.name || provider.id };
+      if (!text) continue;
+      const merged = applyAiInterpretation(result, text, { provider: provider.name || provider.id });
+      if (merged && merged.source === 'ai') {
+        return { ok: true, text: merged.oracleMessage, provider: merged.provider, result: merged };
+      }
+      return { ok: false, text: '', provider: '', reason: merged ? merged.aiError : 'invalid_ai_text' };
     } catch (_) {
-      // try the next candidate, then fall back below
+      // try the next candidate, then fall back to the built-in library
     }
   }
-  return { ...fallback, reason: 'llm_unavailable' };
+  return { ok: false, text: '', provider: '', reason: 'llm_unavailable' };
 }
 
-async function announceTarotReading(reading) {
-  const text = String(reading.spoken || '').slice(0, Math.max(120, Number(state.settings.ttsMaxChars) || 120) * 2);
-  if (!text) return null;
-  try {
-    const result = await synthesizeSpeech(text, {
-      engine: state.settings.ttsEngine,
-      // Kokoro and Piper keep separate voice catalogues. Handing Kokoro a Piper
-      // voice id silently fell back to its built-in default voice.
-      voice: state.settings.ttsEngine === 'kokoro'
-        ? state.settings.ttsKokoroVoice || 'af_alloy'
-        : state.settings.ttsVoice,
-      piperVoice: state.settings.ttsVoice,
-      language: 'en',
-      speed: state.settings.ttsSpeed,
-      allowFallback: true
-    });
-    if (!result || !result.ok) return result || null;
-    broadcastNotification('tts.play', {
-      text,
-      engine: result.engine,
-      requestedEngine: result.requestedEngine,
-      voice: result.voice,
-      language: result.language,
-      speed: result.speed,
-      volume: state.settings.ttsVolume,
-      url: result.url,
-      fallback: Boolean(result.fallback)
-    });
-    return result;
-  } catch (err) {
-    console.warn('[Tarot] TTS failed:', err && err.message ? err.message : err);
-    return null;
+/**
+ * The Oracle narrates a reading in sequence through the shared TTS queue:
+ * welcome, topic, draw, cards, verdict. Each clip is one broadcast, so the
+ * stage queue plays them in order and never overlaps.
+ */
+async function announceTarotReading(reading, result) {
+  if (!result || !Array.isArray(result.spoken) || !result.spoken.length) return { ok: false, parts: 0 };
+  if (state.settings.ttsEnabled === false) return { ok: false, parts: 0, reason: 'tts_disabled' };
+  const useKokoro = state.settings.ttsEngine !== 'piper';
+  let parts = 0;
+  for (const line of result.spoken.slice(0, 9)) {
+    const text = String(line || '').slice(0, 240);
+    if (!text) continue;
+    try {
+      const synthesis = await synthesizeSpeech(text, {
+        engine: useKokoro ? 'kokoro' : 'piper',
+        voice: useKokoro ? ORACLE_VOICE : state.settings.ttsVoice,
+        piperVoice: state.settings.ttsVoice,
+        language: 'en',
+        speed: state.settings.ttsSpeed,
+        allowFallback: true
+      });
+      if (!synthesis || !synthesis.ok) continue;
+      broadcastNotification('tts.play', {
+        text,
+        engine: synthesis.engine,
+        requestedEngine: synthesis.requestedEngine,
+        voice: synthesis.voice,
+        language: synthesis.language,
+        speed: synthesis.speed,
+        volume: state.settings.ttsVolume,
+        url: synthesis.url,
+        fallback: Boolean(synthesis.fallback),
+        readingId: reading.id,
+        part: parts,
+        priority: 'tarot'
+      });
+      parts += 1;
+    } catch (err) {
+      console.warn('[Tarot] TTS part failed:', err && err.message ? err.message : err);
+    }
   }
+  return { ok: parts > 0, parts };
 }
 
-/** Draw, narrate, broadcast and (optionally) speak one reading. */
+/** Draw, interpret, narrate, broadcast and (optionally) speak one reading. */
 async function runTarotReading(request = {}) {
   const reading = tarotEngine.read({
     spread: request.spread,
@@ -5933,12 +6351,27 @@ async function runTarotReading(request = {}) {
     source: request.source || 'rpc',
     trigger: request.trigger || ''
   });
-  const narration = await tarotAiNarration(reading);
-  reading.narration = narration.text;
-  reading.narrationSource = narration.source;
-  reading.narrationProvider = narration.provider || '';
-  // The reading object stored in history is the same reference, so saving here
-  // persists the narration without appending a duplicate entry.
+
+  // Topic: explicit from the queue, otherwise detected from the viewer's words.
+  const detected = detectLiveReadingRequest(reading.question || '');
+  const topicId = request.topicId || (detected && detected.topicId) || '';
+  const topicLabel = request.topicLabel || (detected && detected.topicLabel) || '';
+  reading.topicId = topicId;
+  reading.topicLabel = topicLabel;
+  if (request.theme) reading.theme = request.theme;
+
+  let result = buildReadingResult(reading, { source: 'builtin' });
+  const ai = await tarotAiNarration(reading, result);
+  if (ai.ok && ai.result) result = ai.result;
+  reading.result = result;
+  reading.fortune = result.fortune;
+  reading.caution = result.caution;
+  reading.oracleMessage = result.oracleMessage;
+  reading.topicLabel = result.topicLabel;
+  reading.narration = result.oracleMessage;
+  reading.narrationSource = result.source;
+  reading.narrationProvider = result.provider || '';
+  reading.narrationError = ai.ok ? '' : ai.reason || '';
   tarotEngine.store.save();
 
   const event = pushEventLog({
@@ -5948,7 +6381,10 @@ async function runTarotReading(request = {}) {
     readingId: reading.id,
     spread: reading.spread,
     theme: reading.theme,
+    topicLabel: reading.topicLabel,
     question: reading.question,
+    fortune: reading.fortune,
+    caution: reading.caution,
     cards: reading.cards.map((card) => ({
       name: card.name,
       position: card.position,
@@ -5962,17 +6398,18 @@ async function runTarotReading(request = {}) {
 
   broadcastNotification('tarot.reading', { reading, tarot: tarotSnapshot() });
   broadcastNotification('temple.event', { event });
-  if (request.announce === true) await announceTarotReading(reading);
+  if (request.announce === true) await announceTarotReading(reading, result);
   return { reading, event, tarot: tarotSnapshot() };
 }
 
 function maybeHandleTarotComment(payload = {}) {
-  const detected = detectTarotRequest(payload.commentText || payload.comment || '');
+  const detected = detectLiveReadingRequest(payload.commentText || payload.comment || '');
   if (!detected) return null;
   return enqueueTarotRequest({
     ...detected,
     user: payload.user,
     uniqueId: payload.uniqueId,
+    avatar: payload.avatar,
     source: 'chat',
     trigger: payload.commentText ? String(payload.commentText).slice(0, 40) : 'chat'
   });
@@ -5990,15 +6427,18 @@ function maybeHandleGiftTarot(payload = {}) {
   return enqueueTarotRequest({
     spread: rule.spread,
     theme: 'general',
+    topicLabel: 'Gift Reading',
     question: `${payload.giftName || 'Gift'} reading`,
     user: payload.user,
     uniqueId: payload.uniqueId,
+    avatar: payload.avatar,
     source: 'gift',
     trigger: `gift:${payload.giftCoins}`,
     bypassCooldowns: true
   });
 }
 
+// ------------------------------------------------------------- admin updates
 function updateTarotSettings(params = {}) {
   const current = tarotSettings();
   const next = normalizeTarotState({
@@ -6008,12 +6448,111 @@ function updateTarotSettings(params = {}) {
     commentCooldownSeconds: params.commentCooldownSeconds === undefined ? current.commentCooldownSeconds : params.commentCooldownSeconds,
     perViewerCooldownSeconds: params.perViewerCooldownSeconds === undefined ? current.perViewerCooldownSeconds : params.perViewerCooldownSeconds,
     maxQueue: params.maxQueue === undefined ? current.maxQueue : params.maxQueue,
-    giftRules: params.giftRules === undefined ? current.giftRules : params.giftRules
+    capacity: params.capacity === undefined ? current.capacity : params.capacity,
+    giftRules: params.giftRules === undefined ? current.giftRules : params.giftRules,
+    topics: params.topics === undefined ? current.topics : params.topics,
+    topicSettings: params.topicSettings === undefined ? current.topicSettings : params.topicSettings,
+    promotion: params.promotion === undefined ? current.promotion : { ...current.promotion, ...params.promotion },
+    ticker: params.ticker === undefined ? current.ticker : { ...current.ticker, ...params.ticker },
+    result: params.result === undefined ? current.result : { ...current.result, ...params.result },
+    queueState: current.queueState
   });
   state.tarot = next;
-  saveState();
+  const queue = tarotLiveQueue();
+  queue.setCapacity(next.capacity);
+  queue.setWaitRule(next.promotion.waitIntervalSeconds, next.promotion.waitAmount);
+  syncTarotQueue();
   broadcastNotification('tarot.state', tarotSnapshot());
   return { ok: true, tarot: tarotSnapshot() };
+}
+
+function updateTarotTopics(params = {}) {
+  const settings = tarotSettings();
+  const action = String(params.action || 'set');
+  let topics = settings.topics.map((topic) => ({ ...topic }));
+  const id = String(params.id || '').trim();
+
+  if (action === 'add') {
+    const label = String(params.label || params.name || '').trim();
+    if (!label) return { ok: false, error: 'Topic label is required' };
+    if (topics.some((topic) => topic.label.toLowerCase() === label.toLowerCase())) {
+      return { ok: false, error: 'That topic already exists' };
+    }
+    topics.push({
+      id: `${slug(label)}_${topics.length + 1}`,
+      label,
+      theme: params.theme || 'general',
+      keywords: params.keywords || [],
+      enabled: params.enabled !== false,
+      order: topics.length
+    });
+  } else if (action === 'delete') {
+    topics = topics.filter((topic) => topic.id !== id);
+    if (!topics.length) return { ok: false, error: 'At least one topic is required' };
+  } else if (action === 'move') {
+    const index = topics.findIndex((topic) => topic.id === id);
+    if (index < 0) return { ok: false, error: 'Unknown topic' };
+    const target = Math.max(0, Math.min(topics.length - 1, index + (Number(params.delta) || 0)));
+    const [item] = topics.splice(index, 1);
+    topics.splice(target, 0, item);
+  } else {
+    topics = topics.map((topic) => {
+      if (topic.id !== id) return topic;
+      return {
+        ...topic,
+        label: params.label === undefined ? topic.label : params.label,
+        theme: params.theme === undefined ? topic.theme : params.theme,
+        keywords: params.keywords === undefined ? topic.keywords : params.keywords,
+        enabled: params.enabled === undefined ? topic.enabled : params.enabled === true
+      };
+    });
+  }
+  const next = normalizeTopics(topics);
+  state.tarot = normalizeTarotState({ ...settings, topics: next });
+  saveState();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ok: true, topics: state.tarot.topics, tarot: tarotSnapshot() };
+}
+
+function updateTarotPromotion(params = {}) {
+  const settings = tarotSettings();
+  state.tarot = normalizeTarotState({
+    ...settings,
+    promotion: {
+      ...settings.promotion,
+      ...params,
+      mapping: params.mapping === undefined ? settings.promotion.mapping : params.mapping
+    }
+  });
+  const queue = tarotLiveQueue();
+  queue.setWaitRule(state.tarot.promotion.waitIntervalSeconds, state.tarot.promotion.waitAmount);
+  syncTarotQueue();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ok: true, promotion: tarotSnapshot().promotion, giftMapping: tarotSnapshot().giftMapping, tarot: tarotSnapshot() };
+}
+
+function updateTarotTicker(params = {}) {
+  const settings = tarotSettings();
+  state.tarot = normalizeTarotState({ ...settings, ticker: { ...settings.ticker, ...params } });
+  saveState();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ok: true, ticker: tarotSnapshot().ticker };
+}
+
+function updateTarotResult(params = {}) {
+  const settings = tarotSettings();
+  state.tarot = normalizeTarotState({ ...settings, result: { ...settings.result, ...params } });
+  saveState();
+  broadcastNotification('tarot.state', tarotSnapshot());
+  return { ok: true, result: tarotSnapshot().result };
+}
+
+function slug(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 48);
 }
 
 // ============================================================================
@@ -6363,6 +6902,7 @@ async function handleRpcCall(method, params = {}) {
         question: params.question || `Test ${spread}-card reading`,
         user: params.user || 'Test Viewer',
         uniqueId: params.uniqueId || 'test.viewer',
+        topicLabel: params.topicLabel || '',
         source: 'admin',
         trigger: 'admin-test',
         announce: params.announce === true
@@ -6382,6 +6922,58 @@ async function handleRpcCall(method, params = {}) {
     case 'tarot.updateSettings':
       return updateTarotSettings(params);
 
+    case 'tarot.queue':
+      return tarotQueueSnapshot();
+
+    case 'tarot.queue.add':
+      return addViewerToQueue(params);
+
+    case 'tarot.queue.remove':
+      return removeViewerFromQueue(params);
+
+    case 'tarot.queue.promote':
+      return promoteViewerInQueue(params);
+
+    case 'tarot.queue.clear':
+      return clearTarotQueue();
+
+    case 'tarot.queue.pump':
+      drainTarotQueue();
+      return { ok: true, queue: tarotQueueSnapshot() };
+
+    case 'tarot.topics.update':
+      return updateTarotTopics(params);
+
+    case 'tarot.promotion.update':
+      return updateTarotPromotion(params);
+
+    case 'tarot.ticker.update':
+      return updateTarotTicker(params);
+
+    case 'tarot.result.update':
+      return updateTarotResult(params);
+
+    case 'tarot.simulateViewer':
+      return {
+        ok: true,
+        ...addViewerToQueue({
+          user: params.user || 'Simulated Viewer',
+          uniqueId: params.uniqueId || `sim.viewer.${Date.now()}`,
+          topicLabel: params.topicLabel || 'Love Reading',
+          question: params.question || 'What does my love life hold?',
+          spread: params.spread || 'three'
+        })
+      };
+
+    case 'tarot.simulateLikes': {
+      const movement = applyLikePromotion(
+        params.user || 'Like Tester',
+        params.uniqueId || 'like.tester',
+        Number(params.count) || 120
+      );
+      return { ok: true, movement, queue: tarotQueueSnapshot(), tarot: tarotSnapshot() };
+    }
+
     // Acceptance-test hooks: they run the exact same detection and gift-mapping
     // code the TikTok pipeline uses, without a live connection.
     case 'tarot.simulateComment': {
@@ -6395,7 +6987,7 @@ async function handleRpcCall(method, params = {}) {
         handled: Boolean(outcome),
         accepted: Boolean(outcome && outcome.accepted),
         reason: outcome ? outcome.reason || '' : 'not_a_tarot_request',
-        pending: tarotQueueState.queue.length,
+        pending: tarotLiveQueue().snapshot().count,
         tarot: tarotSnapshot()
       };
     }
@@ -6413,7 +7005,7 @@ async function handleRpcCall(method, params = {}) {
         handled: Boolean(outcome),
         accepted: Boolean(outcome && outcome.accepted),
         reason: outcome ? outcome.reason || '' : 'duplicate_group_or_no_rule',
-        pending: tarotQueueState.queue.length,
+        pending: tarotLiveQueue().snapshot().count,
         tarot: tarotSnapshot()
       };
     }

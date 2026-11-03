@@ -6,7 +6,7 @@
   "scripts": {
     "start": "bun run server.js",
     "dev": "bun --watch server.js",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test",
     "comfy:check": "node tools/comfyui-check.js"
   },
   "dependencies": {
