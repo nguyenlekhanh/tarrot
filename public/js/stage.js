@@ -550,7 +550,7 @@
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
         showReading(msg.params && msg.params.reading);
         showResult(msg.params && msg.params.reading);
-      } else if (msg.method === 'temple.event') {      } else if (msg.method === 'temple.event') {
+      } else if (msg.method === 'temple.event') {
         handleServerEvent(msg.params && msg.params.event);
       } else if (msg.method === 'mystic.fx') {
         const info = msg.params || {};

@@ -795,15 +795,30 @@
       const user = document.getElementById('rpcUser').value.trim() || 'Guest';
       const order = document.getElementById('rpcOrder').value.trim();
       const body = { jsonrpc: '2.0', id: Date.now(), method, params: { user, order, ...extraParams } };
-      const res = await fetch('/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      document.getElementById('rpcOutput').textContent = JSON.stringify(data, null, 2);
-      refreshStatus();
-      return data;
+      const output = document.getElementById('rpcOutput');
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 30000);
+      try {
+        const res = await fetch('/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal
+        });
+        const data = await res.json();
+        if (output) output.textContent = JSON.stringify(data, null, 2);
+        refreshStatus();
+        return data;
+      } catch (err) {
+        // Never leave the panel spinning: show the real reason instead.
+        const error = err && err.name === 'AbortError'
+          ? { jsonrpc: '2.0', id: body.id, error: { code: -32000, message: `${method} timed out after 30s` } }
+          : { jsonrpc: '2.0', id: body.id, error: { code: -32000, message: err && err.message ? err.message : 'Request failed' } };
+        if (output) output.textContent = JSON.stringify(error, null, 2);
+        return error;
+      } finally {
+        clearTimeout(timer);
+      }
     }
 
     document.querySelectorAll('[data-act]').forEach((btn) => {
@@ -812,7 +827,7 @@
         if (act === 'follow') sendRpc('shop.follow', {});
         if (act === 'like') sendRpc('shop.like', { count: 6 });
         if (act === 'comment') sendRpc('shop.comment', { comment: document.getElementById('rpcOrder').value.trim() });
-        if (act === 'gift') sendRpc('shop.gift', { coins: 48, giftName: 'Coffee Run' });
+        if (act === 'gift') sendRpc('shop.gift', { coins: 25, giftName: 'Grand Ceremony' });
         if (act === 'mystery') sendRpc('shop.mysteryDrink', {});
         if (act === 'free') sendRpc('shop.freeDrink', {});
       });
@@ -2574,14 +2589,25 @@
       const typeNames = ['MEMBER', 'LIKE', 'SHARE', 'FOLLOW', 'CHAT', 'GIFT'];
 
       async function eventRpc(method, params = {}) {
-        const res = await fetch('/rpc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message || 'RPC error');
-        return data.result;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        try {
+          const res = await fetch('/rpc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message || 'RPC error');
+          return data.result;
+        } catch (err) {
+          throw new Error(
+            err && err.name === 'AbortError' ? `${method} timed out after 30s` : (err && err.message) || 'RPC failed'
+          );
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       function fmtCount(value) {
@@ -2769,14 +2795,23 @@
       function status(text) { $('tarotStatus').textContent = text || ''; }
 
       async function rpc(method, params) {
-        const res = await fetch('/rpc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        return data.result;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        try {
+          const res = await fetch('/rpc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          return data.result;
+        } catch (err) {
+          throw new Error(err && err.name === 'AbortError' ? `${method} timed out after 30s` : (err && err.message) || 'Request failed');
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       function renderRules() {
@@ -2878,16 +2913,16 @@
       $('tarotTestOne').addEventListener('click', async () => {
         status('Drawing one card…');
         try {
-          const result = await rpc('tarot.testOne', { theme: 'love', announce: false });
-          status('One card: ' + result.reading.cards.map((c) => c.name).join(', '));
+          const result = await rpc('tarot.testOne', { theme: 'love', announce: true });
+          status('One card: ' + result.reading.cards.map((c) => c.name).join(', ') + ' · narration sent to the stage');
           renderHistory(result.tarot.history);
         } catch (err) { status(err.message); }
       });
       $('tarotTestThree').addEventListener('click', async () => {
         status('Drawing three cards…');
         try {
-          const result = await rpc('tarot.testThree', { question: 'What do the cards see?', announce: false });
-          status('Three cards: ' + result.reading.cards.map((c) => c.name + (c.reversed ? ' (rev)' : '')).join(', '));
+          const result = await rpc('tarot.testThree', { question: 'What do the cards see?', announce: true });
+          status('Three cards: ' + result.reading.cards.map((c) => c.name + (c.reversed ? ' (rev)' : '')).join(', ') + ' · narration sent to the stage');
           renderHistory(result.tarot.history);
         } catch (err) { status(err.message); }
       });
@@ -3049,14 +3084,23 @@
       function status(id, text) { if ($(id)) $(id).textContent = text || ''; }
 
       async function rpc(method, params) {
-        const res = await fetch('/rpc', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} })
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-        return data.result;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        try {
+          const res = await fetch('/rpc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          return data.result;
+        } catch (err) {
+          throw new Error(err && err.name === 'AbortError' ? `${method} timed out after 30s` : (err && err.message) || 'Request failed');
+        } finally {
+          clearTimeout(timer);
+        }
       }
 
       function esc(value) {
@@ -3293,7 +3337,7 @@
       });
       $('lxReading').addEventListener('click', async () => {
         try {
-          const r = await rpc('tarot.testThree', { user: $('lxViewer').value || 'Test Viewer', theme: 'love', topicLabel: 'Love Reading', announce: false });
+          const r = await rpc('tarot.testThree', { user: $('lxViewer').value || 'Test Viewer', theme: 'love', topicLabel: 'Love Reading', announce: true });
           status('lxStatus', 'Reading complete: ' + r.reading.result.fortune + '% / ' + r.reading.result.caution + '%');
           refresh();
         } catch (err) { status('lxStatus', err.message); }
