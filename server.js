@@ -2721,10 +2721,11 @@ const DEFAULT_STATE = {
     paused: false,
     spawnRate: 1,
     ttsEnabled: true,
-    ttsEngine: 'piper',
+    // Kokoro is the primary narrator; Piper stays wired as the fallback.
+    ttsEngine: 'kokoro',
     ttsLanguage: 'en',
     ttsVoice: 'en_US-amy-medium',
-    ttsKokoroVoice: 'af_heart',
+    ttsKokoroVoice: 'af_alloy',
     ttsSpeed: 1,
     ttsMaxChars: 120,
     bgMusicEnabled: true,
@@ -5837,7 +5838,11 @@ async function announceTarotReading(reading) {
   try {
     const result = await synthesizeSpeech(text, {
       engine: state.settings.ttsEngine,
-      voice: state.settings.ttsVoice,
+      // Kokoro and Piper keep separate voice catalogues. Handing Kokoro a Piper
+      // voice id silently fell back to its built-in default voice.
+      voice: state.settings.ttsEngine === 'kokoro'
+        ? state.settings.ttsKokoroVoice || 'af_alloy'
+        : state.settings.ttsVoice,
       piperVoice: state.settings.ttsVoice,
       language: 'en',
       speed: state.settings.ttsSpeed,

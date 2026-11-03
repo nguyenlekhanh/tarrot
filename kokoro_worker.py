@@ -115,7 +115,7 @@ def load_runtime():
     except ValueError:
         threads = 0
     if threads <= 0:
-        threads = max(1, min(8, os.cpu_count() or 4))
+        threads = 1
     torch.set_num_threads(threads)
     try:
         torch.set_num_interop_threads(1)
