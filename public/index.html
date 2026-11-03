@@ -12,6 +12,10 @@
 <body>
   <div class="obs-root" id="obsRoot">
     <!-- ============ 1080 x 1920 PORTRAIT STAGE (OBS browser source) ============ -->
+    <!-- The frame is sized to the scaled stage so flexbox can centre it without
+         guessing: the stage itself is fixed at 1080x1920 and scaled from its
+         top-left corner. -->
+    <div class="stage-frame" id="stageFrame">
     <div class="stage" id="stage">
       <!-- 1. CHAMBER BACKDROP -->
       <div class="chamber">

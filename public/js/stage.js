@@ -26,18 +26,28 @@
   const tickerEl = $('ticker');
 
   // ---------------------------------------------------------------- scaling
+  // The stage is a fixed 1080x1920 canvas scaled from its top-left corner. Its
+  // .stage-frame wrapper is sized to the scaled result, so the flex layout
+  // centres the real visual box and no part of the stage can be pushed off
+  // screen (OBS browser source, desktop dock layout, small windows alike).
+  const obsRoot = $('obsRoot');
+
   function fitStage() {
-    const dockWidth = OBS_MODE || !dock || dock.offsetWidth === 0 ? 0 : dock.offsetWidth + 32;
-    const availableWidth = Math.max(320, window.innerWidth - dockWidth);
-    const availableHeight = Math.max(320, window.innerHeight);
+    const dockVisible = !OBS_MODE && dock && dock.offsetParent !== null;
+    const stacked = dockVisible && getComputedStyle(obsRoot).flexDirection === 'column';
+    const dockWidth = dockVisible && !stacked ? dock.offsetWidth + 32 : 0;
+    const dockHeight = dockVisible && stacked ? dock.offsetHeight + 32 : 0;
+    const availableWidth = Math.max(160, window.innerWidth - dockWidth);
+    const availableHeight = Math.max(160, window.innerHeight - dockHeight);
     const scale = Math.min(availableWidth / 1080, availableHeight / 1920);
-    stage.style.transform = `scale(${scale})`;
-    // The scaled stage still occupies its unscaled box; offset the difference so
-    // it sits visually centred without clipping in OBS.
-    stage.style.marginRight = `${(scale - 1) * 1080}px`;
-    stage.style.marginBottom = `${(scale - 1) * 1920}px`;
+    document.documentElement.style.setProperty('--stage-scale', String(scale));
   }
   window.addEventListener('resize', fitStage);
+  window.addEventListener('orientationchange', fitStage);
+  window.addEventListener('load', fitStage);
+  if (!OBS_MODE && dock && typeof ResizeObserver === 'function') {
+    new ResizeObserver(fitStage).observe(dock);
+  }
   fitStage();
 
   // ---------------------------------------------------------------- effects

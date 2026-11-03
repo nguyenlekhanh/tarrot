@@ -36,14 +36,22 @@ html, body {
 }
 
 /* ---------------- stage shell ---------------- */
+.stage-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(1080px * var(--stage-scale, 1));
+  height: calc(1920px * var(--stage-scale, 1));
+}
+
 .stage {
   position: relative;
   width: 1080px;
   height: 1920px;
-  flex: 0 0 auto;
   overflow: hidden;
   background: radial-gradient(120% 80% at 50% 30%, #1b0f2e 0%, #0a0613 45%, #04030a 100%);
-  transform-origin: center center;
+  /* Scaled from the top-left so the visual box exactly matches .stage-frame. */
+  transform-origin: top left;
+  transform: scale(var(--stage-scale, 1));
   box-shadow: 0 0 120px rgba(0, 0, 0, 0.9);
 }
 
