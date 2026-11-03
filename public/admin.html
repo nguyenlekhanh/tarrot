@@ -3348,5 +3348,312 @@
     })();
   </script>
 
+<!-- ================= TEST USER JOIN + TAROT COMMENT ================= -->
+  <style>
+    .tu-panel .tu-destiny {
+      border: 1px solid rgba(166, 120, 255, 0.22);
+      border-radius: 10px;
+      padding: 12px 14px;
+      background: #100a1e;
+      margin: 10px 0;
+    }
+    .tu-destiny-head { text-align: center; font-size: 14px; letter-spacing: 2px; color: #ffd9ee; }
+    .tu-destiny-sub { text-align: center; font-size: 11px; letter-spacing: 2px; opacity: 0.65; margin: 4px 0 10px; }
+    .tu-topics { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .tu-topic {
+      padding: 5px 11px; border-radius: 999px; cursor: pointer; font-family: inherit; font-size: 12.5px;
+      border: 1px solid rgba(216, 185, 120, 0.4); background: #1a1030; color: #ffe9c4;
+    }
+    .tu-topic:hover { background: #2a1850; }
+    .tu-result { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 13px; margin: 10px 0 0; }
+    .tu-result dt { opacity: 0.6; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
+    .tu-result dd { margin: 0; word-break: break-word; }
+    .tu-state {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 11.5px; letter-spacing: 1.5px; border: 1px solid rgba(166, 120, 255, 0.4); color: #d9c8ff;
+    }
+    .tu-state.queued { border-color: rgba(166, 120, 255, 0.8); color: #cbb2ff; }
+    .tu-state.reading { border-color: #6fd8ff; color: #b6ecff; }
+    .tu-state.completed { border-color: #7ef0b0; color: #b6ffd8; }
+    .tu-state.error { border-color: #ff8080; color: #ffb9b9; }
+    .tu-state.waiting { border-color: rgba(216, 185, 120, 0.6); color: #ffe9c4; }
+  </style>
+  <section class="lt-panel tu-panel" id="testUserPanel">
+    <h2>&#129514; Test User Join &amp; Tarot Comment</h2>
+    <div class="hint">Runs the real viewer-join handler and the real tarot comment pipeline: topic match, queue, card draw, stage reveal and Kokoro narration through the shared voice queue. The test obeys the same cooldowns and queue limits as a TikTok comment.</div>
+
+    <h3>Test User Join</h3>
+    <div class="lt-actions">
+      <button id="tuJoin" class="primary" type="button">TEST USER JOIN</button>
+    </div>
+    <div class="lt-status" id="tuJoinStatus">No test viewer joined yet.</div>
+
+    <h3>Test Tarot Comment</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Username</label><input type="text" id="tuUser" value="TEST_VIEWER_01" /></div>
+      <div class="lt-field"><label>Comment</label><input type="text" id="tuComment" placeholder="Love Reading" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="tuSend" class="primary" type="button">SEND COMMENT</button>
+      <button id="tuClear" type="button">Clear result</button>
+    </div>
+    <div class="lt-status" id="tuSendStatus">Waiting for a comment.</div>
+
+    <div class="tu-destiny">
+      <div class="tu-destiny-head">&#128302; CHOOSE YOUR DESTINY</div>
+      <div class="tu-destiny-sub">COMMENT + YOUR QUESTION</div>
+      <div class="tu-topics" id="tuTopics">Loading topics…</div>
+      <div class="tu-destiny-sub" id="tuTopicNote"></div>
+    </div>
+
+    <h3>Test Result</h3>
+    <dl class="tu-result">
+      <dt>Status</dt><dd><span class="tu-state waiting" id="tuState">WAITING</span></dd>
+      <dt>Test username</dt><dd id="tuOutUser">—</dd>
+      <dt>Comment</dt><dd id="tuOutComment">—</dd>
+      <dt>Matched topic</dt><dd id="tuOutTopic">—</dd>
+      <dt>Queue position</dt><dd id="tuOutPosition">—</dd>
+      <dt>Reading ID</dt><dd id="tuOutReading">—</dd>
+      <dt>Cards</dt><dd id="tuOutCards">—</dd>
+      <dt>Narration</dt><dd id="tuOutNarration">—</dd>
+    </dl>
+  </section>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      // One fixed test viewer: a second TEST USER JOIN reuses the same record.
+      const TEST_UNIQUE_ID = 'test.viewer.01';
+      const view = {
+        user: 'TEST_VIEWER_01',
+        comment: '',
+        topic: '',
+        position: 0,
+        readingId: '',
+        status: 'WAITING',
+        cards: [],
+        narration: { parts: 0, engine: '', voice: '', fallback: false },
+        timer: null
+      };
+
+      async function rpc(method, params) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 30000);
+        try {
+          const res = await fetch('/rpc', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (data.error) throw new Error(data.error.message);
+          return data.result || {};
+        } catch (err) {
+          throw new Error(err && err.name === 'AbortError' ? method + ' timed out after 30s' : (err && err.message) || 'Request failed');
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+
+      function setState(status) {
+        view.status = status;
+        const el = $('tuState');
+        if (!el) return;
+        el.textContent = status;
+        el.className = 'tu-state ' + String(status).toLowerCase();
+      }
+
+      // Enabled topics come from the server snapshot the stage uses, never a copy.
+      function renderTopicChips(topics) {
+        const host = $('tuTopics');
+        if (!host) return;
+        const enabled = (Array.isArray(topics) ? topics : []).filter((topic) => topic && topic.enabled !== false);
+        host.innerHTML = enabled.length
+          ? enabled.map((topic) => '<button class="tu-topic" type="button" data-topic="' + String(topic.label).replace(/"/g, '&quot;') + '">' + topic.label + '</button>').join('')
+          : '<span>No enabled topics — enable one under Reading Topics.</span>';
+        const note = $('tuTopicNote');
+        if (note) note.textContent = enabled.length + ' enabled topics · the stage rotates this same list';
+      }
+
+      function paintResult() {
+        $('tuOutUser').textContent = view.user || '—';
+        $('tuOutComment').textContent = view.comment || '—';
+        $('tuOutTopic').textContent = view.topic || '—';
+        $('tuOutPosition').textContent = view.position ? '#' + view.position : '—';
+        $('tuOutReading').textContent = view.readingId || '—';
+        $('tuOutCards').textContent = view.cards.length ? view.cards.join(' · ') : '—';
+        const narration = view.narration;
+        $('tuOutNarration').textContent = narration.parts
+          ? narration.parts + ' clips · ' + [narration.engine, narration.voice].filter(Boolean).join(' ') +
+            (narration.fallback ? ' · fallback' : '') + ' · ' + view.status
+          : view.status === 'READING'
+            ? 'synthesising…'
+            : '—';
+      }
+
+      function scheduleCompletion(ms) {
+        clearTimeout(view.timer);
+        view.timer = setTimeout(() => {
+          if (view.status !== 'READING') return;
+          setState('COMPLETED');
+          paintResult();
+        }, ms);
+      }
+
+      function isReversed(card) {
+        if (!card) return false;
+        if (typeof card.reversed === 'boolean') return card.reversed;
+        return /reversed/i.test(String(card.orientation || ''));
+      }
+
+      function onReading(reading) {
+        if (!reading) return;
+        const uniqueId = String(reading.uniqueId || '').toLowerCase();
+        const name = String(reading.user || '').toLowerCase();
+        if (uniqueId !== TEST_UNIQUE_ID && name !== String(view.user || '').toLowerCase()) return;
+        view.readingId = reading.id || '';
+        if (reading.topicLabel) view.topic = reading.topicLabel;
+        view.cards = (reading.cards || []).map((card) =>
+          (card.position ? card.position + ': ' : '') + card.name + ' (' + (isReversed(card) ? 'REVERSED' : 'UPRIGHT') + ')'
+        );
+        view.position = 0;
+        setState('READING');
+        paintResult();
+        // A reading with speech disabled still completes; otherwise wait for clips.
+        scheduleCompletion(25000);
+      }
+
+      function onClip(params) {
+        if (!view.readingId || params.readingId !== view.readingId) return;
+        const narration = view.narration;
+        narration.parts += 1;
+        narration.engine = params.engine || narration.engine;
+        narration.voice = params.voice || narration.voice;
+        narration.fallback = narration.fallback || Boolean(params.fallback);
+        paintResult();
+        scheduleCompletion(5000);
+      }
+
+      function connectEvents() {
+        let url;
+        try { url = new URL('/ws', window.location.href); } catch (_) { return; }
+        url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socket = new WebSocket(url.href);
+        socket.onmessage = (event) => {
+          let msg;
+          try { msg = JSON.parse(event.data); } catch (_) { return; }
+          if (!msg || !msg.method) return;
+          if (msg.method === 'tarot.state') {
+            if (msg.params && Array.isArray(msg.params.topics)) renderTopicChips(msg.params.topics);
+          } else if (msg.method === 'tarot.reading') {
+            onReading(msg.params && msg.params.reading);
+          } else if (msg.method === 'tts.play') {
+            onClip(msg.params || {});
+          }
+        };
+        socket.onclose = () => setTimeout(connectEvents, 2500);
+        socket.onerror = () => {};
+      }
+
+      $('tuJoin').addEventListener('click', async () => {
+        const button = $('tuJoin');
+        const hint = $('tuJoinStatus');
+        const user = ($('tuUser').value || '').trim() || 'TEST_VIEWER_01';
+        button.disabled = true;
+        hint.textContent = 'Sending the viewer-join event…';
+        try {
+          const result = await rpc('viewers.testJoin', { user, uniqueId: TEST_UNIQUE_ID });
+          hint.textContent = result.duplicate
+            ? '✔ ' + result.message + ' — no duplicate viewer created.'
+            : '✔ ' + result.message + ' — ' + (Number(result.viewers) || 1) + ' viewer(s) on stage.';
+        } catch (err) {
+          hint.textContent = '✖ ' + err.message;
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      $('tuSend').addEventListener('click', async () => {
+        const button = $('tuSend');
+        const hint = $('tuSendStatus');
+        const user = ($('tuUser').value || '').trim() || 'TEST_VIEWER_01';
+        const comment = ($('tuComment').value || '').trim();
+        if (!comment) {
+          hint.textContent = 'Type a comment first — for example "Love Reading".';
+          return;
+        }
+        view.user = user;
+        view.comment = comment;
+        view.topic = '';
+        view.position = 0;
+        view.readingId = '';
+        view.cards = [];
+        view.narration = { parts: 0, engine: '', voice: '', fallback: false };
+        clearTimeout(view.timer);
+        setState('WAITING');
+        paintResult();
+        button.disabled = true;
+        hint.textContent = 'Matching the comment and adding the test user to the tarot queue…';
+        try {
+          const result = await rpc('tarot.simulateComment', { comment, user, uniqueId: TEST_UNIQUE_ID });
+          const topic = result.topic;
+          view.topic = topic
+            ? topic.label + (topic.matched ? ' · matched "' + topic.keyword + '"' : ' · fallback topic')
+            : 'no topic matched';
+          view.position = Number(result.position) || 0;
+          if (result.handled && result.accepted) {
+            setState('QUEUED');
+            hint.textContent = '✔ Queued at #' + view.position + ' as "' + topic.label + '". The stage draws and speaks next.';
+          } else if (result.duplicate) {
+            setState('QUEUED');
+            hint.textContent = 'Already in the line at #' + view.position + ' — the queue refuses a second entry for the same viewer.';
+          } else if (result.reason === 'global_cooldown' || result.reason === 'viewer_cooldown') {
+            setState('WAITING');
+            hint.textContent = '⏳ Live chat cooldown active (' + (Number(result.retryAfterSeconds) || 0) + ' s left). The test respects the same limit as real comments.';
+          } else if (!result.handled) {
+            setState('ERROR');
+            hint.textContent = '✖ No enabled topic matched that comment. Try one of the destiny topics above.';
+          } else {
+            setState('ERROR');
+            hint.textContent = '✖ Not queued: ' + (result.reason || 'unknown reason') + '.';
+          }
+          paintResult();
+          if (result.tarot && Array.isArray(result.tarot.topics)) renderTopicChips(result.tarot.topics);
+        } catch (err) {
+          setState('ERROR');
+          hint.textContent = '✖ ' + err.message;
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      $('tuClear').addEventListener('click', () => {
+        clearTimeout(view.timer);
+        view.comment = '';
+        view.topic = '';
+        view.position = 0;
+        view.readingId = '';
+        view.cards = [];
+        view.narration = { parts: 0, engine: '', voice: '', fallback: false };
+        setState('WAITING');
+        paintResult();
+        $('tuSendStatus').textContent = 'Waiting for a comment.';
+      });
+
+      $('tuTopics').addEventListener('click', (event) => {
+        const chip = event.target.closest('[data-topic]');
+        if (!chip) return;
+        $('tuComment').value = chip.getAttribute('data-topic') || '';
+      });
+
+      rpc('tarot.getState')
+        .then((tarot) => { if (tarot && Array.isArray(tarot.topics)) renderTopicChips(tarot.topics); })
+        .catch((err) => { $('tuTopics').textContent = 'Topics unavailable: ' + err.message; });
+      connectEvents();
+    })();
+  </script>
+
 </body>
 </html>
+

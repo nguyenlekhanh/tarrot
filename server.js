@@ -6134,12 +6134,21 @@ function enqueueTarotRequest(request = {}) {
   const viewerKeyValue = tarotViewerKey(request.user, request.uniqueId);
   if (!bypassCooldowns && now - tarotQueueState.lastGlobalAt < settings.commentCooldownSeconds * 1000) {
     tarotQueueState.dropped += 1;
-    return { accepted: false, reason: 'global_cooldown' };
+    return {
+      accepted: false,
+      reason: 'global_cooldown',
+      // Admin tests show this so the tester knows when the same chat rule allows another try.
+      retryAfterSeconds: Math.ceil((settings.commentCooldownSeconds * 1000 - (now - tarotQueueState.lastGlobalAt)) / 1000)
+    };
   }
   const viewerLast = Number(tarotQueueState.lastByViewer.get(viewerKeyValue) || 0);
   if (!bypassCooldowns && now - viewerLast < settings.perViewerCooldownSeconds * 1000) {
     tarotQueueState.dropped += 1;
-    return { accepted: false, reason: 'viewer_cooldown' };
+    return {
+      accepted: false,
+      reason: 'viewer_cooldown',
+      retryAfterSeconds: Math.ceil((settings.perViewerCooldownSeconds * 1000 - (now - viewerLast)) / 1000)
+    };
   }
   const added = addViewerToQueue({
     user: request.user,
@@ -6883,6 +6892,38 @@ async function handleRpcCall(method, params = {}) {
     case 'live.testCelebration':
       return Actions.testVip({ ...params, kind: 'celebration' });
 
+    // Admin "TEST USER JOIN": the same viewer-join handler the TikTok MEMBER
+    // event uses, so the test user is a real viewer record on the stage. A
+    // second click reuses that record instead of creating another viewer.
+    case 'viewers.testJoin':
+    case 'shop.testViewerJoin': {
+      const user = String(params.user || 'TEST_VIEWER_01').slice(0, 40);
+      const uniqueId = String(params.uniqueId || 'test.viewer.01').slice(0, 40);
+      const existing = findViewerRecord({ user, uniqueId });
+      if (existing && !existing.leftAt) {
+        return {
+          ok: true,
+          created: false,
+          rejoined: false,
+          duplicate: true,
+          message: `${existing.name} is already in the live`,
+          viewer: viewerSnapshot(existing),
+          viewers: activeViewers().length
+        };
+      }
+      const joined = Actions.viewerJoin({ user, uniqueId, avatar: params.avatar || '', _lean: true });
+      return {
+        ok: true,
+        created: Boolean(joined.created),
+        rejoined: Boolean(joined.rejoined),
+        duplicate: false,
+        message: joined.created ? `${user} joined the live` : `${user} came back to the live`,
+        viewer: joined.viewer,
+        event: joined.event,
+        viewers: activeViewers().length
+      };
+    }
+
     case 'tarot.getState':
     case 'tarot.state':
       return tarotSnapshot();
@@ -6984,17 +7025,38 @@ async function handleRpcCall(method, params = {}) {
     // Acceptance-test hooks: they run the exact same detection and gift-mapping
     // code the TikTok pipeline uses, without a live connection.
     case 'tarot.simulateComment': {
+      const comment = params.comment || params.text || '';
+      // Same detection the TikTok CHAT event runs; the echo lets Admin show the
+      // matched topic without duplicating any matching logic in the browser.
+      const detected = detectLiveReadingRequest(comment);
       const outcome = maybeHandleTarotComment({
-        commentText: params.comment || params.text || '',
+        commentText: comment,
         user: params.user || 'Chat Tester',
         uniqueId: params.uniqueId || 'chat.tester'
       });
+      const queue = tarotLiveQueue();
+      const current = queue.snapshot().current;
       return {
         ok: true,
         handled: Boolean(outcome),
         accepted: Boolean(outcome && outcome.accepted),
         reason: outcome ? outcome.reason || '' : 'not_a_tarot_request',
-        pending: tarotLiveQueue().snapshot().count,
+        retryAfterSeconds: outcome && outcome.retryAfterSeconds ? outcome.retryAfterSeconds : 0,
+        position: outcome && outcome.position ? outcome.position : 0,
+        duplicate: Boolean(outcome && outcome.reason === 'already_queued'),
+        topic: detected
+          ? {
+              id: detected.topicId,
+              label: detected.topicLabel,
+              theme: detected.theme,
+              keyword: detected.keyword,
+              matched: detected.matched,
+              spread: detected.spread,
+              question: detected.question
+            }
+          : null,
+        readingFor: current && current.uniqueId === String(params.uniqueId || 'chat.tester') ? current : null,
+        pending: queue.snapshot().count,
         tarot: tarotSnapshot()
       };
     }
