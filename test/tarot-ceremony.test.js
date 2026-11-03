@@ -137,12 +137,22 @@ test('the ceremony plan covers announce, prepare, reveal, interpret and closing'
   const result = buildReadingResult(draw);
   const clips = buildCeremonyClips(draw, result);
 
-  assert.deepEqual([...new Set(clips.map((clip) => clip.phase))], ['announce', 'prepare', 'reveal', 'interpret', 'closing']);
+  // The closing line is synthesised early (right after the preparation), so the
+  // phase order in the plan is announce, prepare, closing, reveal, interpret.
+  assert.deepEqual([...new Set(clips.map((clip) => clip.phase))], ['announce', 'prepare', 'closing', 'reveal', 'interpret']);
   assert.equal(clips[0].phase, 'announce');
-  assert.match(clips[0].text, /^Emily, your turn has arrived\./);
-  assert.match(clips[0].text, /The cards are ready to reveal your destiny\./);
-  assert.match(clips[1].text, /Take a deep breath\./);
-  assert.equal(clips[clips.length - 1].text, CEREMONY_CLOSING_TEXT);
+  assert.equal(clips[0].phase, 'announce');
+  // The name is its own short clip so the constant sentence stays cacheable.
+  assert.equal(clips[0].text, 'Emily,');
+  assert.equal(clips[1].phase, 'announce');
+  assert.match(clips[1].text, /^your turn has arrived\./);
+  assert.match(clips[1].text, /The cards are ready to reveal your destiny\./);
+  assert.match(clips.find((clip) => clip.phase === 'prepare').text, /Take a deep breath\./);
+  // The closing line is queued early so its (cached) audio is ready in time.
+  const closing = clips.filter((clip) => clip.phase === 'closing');
+  assert.equal(closing.length, 1);
+  assert.equal(closing[0].text, CEREMONY_CLOSING_TEXT);
+  assert.equal(clips[3].phase, 'closing');
 
   const reveal = clips.filter((clip) => clip.phase === 'reveal');
   assert.equal(reveal.length, 3);
@@ -167,7 +177,8 @@ test('a one-card ceremony reveals one card and never invents another', () => {
   const reveal = clips.filter((clip) => clip.phase === 'reveal');
   assert.equal(reveal.length, 1);
   assert.match(reveal[0].text, /^The card is The Star, in the guidance\.$/);
-  assert.match(clips[0].text, /^Maya, your turn has arrived\./);
+  assert.match(clips[0].text, /^Maya,$/);
+  assert.match(clips[1].text, /^your turn has arrived\./);
   assert.equal(clips.filter((clip) => clip.phase === 'closing').length, 1);
   assert.ok(clips.length <= 20);
 });
@@ -290,7 +301,7 @@ test('the ceremony markup, styles and module load before the controller', () => 
 
 test('the server sends the ceremony plan and phase-tagged clips', () => {
   const server = read('server.js');
-  assert.match(server, /const \{ buildReadingResult, applyAiInterpretation, buildCeremonyClips \} = require\('\.\/tarot-reading-library'\);/);
+  assert.match(server, /const \{ buildReadingResult, applyAiInterpretation, buildCeremonyClips, CEREMONY_ANNOUNCE_LINE, CEREMONY_PREPARE_LINE, CEREMONY_CLOSING_TEXT \} = require\('\.\/tarot-reading-library'\);/);
   assert.match(server, /const ceremonyClips = request\.announce === true && state\.settings\.ttsEnabled !== false/);
   assert.match(server, /broadcastNotification\('tarot\.reading', \{ reading, tarot: tarotSnapshot\(\), ceremony: ceremonyPlan \}\);/);
   assert.match(server, /announceTarotReading\(reading, result, ceremonyClips\)/);

@@ -1146,6 +1146,10 @@ function applyAiInterpretation(result, aiText, options = {}) {
 }
 
 const CEREMONY_CLOSING_TEXT = 'Your reading is complete. May the spirits guide your path.';
+// Split from the viewer's name so the long, constant sentence stays a cache
+// hit while only the short name fragment has to be synthesised per viewer.
+const CEREMONY_ANNOUNCE_LINE = 'your turn has arrived. Come closer. The cards are ready to reveal your destiny.';
+const CEREMONY_PREPARE_LINE = 'Take a deep breath. Let us discover what the cards have to tell you.';
 
 /**
  * The spoken ceremony: one announcement, one preparation line, one line per
@@ -1164,8 +1168,13 @@ function buildCeremonyClips(reading, result) {
   const user = clean(result.user || (reading && reading.user) || 'Seeker', 50);
   const topicLabel = clean(result.topicLabel || 'Tarot Reading', 60);
 
-  push('announce', `${user}, your turn has arrived. Come closer. The cards are ready to reveal your destiny.`);
-  push('prepare', 'Take a deep breath. Let us discover what the cards have to tell you.');
+  push('announce', `${user},`);
+  push('announce', CEREMONY_ANNOUNCE_LINE);
+  push('prepare', CEREMONY_PREPARE_LINE);
+  // Constant and cached, so it is queued early: by the time the interpretation
+  // ends the closing line is already buffered and the closing screen never sits
+  // silent while the last synthesised passage renders.
+  push('closing', CEREMONY_CLOSING_TEXT);
   cards.forEach((card, index) => {
     const label = cards.length === 1
       ? 'The card'
@@ -1182,7 +1191,6 @@ function buildCeremonyClips(reading, result) {
     if (!section || !section.text) continue;
     push('interpret', `${section.label}. ${section.spoken || firstSentence(section.text)}`);
   }
-  push('closing', CEREMONY_CLOSING_TEXT);
   return clips;
 }
 
@@ -1198,6 +1206,8 @@ module.exports = {
   buildReadingResult,
   buildCeremonyClips,
   CEREMONY_CLOSING_TEXT,
+  CEREMONY_ANNOUNCE_LINE,
+  CEREMONY_PREPARE_LINE,
   buildSections,
   spokenLines,
   spokenScript,

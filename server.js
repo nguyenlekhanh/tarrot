@@ -41,7 +41,7 @@ const STATE_FILE = path.join(DATA_DIR, 'game-state.json');
 const { TarotEngine } = require('./tarot-engine');
 const { TarotQueue } = require('./tarot-queue');
 const { normalizeTopics, normalizeTopicSettings, detectTopic, extractQuestion, rotateTopics } = require('./tarot-topics');
-const { buildReadingResult, applyAiInterpretation, buildCeremonyClips } = require('./tarot-reading-library');
+const { buildReadingResult, applyAiInterpretation, buildCeremonyClips, CEREMONY_ANNOUNCE_LINE, CEREMONY_PREPARE_LINE, CEREMONY_CLOSING_TEXT } = require('./tarot-reading-library');
 const tarotEngine = new TarotEngine({ historyFile: path.join(DATA_DIR, 'tarot-history.json') });
 
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
@@ -2502,6 +2502,9 @@ class KokoroTTSManager {
         `[Kokoro TTS] Ready · ${this.device} · ${this.listVoices().length} voices · model ${this.model}`
       );
       this.warm(state.settings.ttsKokoroVoice, 'en');
+      // The fixed ceremony sentences cost ~20 s each on CPU. Warm their WAV
+      // cache once while the stage is idle so the first reading does not pay.
+      scheduleTarotVoiceWarm(3000);
       broadcastNotification('tts.status', ttsStatusSnapshot());
     } else if (msg.type === 'voices') {
       if (Array.isArray(msg.voices) && msg.voices.length) {
@@ -6318,46 +6321,100 @@ const MAX_CEREMONY_PARTS = 20;
  * its phase and order, so the stage can hold every screen until the matching
  * audio has actually finished playing instead of guessing from synthesis.
  */
+// --------------------------------------------------------------- voice warm
+// The ceremony's constant sentences never change, so they are synthesised once
+// in the background and then served from the on-disk WAV cache. Warmed clips
+// are strictly lower priority than a live narration: the worker is serial, so
+// a warm request is only written while nothing else is queued.
+const TAROT_WARM_LINES = [CEREMONY_ANNOUNCE_LINE, CEREMONY_PREPARE_LINE, CEREMONY_CLOSING_TEXT];
+let tarotWarmIndex = 0;
+let tarotWarmTimer = null;
+let tarotNarrationActive = 0;
+
+function scheduleTarotVoiceWarm(delay = 4000) {
+  if (tarotWarmTimer || tarotWarmIndex >= TAROT_WARM_LINES.length) return;
+  tarotWarmTimer = setTimeout(async () => {
+    tarotWarmTimer = null;
+    if (state.settings.ttsEnabled === false || state.settings.ttsEngine === 'piper') return;
+    if (!kokoroTts.ready) {
+      scheduleTarotVoiceWarm(8000);
+      return;
+    }
+    if (tarotNarrationActive > 0 || kokoroTts.pending.size > 0 || kokoroTts.inflight.size > 0) {
+      scheduleTarotVoiceWarm(4000);
+      return;
+    }
+    const text = TAROT_WARM_LINES[tarotWarmIndex];
+    tarotWarmIndex += 1;
+    try {
+      await synthesizeSpeech(text, {
+        engine: 'kokoro',
+        voice: ORACLE_VOICE,
+        language: 'en',
+        speed: state.settings.ttsSpeed,
+        allowFallback: false
+      });
+      console.log(`[Tarot] warmed ceremony line ${tarotWarmIndex}/${TAROT_WARM_LINES.length}`);
+    } catch (err) {
+      console.warn('[Tarot] warm-up failed:', err && err.message ? err.message : err);
+    }
+    scheduleTarotVoiceWarm(800);
+  }, delay);
+  if (tarotWarmTimer.unref) tarotWarmTimer.unref();
+}
+
 async function announceTarotReading(reading, result, clips) {
   const plan = Array.isArray(clips) && clips.length ? clips : buildCeremonyClips(reading, result);
   if (!plan.length) return { ok: false, parts: 0 };
   if (state.settings.ttsEnabled === false) return { ok: false, parts: 0, reason: 'tts_disabled' };
   const useKokoro = state.settings.ttsEngine !== 'piper';
   let parts = 0;
-  for (const clip of plan.slice(0, MAX_CEREMONY_PARTS)) {
-    const text = String((clip && clip.text) || '').slice(0, 240);
-    if (!text) continue;
-    try {
-      const synthesis = await synthesizeSpeech(text, {
-        engine: useKokoro ? 'kokoro' : 'piper',
-        voice: useKokoro ? ORACLE_VOICE : state.settings.ttsVoice,
-        piperVoice: state.settings.ttsVoice,
-        language: 'en',
-        speed: state.settings.ttsSpeed,
-        allowFallback: true
-      });
-      if (!synthesis || !synthesis.ok) continue;
-      broadcastNotification('tts.play', {
-        text,
-        engine: synthesis.engine,
-        requestedEngine: synthesis.requestedEngine,
-        voice: synthesis.voice,
-        language: synthesis.language,
-        speed: synthesis.speed,
-        volume: state.settings.ttsVolume,
-        url: synthesis.url,
-        fallback: Boolean(synthesis.fallback),
-        readingId: reading.id,
-        phase: clip.phase,
-        order: clip.order,
-        part: parts,
-        priority: 'tarot'
-      });
-      parts += 1;
-    } catch (err) {
-      console.warn('[Tarot] TTS part failed:', err && err.message ? err.message : err);
+  let synthSec = 0;
+  let cachedParts = 0;
+  tarotNarrationActive += 1;
+  try {
+    for (const clip of plan.slice(0, MAX_CEREMONY_PARTS)) {
+      const text = String((clip && clip.text) || '').slice(0, 240);
+      if (!text) continue;
+      try {
+        const synthesis = await synthesizeSpeech(text, {
+          engine: useKokoro ? 'kokoro' : 'piper',
+          voice: useKokoro ? ORACLE_VOICE : state.settings.ttsVoice,
+          piperVoice: state.settings.ttsVoice,
+          language: 'en',
+          speed: state.settings.ttsSpeed,
+          allowFallback: true
+        });
+        if (!synthesis || !synthesis.ok) continue;
+        synthSec += Number(synthesis.synthSec) || 0;
+        if (synthesis.cached) cachedParts += 1;
+        broadcastNotification('tts.play', {
+          text,
+          engine: synthesis.engine,
+          requestedEngine: synthesis.requestedEngine,
+          voice: synthesis.voice,
+          language: synthesis.language,
+          speed: synthesis.speed,
+          volume: state.settings.ttsVolume,
+          url: synthesis.url,
+          fallback: Boolean(synthesis.fallback),
+          readingId: reading.id,
+          phase: clip.phase,
+          order: clip.order,
+          part: parts,
+          priority: 'tarot'
+        });
+        parts += 1;
+      } catch (err) {
+        console.warn('[Tarot] TTS part failed:', err && err.message ? err.message : err);
+      }
     }
+  } finally {
+    tarotNarrationActive -= 1;
   }
+  console.log(
+    `[Tarot] narration ${parts} clips · ${synthSec.toFixed(1)}s synthesis · ${cachedParts} from cache`
+  );
   return { ok: parts > 0, parts };
 }
 
