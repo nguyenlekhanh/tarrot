@@ -171,24 +171,12 @@
     }[ch]));
   }
 
-  const SIGILS = { cups: '☾', swords: '⚔', pentacles: '✧', wands: '✦' };
+  // Card markup lives in its own module so a reversed draw can rotate only the
+  // artwork layer while every text node stays upright.
+  const cardView = window.TarotCardView || null;
 
   function cardMarkup(card) {
-    const sigil = card.arcana === 'major' ? '✦' : (SIGILS[card.suit] || '✦');
-    const keywords = (card.keywords || []).slice(0, 3).join(' · ');
-    return `
-      <div class="card-slot">
-        <div class="card-inner">
-          <div class="card-back">✦</div>
-          <div class="card-face${card.reversed ? ' reversed-card' : ''}">
-            <div class="card-position">${escapeHtml(String(card.position || '').toUpperCase())}</div>
-            <div class="card-sigil">${sigil}</div>
-            <div class="card-name">${escapeHtml(card.name)}</div>
-            <div class="card-orientation${card.reversed ? ' reversed' : ''}">${card.reversed ? 'REVERSED' : 'UPRIGHT'}</div>
-            <div class="card-keywords">${escapeHtml(keywords)}</div>
-          </div>
-        </div>
-      </div>`;
+    return cardView && cardView.cardMarkup ? cardView.cardMarkup(card) : '';
   }
 
   function showBanner(title, sub, ms = 4200) {
@@ -203,6 +191,7 @@
   // Clips are queued, not interrupted: a reading must never be cut off by the
   // next tts.play message, and a burst of gift readings must not overlap.
   let readingHold = false;
+  let readingReset = null;
 
   // One shared clip queue: a reading must never be cut off by the next tts.play
   // message, and a burst of gift lines must never overlap.
@@ -225,6 +214,9 @@
             readingHold = false;
             if (conversation) conversation.notifyReading(false);
           }
+          // Real playback has finished (not just TTS generation): the cards may
+          // now start their way back to the idle table.
+          if (readingReset) readingReset.queueIdle();
         }
       })
     : null;
@@ -273,10 +265,69 @@
 
   // ---------------------------------------------------------------- readings
   let revealTimer = null;
+  let readingGeneration = 0;
+  let currentReadingId = '';
+  let cardClearTimer = null;
+
+  // The idle table: three face-down cards, the same markup index.html ships.
+  const IDLE_CARD_ROW = '<div class="card-slot" data-slot="0"><div class="card-back">✦</div></div>'
+    + '<div class="card-slot" data-slot="1"><div class="card-back">✦</div></div>'
+    + '<div class="card-slot" data-slot="2"><div class="card-back">✦</div></div>';
+
+  // Seconds to wait after the last narrated clip before the cards flip back.
+  function cardResetDelayMs() {
+    const fromWindow = Number(window.MYSTIC_CARD_RESET_SECONDS);
+    if (Number.isFinite(fromWindow) && fromWindow >= 0) return fromWindow * 1000;
+    const fromUrl = params.get('cardReset');
+    if (fromUrl !== null) {
+      const seconds = Number(fromUrl);
+      if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+    }
+    const fromState = Number(tarotState && tarotState.result && tarotState.result.cardResetSeconds);
+    if (Number.isFinite(fromState) && fromState >= 0) return fromState * 1000;
+    return 3000;
+  }
+
+  // Flip the cards face-down, then clear the finished reading from the stage.
+  function resetReading(readingId) {
+    if (readingId && currentReadingId && readingId !== currentReadingId) return;
+    currentReadingId = '';
+    clearTimeout(resultHideTimer);
+    clearTimeout(cardClearTimer);
+    const generation = readingGeneration;
+    // Removing .revealed runs the same 0.85s turn as the reveal, in reverse.
+    cardRow.querySelectorAll('.card-slot.revealed').forEach((slot) => slot.classList.remove('revealed'));
+    resultEl.classList.remove('show');
+    stage.classList.remove('showing-result');
+    narrationEl.classList.remove('show');
+    cardClearTimer = setTimeout(() => {
+      // A new reading arrived during the flip: leave its cards alone.
+      if (generation !== readingGeneration) return;
+      cardRow.classList.remove('single');
+      cardRow.innerHTML = IDLE_CARD_ROW;
+      narrationEl.textContent = '';
+      questionEl.textContent = 'Speak your question in the chat…';
+      const headline = $('resultHeadline');
+      if (headline) headline.textContent = '';
+      const cardsBox = $('resultCards');
+      if (cardsBox) cardsBox.innerHTML = '';
+    }, 950);
+  }
+
+  readingReset = window.ReadingResetTimer
+    ? new window.ReadingResetTimer({
+        delayMs: cardResetDelayMs,
+        fallbackMs: 25000,
+        isQueueIdle: () => !speech || (!speech.busy && speech.size === 0),
+        onReset: (readingId) => resetReading(readingId)
+      })
+    : null;
 
   function showReading(reading) {
     if (!reading || !Array.isArray(reading.cards) || !reading.cards.length) return;
     clearTimeout(revealTimer);
+    readingGeneration += 1;
+    currentReadingId = String(reading.id || reading.readingId || `stage-${Date.now()}`);
 
     const cards = reading.cards.slice(0, 3);
     cardRow.classList.toggle('single', cards.length === 1);
@@ -384,17 +435,9 @@
     const result = reading && reading.result;
     if (!result || !resultEl) return;
     $('resultHeadline').textContent = result.headline || '';
-    $('resultCards').innerHTML = (result.cards || [])
-      .map((card) => {
-        const sigil = card.arcana === 'major' ? '✦' : (SIGILS[card.suit] || '✧');
-        return `<div class="result-card${card.reversed ? ' is-reversed' : ''}">
-          <div class="result-card-sigil">${sigil}</div>
-          <div class="result-card-name">${escapeHtml(card.name)}</div>
-          <div class="result-card-position">${escapeHtml(String(card.position || '').toUpperCase())}</div>
-          <div class="result-card-orientation">${card.reversed ? 'REVERSED' : 'UPRIGHT'}</div>
-        </div>`;
-      })
-      .join('');
+    $('resultCards').innerHTML = cardView && cardView.resultCardsMarkup
+      ? cardView.resultCardsMarkup(result.cards)
+      : '';
     const showFortune = !(tarotState && tarotState.result && tarotState.result.showFortune === false);
     resultEl.classList.toggle('no-fortune', !showFortune);
     $('fortuneValue').textContent = `${result.fortune}%`;
@@ -408,6 +451,9 @@
     clearTimeout(resultHideTimer);
     const seconds = Number(tarotState && tarotState.result && tarotState.result.displaySeconds) || 45;
     resultHideTimer = setTimeout(() => {
+      // While the narration is still playing the reset owns the table: the panel
+      // must stay up until the last spoken clip has finished.
+      if (readingReset && readingReset.pending) return;
       resultEl.classList.remove('show');
       stage.classList.remove('showing-result');
     }, Math.max(5000, seconds * 1000));
@@ -550,6 +596,9 @@
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
         showReading(msg.params && msg.params.reading);
         showResult(msg.params && msg.params.reading);
+        // The cards flip back only after this reading's clips have finished
+        // playing and the shared queue reports idle, then a short delay.
+        if (readingReset) readingReset.begin(currentReadingId);
       } else if (msg.method === 'temple.event') {
         handleServerEvent(msg.params && msg.params.event);
       } else if (msg.method === 'mystic.fx') {
@@ -562,6 +611,8 @@
       } else if (msg.method === 'tts.play') {
         const p = msg.params || {};
         playTts(p.url, p.volume);
+        // Only this reading's own narration may arm the reset.
+        if (readingReset) readingReset.heardClip(p.readingId);
       }
     };
     socket.onclose = () => setTimeout(connectSocket, 2200);
