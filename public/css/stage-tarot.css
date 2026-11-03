@@ -1,0 +1,307 @@
+/* ==========================================================================
+   MYSTIC WITCH LIVE — live tarot experience layer
+   Queue box, destiny topics, reading result and the movement ticker. Loaded
+   after stage.css so it only adds to the existing gothic chamber styling.
+   ========================================================================== */
+
+/* ---------------- live queue box ---------------- */
+.live-queue {
+  position: absolute;
+  z-index: 8;
+  top: 182px;
+  left: 50%;
+  width: 930px;
+  margin-left: -465px;
+  padding: 11px 20px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(216, 185, 120, 0.32);
+  background: linear-gradient(180deg, rgba(24, 12, 44, 0.9), rgba(9, 5, 18, 0.88));
+  box-shadow: 0 0 40px rgba(120, 60, 220, 0.28);
+  font-family: 'Cinzel', serif;
+}
+
+.queue-row { display: flex; align-items: center; gap: 12px; }
+
+.queue-current {
+  font-size: 23px;
+  letter-spacing: 1.4px;
+  color: #f4eaff;
+}
+
+.queue-label {
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: rgba(166, 120, 255, 0.9);
+}
+
+.queue-current-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-count {
+  font-size: 15px;
+  letter-spacing: 1.2px;
+  color: var(--gold, #d8b978);
+  white-space: nowrap;
+}
+
+.queue-next {
+  margin-top: 6px;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: rgba(216, 185, 120, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.queue-move {
+  margin-top: 3px;
+  min-height: 21px;
+  font-size: 17px;
+  color: #ffd9ee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- choose your destiny ---------------- */
+.destiny {
+  position: absolute;
+  z-index: 8;
+  top: 322px;
+  left: 50%;
+  width: 930px;
+  margin-left: -465px;
+  padding: 9px 18px 11px;
+  text-align: center;
+  border-radius: 16px;
+  border: 1px solid rgba(166, 120, 255, 0.22);
+  background: rgba(10, 6, 20, 0.62);
+}
+
+.destiny-head {
+  font-family: 'Cinzel', serif;
+  font-size: 21px;
+  letter-spacing: 2.5px;
+  color: #e9d9ff;
+  text-shadow: 0 0 18px rgba(150, 90, 255, 0.55);
+}
+
+.destiny-instruction {
+  margin-top: 2px;
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: rgba(216, 185, 120, 0.9);
+}
+
+.destiny-columns {
+  display: flex;
+  gap: 16px;
+  margin-top: 7px;
+  justify-content: center;
+}
+
+.destiny-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.destiny-topic {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(166, 120, 255, 0.18);
+  background: rgba(60, 30, 110, 0.45);
+  font-size: 16px;
+  color: rgba(236, 226, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------------- reading panel: make room above the table ---------------- */
+.reading { top: 492px; }
+.reading-question { margin-bottom: 14px; font-size: 26px; min-height: 32px; }
+.reading-narration { margin-top: 14px; font-size: 22px; }
+
+/* ---------------- reading result ---------------- */
+.reading-result {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 1030px;
+  width: 940px;
+  max-height: 600px;
+  margin-left: -470px;
+  padding: 15px 20px 13px;
+  border-radius: 18px;
+  border: 1px solid rgba(216, 185, 120, 0.35);
+  background: linear-gradient(180deg, rgba(22, 12, 40, 0.95), rgba(8, 4, 16, 0.95));
+  box-shadow: 0 0 70px rgba(120, 60, 220, 0.35);
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  overflow: hidden;
+}
+
+.reading-result.show { opacity: 1; transform: translateY(0); }
+
+.result-headline {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  text-align: center;
+  color: #f6ecff;
+}
+
+.result-cards {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 9px;
+}
+
+.result-card {
+  width: 182px;
+  padding: 7px 6px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(166, 120, 255, 0.28);
+  background: rgba(30, 16, 52, 0.85);
+  text-align: center;
+}
+
+.result-card.is-reversed { border-color: rgba(255, 158, 194, 0.45); }
+.result-card-sigil { font-size: 25px; line-height: 1; color: #c9a6ff; }
+
+.result-card-name {
+  margin-top: 3px;
+  min-height: 34px;
+  font-family: 'Cinzel', serif;
+  font-size: 15px;
+  line-height: 1.15;
+  color: #f0e6ff;
+}
+
+.result-card-position {
+  margin-top: 3px;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  color: rgba(216, 185, 120, 0.85);
+}
+
+.result-card-orientation {
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  color: rgba(200, 170, 255, 0.75);
+}
+
+.result-card.is-reversed .result-card-orientation { color: #ff9ec2; }
+
+.result-bars { display: flex; gap: 14px; margin-top: 9px; }
+.result-bar { flex: 1; }
+
+.result-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 1.2px;
+  color: rgba(233, 221, 196, 0.85);
+}
+
+.result-bar-track {
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.result-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  transition: width 0.8s ease;
+}
+
+.result-bar-fill.good { background: linear-gradient(90deg, #8f6bff, #d8b978); }
+.result-bar-fill.watch { background: linear-gradient(90deg, #ff8fb0, #a678ff); }
+
+.result-oracle { margin-top: 9px; }
+
+.result-oracle-label {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: rgba(216, 185, 120, 0.9);
+}
+
+.result-oracle-text {
+  margin-top: 3px;
+  max-height: 250px;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.32;
+  color: rgba(240, 232, 255, 0.92);
+  white-space: pre-wrap;
+}
+
+.result-closing {
+  margin-top: 6px;
+  text-align: center;
+  font-style: italic;
+  font-size: 15px;
+  color: rgba(216, 185, 120, 0.9);
+}
+
+.reading-result.no-fortune .result-bars { display: none; }
+
+/* The card table dims while the written result is on screen. */
+.stage.showing-result .table { opacity: 0.35; transition: opacity 0.5s ease; }
+
+/* Banners sit between the narration and the result box. */
+.banner { top: 1000px; }
+.stage.showing-result .banner { opacity: 0; }
+
+/* ---------------- queue movement ticker ---------------- */
+.move-ticker {
+  position: absolute;
+  z-index: 9;
+  left: 50%;
+  bottom: 196px;
+  width: 900px;
+  height: 70px;
+  margin-left: -450px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.move-line {
+  font-size: 17px;
+  letter-spacing: 0.6px;
+  color: rgba(240, 232, 255, 0.92);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+}
+
+.move-line.rise { animation: moveRise 3.6s ease-out forwards; }
+
+@keyframes moveRise {
+  0% { opacity: 0; transform: translateY(20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  75% { opacity: 1; transform: translateY(-14px); }
+  100% { opacity: 0; transform: translateY(-34px); }
+}

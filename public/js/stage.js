@@ -202,53 +202,36 @@
   // ---------------------------------------------------------------- audio
   // Clips are queued, not interrupted: a reading must never be cut off by the
   // next tts.play message, and a burst of gift readings must not overlap.
-  const ttsQueue = [];
-  let currentClip = null;
-  let ttsPlaying = false;
   let readingHold = false;
 
-  function pumpTts() {
-    if (ttsPlaying || !ttsQueue.length) return;
-    const clip = ttsQueue.shift();
-    ttsPlaying = true;
-    let audio;
-    try {
-      audio = new Audio(clip.url);
-    } catch (_) {
-      ttsPlaying = false;
-      return pumpTts();
-    }
-    audio.volume = clip.volume;
-    if (music) music.setDuck(true);
-    const finish = () => {
-      if (currentClip === audio) currentClip = null;
-      audio.onended = null;
-      audio.onerror = null;
-      ttsPlaying = false;
-      // Stay ducked until the queue is empty so back-to-back lines do not pump
-      // the music up and down between sentences.
-      if (music && !ttsQueue.length) music.setDuck(false);
-      // The reading is over once its narration has drained: ambient dialogue
-      // resumes on its own relaxed interval.
-      if (!ttsQueue.length && readingHold) {
-        readingHold = false;
-        if (conversation) conversation.notifyReading(false);
-      }
-      pumpTts();
-    };
-    audio.onended = finish;
-    audio.onerror = finish;
-    currentClip = audio;
-    const started = audio.play();
-    if (started && typeof started.catch === 'function') started.catch(finish);
-  }
+  // One shared clip queue: a reading must never be cut off by the next tts.play
+  // message, and a burst of gift lines must never overlap.
+  const speech = window.TtsQueue
+    ? new window.TtsQueue({
+        limit: 16,
+        create: (clip) => {
+          const audio = new Audio(clip.url);
+          const level = Number(clip.volume);
+          audio.volume = Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0.9;
+          return audio;
+        },
+        onChange: ({ size, playing }) => {
+          if (music) music.setDuck(playing || size > 0);
+        },
+        onIdle: () => {
+          // The reading is over once its narration has drained: ambient dialogue
+          // resumes on its own relaxed interval.
+          if (readingHold) {
+            readingHold = false;
+            if (conversation) conversation.notifyReading(false);
+          }
+        }
+      })
+    : null;
 
   function playTts(url, volume) {
-    if (!url) return;
-    const level = Number(volume);
-    if (ttsQueue.length >= 8) ttsQueue.shift();
-    ttsQueue.push({ url, volume: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0.9 });
-    pumpTts();
+    if (!speech || !url) return;
+    speech.push({ url, volume });
   }
 
   // ------------------------------------------------------- mystic dialogue
@@ -262,7 +245,7 @@
               ? res.result
               : { ok: false, error: (res && res.error && res.error.message) || 'rpc failed' }
           ),
-        isBusy: () => ttsPlaying || ttsQueue.length > 0,
+        isBusy: () => (speech ? speech.busy || speech.size > 0 : false),
         getContext: () => ({ viewers: currentViewers }),
         onStatus: (status) => {
           callRpc('conversation.status', {
@@ -335,6 +318,119 @@
     while (tickerEl.children.length > 3) tickerEl.lastChild.remove();
   }
 
+  // ------------------------------------------------------------ live tarot UI
+  const queueCurrentEl = $('queueCurrent');
+  const queueCountEl = $('queueCount');
+  const queueNextEl = $('queueNext');
+  const queueMoveEl = $('queueMovement');
+  const destinyColumnsEl = $('destinyColumns');
+  const resultEl = $('readingResult');
+  const moveLineEls = [$('moveLineA'), $('moveLineB')];
+
+  let tarotState = null;
+  let topicsCache = [];
+  let rotationConfig = { rotationSeconds: 6, rows: 3 };
+  let rotationStep = -1;
+  let rotationTimer = null;
+  let resultHideTimer = null;
+  let movementIndex = 0;
+  let lastMovementId = '';
+
+  function renderQueue(queue) {
+    if (!queue || !queue.lines) return;
+    if (queueCurrentEl) queueCurrentEl.textContent = queue.lines.current;
+    if (queueCountEl) queueCountEl.textContent = queue.lines.count;
+    if (queueNextEl) queueNextEl.textContent = queue.lines.next;
+    if (queueMoveEl && queue.lines.recent) queueMoveEl.textContent = queue.lines.recent;
+  }
+
+  // Two rotating columns of topics, one step per configured interval.
+  function paintTopics() {
+    if (!destinyColumnsEl || !topicsCache.length) return;
+    const stepMs = Math.max(1000, (Number(rotationConfig.rotationSeconds) || 6) * 1000);
+    const step = Math.floor(Date.now() / stepMs) % topicsCache.length;
+    if (step === rotationStep && destinyColumnsEl.children.length) return;
+    rotationStep = step;
+    const rows = Math.max(1, Number(rotationConfig.rows) || 3);
+    const columns = [[], []];
+    for (let index = 0; index < rows * 2; index += 1) {
+      const topic = topicsCache[(step + index) % topicsCache.length];
+      if (topic) columns[index < rows ? 0 : 1].push(topic.label);
+    }
+    destinyColumnsEl.innerHTML = columns
+      .map((items) => `<div class="destiny-column">${items
+        .map((label) => `<span class="destiny-topic">${escapeHtml(label)}</span>`)
+        .join('')}</div>`)
+      .join('');
+  }
+
+  function applyTarotState(tarot) {
+    if (!tarot) return;
+    tarotState = tarot;
+    renderQueue(tarot.queue);
+    if (Array.isArray(tarot.topics)) {
+      topicsCache = tarot.topics.filter((topic) => topic && topic.enabled !== false);
+      rotationConfig = {
+        rotationSeconds: Number(tarot.topicSettings && tarot.topicSettings.rotationSeconds) || 6,
+        rows: Number(tarot.topicSettings && tarot.topicSettings.rows) || 3
+      };
+      rotationStep = -1;
+      paintTopics();
+      if (!rotationTimer) rotationTimer = setInterval(paintTopics, 500);
+    }
+  }
+
+  function showResult(reading) {
+    const result = reading && reading.result;
+    if (!result || !resultEl) return;
+    $('resultHeadline').textContent = result.headline || '';
+    $('resultCards').innerHTML = (result.cards || [])
+      .map((card) => {
+        const sigil = card.arcana === 'major' ? '✦' : (SIGILS[card.suit] || '✧');
+        return `<div class="result-card${card.reversed ? ' is-reversed' : ''}">
+          <div class="result-card-sigil">${sigil}</div>
+          <div class="result-card-name">${escapeHtml(card.name)}</div>
+          <div class="result-card-position">${escapeHtml(String(card.position || '').toUpperCase())}</div>
+          <div class="result-card-orientation">${card.reversed ? 'REVERSED' : 'UPRIGHT'}</div>
+        </div>`;
+      })
+      .join('');
+    const showFortune = !(tarotState && tarotState.result && tarotState.result.showFortune === false);
+    resultEl.classList.toggle('no-fortune', !showFortune);
+    $('fortuneValue').textContent = `${result.fortune}%`;
+    $('cautionValue').textContent = `${result.caution}%`;
+    $('fortuneBar').style.width = `${result.fortune}%`;
+    $('cautionBar').style.width = `${result.caution}%`;
+    $('oracleText').textContent = result.oracleMessage || '';
+    $('resultClosing').textContent = result.closing || '';
+    resultEl.classList.add('show');
+    stage.classList.add('showing-result');
+    clearTimeout(resultHideTimer);
+    const seconds = Number(tarotState && tarotState.result && tarotState.result.displaySeconds) || 45;
+    resultHideTimer = setTimeout(() => {
+      resultEl.classList.remove('show');
+      stage.classList.remove('showing-result');
+    }, Math.max(5000, seconds * 1000));
+  }
+
+  // One movement at a time per ticker line, animated upward and expired by the
+  // animation itself, so the DOM never accumulates old messages.
+  function pushMovement(movement) {
+    if (!movement || movement.id === lastMovementId) return;
+    lastMovementId = movement.id;
+    if (queueMoveEl) queueMoveEl.textContent = movement.message || '';
+    if (tarotState && tarotState.ticker && tarotState.ticker.enabled === false) return;
+    const el = moveLineEls[movementIndex % moveLineEls.length];
+    movementIndex += 1;
+    if (!el) return;
+    const speed = Number(tarotState && tarotState.ticker && tarotState.ticker.speedMs) || 900;
+    el.textContent = movement.ticker || movement.message || '';
+    el.style.animationDuration = `${Math.max(600, speed * 4)}ms`;
+    el.classList.remove('rise');
+    void el.offsetWidth;
+    el.classList.add('rise');
+  }
+
   // ---------------------------------------------------------------- state
   let tarotEnabled = true;
   let currentViewers = 0;
@@ -356,6 +452,7 @@
       const btn = $('btnToggleTarot');
       if (btn) btn.textContent = tarotEnabled ? 'Tarot: ON' : 'Tarot: OFF';
       if (Array.isArray(state.tarot.history)) renderHistory(state.tarot.history);
+      applyTarotState(state.tarot);
     }
     document.body.classList.toggle('is-paused', Boolean(state.tarot && state.tarot.enabled === false));
     const tiktok = state.tiktok || {};
@@ -444,13 +541,16 @@
       } else if (msg.method === 'tarot.state') {
         // The broadcast snapshot is the settings object itself, with no wrapper.
         applyState({ tarot: msg.params });
+      } else if (msg.method === 'tarot.queue.move') {
+        pushMovement(msg.params && msg.params.movement);
       } else if (msg.method === 'tarot.reading') {
         // The reading owns the voice; ambient dialogue holds until it drains.
         readingHold = true;
         if (conversation) conversation.notifyReading(true, 25000);
-        showReading(msg.params && msg.params.reading);
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
-      } else if (msg.method === 'temple.event') {
+        showReading(msg.params && msg.params.reading);
+        showResult(msg.params && msg.params.reading);
+      } else if (msg.method === 'temple.event') {      } else if (msg.method === 'temple.event') {
         handleServerEvent(msg.params && msg.params.event);
       } else if (msg.method === 'mystic.fx') {
         const info = msg.params || {};

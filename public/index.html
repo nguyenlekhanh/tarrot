@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/stage.css" />
+  <link rel="stylesheet" href="/css/stage-tarot.css" />
 </head>
 <body>
   <div class="obs-root" id="obsRoot">
@@ -50,6 +51,24 @@
         </div>
       </header>
 
+        <!-- 4b. LIVE TAROT QUEUE -->
+        <section class="live-queue" id="liveQueue">
+          <div class="queue-row queue-current">
+            <span class="queue-label">&#128302; NOW</span>
+            <span class="queue-current-text" id="queueCurrent">THE READING TABLE IS WAITING</span>
+            <span class="queue-count" id="queueCount">0 / 100 WAITING</span>
+          </div>
+          <div class="queue-row queue-next" id="queueNext">NEXT: THE LINE IS OPEN</div>
+          <div class="queue-row queue-move" id="queueMovement">&#10024; THE LINE IS QUIET TONIGHT</div>
+        </section>
+
+        <!-- 4c. CHOOSE YOUR DESTINY -->
+        <section class="destiny" id="destinyBox">
+          <div class="destiny-head">&#128302; CHOOSE YOUR DESTINY</div>
+          <div class="destiny-instruction">COMMENT + YOUR QUESTION</div>
+          <div class="destiny-columns" id="destinyColumns"></div>
+        </section>
+
       <!-- 5. READING PANEL -->
       <section class="reading" id="readingPanel" aria-live="polite">
         <div class="reading-question" id="readingQuestion">Speak your question in the chat…</div>
@@ -60,6 +79,28 @@
         </div>
         <div class="reading-narration" id="readingNarration"></div>
       </section>
+
+
+        <!-- 5b. READING RESULT -->
+        <section class="reading-result" id="readingResult" aria-live="polite">
+          <div class="result-headline" id="resultHeadline"></div>
+          <div class="result-cards" id="resultCards"></div>
+          <div class="result-bars">
+            <div class="result-bar">
+              <div class="result-bar-label"><span>GOOD FORTUNE</span><b id="fortuneValue">0%</b></div>
+              <div class="result-bar-track"><div class="result-bar-fill good" id="fortuneBar"></div></div>
+            </div>
+            <div class="result-bar">
+              <div class="result-bar-label"><span>POINTS TO WATCH</span><b id="cautionValue">0%</b></div>
+              <div class="result-bar-track"><div class="result-bar-fill watch" id="cautionBar"></div></div>
+            </div>
+          </div>
+          <div class="result-oracle">
+            <div class="result-oracle-label">THE ORACLE&#39;S MESSAGE</div>
+            <div class="result-oracle-text" id="oracleText"></div>
+          </div>
+          <div class="result-closing" id="resultClosing"></div>
+        </section>
 
       <!-- 6. WELCOME / GIFT BANNER -->
       <div class="banner" id="banner">
@@ -89,6 +130,13 @@
           </div>
         </div>
       </div>
+
+
+        <!-- 7b. QUEUE MOVEMENT TICKER -->
+        <div class="move-ticker" id="moveTicker">
+          <div class="move-line" id="moveLineA"></div>
+          <div class="move-line" id="moveLineB"></div>
+        </div>
 
       <!-- 8. FOOTER TICKER -->
       <footer class="stage-footer">
@@ -158,6 +206,7 @@
 
   <script src="/js/particles.js"></script>
   <script src="/js/music.js"></script>
+  <script src="/js/tts-queue.js"></script>
   <script src="/js/conversation.js"></script>
   <script src="/js/stage.js"></script>
 </body>
