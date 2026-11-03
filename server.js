@@ -6398,7 +6398,14 @@ async function runTarotReading(request = {}) {
 
   broadcastNotification('tarot.reading', { reading, tarot: tarotSnapshot() });
   broadcastNotification('temple.event', { event });
-  if (request.announce === true) await announceTarotReading(reading, result);
+  if (request.announce === true) {
+    // Narration must not block the caller: every clip is broadcast as soon as it
+    // is synthesised, so the Admin button answers immediately and the stage
+    // plays the sequence in order instead of the UI waiting ~30-60 s.
+    announceTarotReading(reading, result).catch((err) => {
+      console.warn('[Tarot] Narration failed:', err && err.message ? err.message : err);
+    });
+  }
   return { reading, event, tarot: tarotSnapshot() };
 }
 
@@ -7033,6 +7040,7 @@ async function handleRpcCall(method, params = {}) {
 // ============================================================================
 // 9. EXPRESS + WEBSOCKET SERVER
 // ============================================================================
+const RPC_TIMEOUT_MS = 45000;
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -7053,15 +7061,34 @@ app.post('/rpc', async (req, res) => {
       error: { code: -32600, message: 'Invalid JSON-RPC request: method is required' }
     });
   }
+  // A caller must always get exactly one answer, even if a handler hangs.
+  let replied = false;
+  const timeout = setTimeout(() => {
+    if (replied) return;
+    replied = true;
+    console.warn(`[RPC] ${method} timed out after ${RPC_TIMEOUT_MS} ms`);
+    res.status(200).json({
+      jsonrpc: jsonrpc || '2.0',
+      id: id ?? null,
+      error: { code: -32000, message: `${method} timed out after ${Math.round(RPC_TIMEOUT_MS / 1000)}s` }
+    });
+  }, RPC_TIMEOUT_MS);
   try {
     const result = await handleRpcCall(method, params || {});
+    if (replied) return;
+    replied = true;
     res.json({ jsonrpc: jsonrpc || '2.0', id: id ?? null, result });
   } catch (err) {
+    console.warn(`[RPC] ${method} failed:`, err && err.message ? err.message : err);
+    if (replied) return;
+    replied = true;
     res.status(200).json({
       jsonrpc: jsonrpc || '2.0',
       id: id ?? null,
       error: { code: -32000, message: err.message || 'Server error' }
     });
+  } finally {
+    clearTimeout(timeout);
   }
 });
 
@@ -7181,6 +7208,7 @@ wss.on('connection', (ws) => {
         ws.send(JSON.stringify({ jsonrpc: '2.0', id: msg.id, result }));
       }
     } catch (err) {
+      console.warn(`[WS-RPC] ${msg.method} failed:`, err && err.message ? err.message : err);
       if (msg.id !== undefined) {
         ws.send(
           JSON.stringify({
