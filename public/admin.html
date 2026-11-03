@@ -2905,5 +2905,404 @@
     })();
   </script>
 
+<!-- ===================== LIVE TAROT EXPERIENCE ===================== -->
+  <style>
+    .lt-panel {
+      margin: 22px;
+      padding: 20px 22px;
+      border-radius: 14px;
+      border: 1px solid rgba(166, 120, 255, 0.28);
+      background: #0c0817;
+      color: #e9ddff;
+      font-family: 'EB Garamond', 'Segoe UI', serif;
+    }
+    .lt-panel h2 { margin: 0 0 4px; font-size: 20px; letter-spacing: 1px; }
+    .lt-panel h3 { margin: 18px 0 8px; font-size: 15px; letter-spacing: 1.5px; color: #f2e6ff; text-transform: uppercase; }
+    .lt-panel .hint { font-size: 13px; opacity: 0.7; margin-bottom: 12px; }
+    .lt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .lt-field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+    .lt-field input, .lt-field select, .lt-panel input[type="text"], .lt-panel input[type="number"], .lt-panel select {
+      padding: 7px 9px; border-radius: 8px; border: 1px solid rgba(166, 120, 255, 0.3);
+      background: #150d26; color: #f2eaff; font-family: inherit; font-size: 13.5px;
+    }
+    .lt-actions { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 0; }
+    .lt-actions button, .lt-row button {
+      padding: 7px 11px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px;
+      border: 1px solid rgba(166, 120, 255, 0.35); background: #1a1030; color: #eadfff;
+    }
+    .lt-actions button.primary { background: linear-gradient(180deg, #4a2d86, #2a1850); border-color: rgba(216, 185, 120, 0.5); }
+    .lt-actions button.on { border-color: #7ef0b0; color: #b6ffd8; }
+    .lt-actions button:hover, .lt-row button:hover { background: #241543; }
+    .lt-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 10px; }
+    .lt-table th, .lt-table td { text-align: left; padding: 5px 4px; border-bottom: 1px solid rgba(166, 120, 255, 0.12); vertical-align: middle; }
+    .lt-table input[type="text"], .lt-table input[type="number"] { width: 100%; }
+    .lt-table img { width: 26px; height: 26px; object-fit: contain; }
+    .lt-status { font-size: 13px; min-height: 18px; opacity: 0.85; margin: 6px 0; }
+    .lt-current { font-size: 13px; margin-bottom: 8px; color: #ffd9ee; }
+  </style>
+  <section class="lt-panel" id="liveTarotPanel">
+    <h2>&#128302; Live Tarot Experience</h2>
+    <div class="hint">Queue, rotating topics, gift/like/wait priority, ticker and the written reading result. Everything is saved on the server and survives restarts.</div>
+
+    <h3>Live Queue Manager</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Queue capacity</label><input type="number" id="lqCapacity" min="1" max="1000" step="1" /></div>
+      <div class="lt-field"><label>Add a viewer</label><input type="text" id="lqViewer" placeholder="Viewer name" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="lqSaveCapacity" class="primary" type="button">Save capacity</button>
+      <button id="lqAdd" type="button">Add viewer</button>
+      <button id="lqClear" type="button">Clear queue</button>
+      <button id="lqPump" type="button">Start next reading</button>
+      <button id="lqRefresh" type="button">Refresh</button>
+    </div>
+    <div class="lt-current" id="lqCurrent"></div>
+    <table class="lt-table">
+      <thead><tr><th>#</th><th>Viewer</th><th>Topic</th><th>Score</th><th>Move</th></tr></thead>
+      <tbody id="lqRows"></tbody>
+    </table>
+    <div class="lt-status" id="lqStatus"></div>
+
+    <h3>Reading Topics</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Rotation speed</label><select id="ltSpeed"></select></div>
+      <div class="lt-field"><label>New topic</label><input type="text" id="ltNew" placeholder="e.g. Pet Reading" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="ltAdd" class="primary" type="button">Add topic</button>
+      <button id="ltSaveSpeed" type="button">Save rotation speed</button>
+    </div>
+    <table class="lt-table">
+      <thead><tr><th>On</th><th>Topic</th><th>Keywords</th><th></th></tr></thead>
+      <tbody id="ltRows"></tbody>
+    </table>
+    <div class="lt-status" id="ltStatus"></div>
+
+    <h3>Gift Priority</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Wait promotion interval (s)</label><input type="number" id="lpWaitInterval" min="10" max="3600" step="5" /></div>
+      <div class="lt-field"><label>Wait promotion amount</label><input type="number" id="lpWaitAmount" min="0" max="100" step="1" /></div>
+      <div class="lt-field"><label>Likes needed</label><input type="number" id="lpLikeThreshold" min="1" max="10000" step="1" /></div>
+      <div class="lt-field"><label>Like promotion amount</label><input type="number" id="lpLikeAmount" min="0" max="100" step="1" /></div>
+      <div class="lt-field"><label>Coins per unmapped step</label><input type="number" id="lpCoinsPerStep" min="1" max="1000" step="1" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="lpWait" type="button">Waiting promotion: ON</button>
+      <button id="lpGift" type="button">Gift promotion: ON</button>
+      <button id="lpLike" type="button">Like promotion: ON</button>
+      <button id="lpSave" class="primary" type="button">Save promotions</button>
+    </div>
+    <table class="lt-table">
+      <thead><tr><th>Gift</th><th>Icon</th><th>Coins</th><th>Promote</th><th>On</th></tr></thead>
+      <tbody id="lpRows"></tbody>
+    </table>
+    <div class="lt-status" id="lpStatus"></div>
+
+    <h3>Queue Ticker</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Message duration (ms)</label><input type="number" id="lkDuration" min="1500" max="30000" step="500" /></div>
+      <div class="lt-field"><label>Animation speed (ms)</label><input type="number" id="lkSpeed" min="200" max="6000" step="100" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="lkToggle" type="button">Ticker: ON</button>
+      <button id="lkSave" class="primary" type="button">Save ticker</button>
+    </div>
+    <div class="lt-status" id="lkStatus"></div>
+
+    <h3>Reading Result</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Result display duration (s)</label><input type="number" id="lrSeconds" min="5" max="300" step="5" /></div>
+      <div class="lt-field"><label>Interpretation</label><select id="lrMode"><option value="builtin">Built-in library</option><option value="ai">AI (falls back to built-in)</option></select></div>
+    </div>
+    <div class="lt-actions">
+      <button id="lrFortune" type="button">Fortune bars: ON</button>
+      <button id="lrSave" class="primary" type="button">Save result</button>
+    </div>
+    <div class="lt-hint hint">AI reads the <em>existing</em> OpenRouter / Ollama provider settings above — there is no separate key here, and a failed call falls back to the built-in interpretation.</div>
+    <div class="lt-status" id="lrStatus"></div>
+
+    <h3>Testing</h3>
+    <div class="lt-grid">
+      <div class="lt-field"><label>Test viewer</label><input type="text" id="lxViewer" value="Sophia" /></div>
+      <div class="lt-field"><label>Test comment</label><input type="text" id="lxComment" value="tarot reading about my love life" /></div>
+    </div>
+    <div class="lt-actions">
+      <button id="lxViewerAdd" type="button">Simulate viewer joining</button>
+      <button id="lxComment" type="button">Simulate tarot comment</button>
+      <button id="lxGift" type="button">Simulate gift</button>
+      <button id="lxLikes" type="button">Simulate likes</button>
+      <button id="lxReading" type="button">Complete test reading</button>
+    </div>
+    <div class="lt-status" id="lxStatus"></div>
+  </section>
+
+  <script>
+    (function () {
+      const $ = (id) => document.getElementById(id);
+      let snapshot = null;
+      let topics = [];
+      let mapping = [];
+      let promotion = null;
+      let ticker = null;
+      let result = null;
+
+      function status(id, text) { if ($(id)) $(id).textContent = text || ''; }
+
+      async function rpc(method, params) {
+        const res = await fetch('/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params: params || {} })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.result;
+      }
+
+      function esc(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+      }
+
+      function renderQueue() {
+        const queue = (snapshot && snapshot.queue) || null;
+        if (!queue) return;
+        $('lqCapacity').value = queue.capacity;
+        $('lqCurrent').textContent = (queue.lines.current || '') + ' · ' + (queue.lines.count || '');
+        $('lqRows').innerHTML = (queue.entries || []).map((entry) => (
+          '<tr><td>#' + entry.position + '</td><td>' + esc(entry.user) + '</td><td>' + esc(entry.topicLabel || '—') + '</td>' +
+          '<td>' + entry.score + '</td><td><button data-lq-up="' + esc(entry.user) + '" type="button">&uarr; Up</button> ' +
+          '<button data-lq-remove="' + esc(entry.user) + '" type="button">&times;</button></td></tr>'
+        )).join('') || '<tr><td colspan="5">The line is empty.</td></tr>';
+      }
+
+      function renderTopics() {
+        topics = (snapshot && snapshot.topics) || [];
+        $('ltSpeed').innerHTML = [3, 5, 6, 8, 10, 15, 20].map((seconds) =>
+          '<option value="' + seconds + '"' + ((snapshot.topicSettings.rotationSeconds === seconds) ? ' selected' : '') + '>' + seconds + ' s</option>'
+        ).join('');
+        $('ltRows').innerHTML = topics.map((topic) => (
+          '<tr data-topic="' + esc(topic.id) + '">' +
+          '<td><input type="checkbox" data-topic-enabled="' + esc(topic.id) + '"' + (topic.enabled ? ' checked' : '') + ' /></td>' +
+          '<td><input type="text" data-topic-label="' + esc(topic.id) + '" value="' + esc(topic.label) + '" /></td>' +
+          '<td><input type="text" data-topic-keywords="' + esc(topic.id) + '" value="' + esc((topic.keywords || []).join(', ')) + '" /></td>' +
+          '<td><button data-topic-save="' + esc(topic.id) + '" type="button">Save</button> ' +
+          '<button data-topic-up="' + esc(topic.id) + '" type="button">&uarr;</button> ' +
+          '<button data-topic-down="' + esc(topic.id) + '" type="button">&darr;</button> ' +
+          '<button data-topic-delete="' + esc(topic.id) + '" type="button">&times;</button></td></tr>'
+        )).join('') || '<tr><td colspan="4">No topics — add one.</td></tr>';
+      }
+
+      function renderPromotion() {
+        promotion = (snapshot && snapshot.promotion) || {};
+        mapping = (snapshot && snapshot.giftMapping) || [];
+        $('lpWaitInterval').value = promotion.waitIntervalSeconds;
+        $('lpWaitAmount').value = promotion.waitAmount;
+        $('lpLikeThreshold').value = promotion.likeThreshold;
+        $('lpLikeAmount').value = promotion.likeAmount;
+        $('lpCoinsPerStep').value = promotion.giftCoinsPerStep;
+        $('lpWait').textContent = 'Waiting promotion: ' + (promotion.waitEnabled ? 'ON' : 'OFF');
+        $('lpWait').classList.toggle('on', promotion.waitEnabled);
+        $('lpGift').textContent = 'Gift promotion: ' + (promotion.giftEnabled ? 'ON' : 'OFF');
+        $('lpGift').classList.toggle('on', promotion.giftEnabled);
+        $('lpLike').textContent = 'Like promotion: ' + (promotion.likeEnabled ? 'ON' : 'OFF');
+        $('lpLike').classList.toggle('on', promotion.likeEnabled);
+        $('lpRows').innerHTML = mapping.map((item, index) => (
+          '<tr><td><input type="text" data-gift-name="' + index + '" value="' + esc(item.label) + '" /></td>' +
+          '<td><img src="' + esc(item.url) + '" alt="" /></td>' +
+          '<td><input type="number" data-gift-coins="' + index + '" value="' + item.coins + '" min="0" max="100000" /></td>' +
+          '<td><input type="number" data-gift-promote="' + index + '" value="' + item.promote + '" min="0" max="1000" /></td>' +
+          '<td><input type="checkbox" data-gift-enabled="' + index + '"' + (item.enabled !== false ? ' checked' : '') + ' /></td></tr>'
+        )).join('') || '<tr><td colspan="5">No gift mappings.</td></tr>';
+      }
+
+      function renderExtras() {
+        ticker = (snapshot && snapshot.ticker) || {};
+        result = (snapshot && snapshot.result) || {};
+        $('lkDuration').value = ticker.durationMs;
+        $('lkSpeed').value = ticker.speedMs;
+        $('lkToggle').textContent = 'Ticker: ' + (ticker.enabled ? 'ON' : 'OFF');
+        $('lkToggle').classList.toggle('on', ticker.enabled);
+        $('lrSeconds').value = result.displaySeconds;
+        $('lrMode').value = result.interpretation === 'ai' ? 'ai' : 'builtin';
+        $('lrFortune').textContent = 'Fortune bars: ' + (result.showFortune === false ? 'OFF' : 'ON');
+        $('lrFortune').classList.toggle('on', result.showFortune !== false);
+      }
+
+      function apply(next) {
+        if (!next) return;
+        snapshot = next;
+        if (snapshot.queue) renderQueue();
+        if (snapshot.topics) renderTopics();
+        if (snapshot.promotion) renderPromotion();
+        if (snapshot.ticker) renderExtras();
+      }
+
+      async function refresh() {
+        try {
+          apply(await rpc('tarot.getState', {}));
+        } catch (err) { status('lqStatus', 'Server offline: ' + err.message); }
+      }
+
+      async function saveSettings(patch) {
+        const data = await rpc('tarot.updateSettings', patch);
+        apply(data.tarot);
+        return data;
+      }
+
+      // queue
+      $('lqSaveCapacity').addEventListener('click', async () => {
+        try { await saveSettings({ capacity: Number($('lqCapacity').value) || 100 }); status('lqStatus', 'Capacity saved.'); }
+        catch (err) { status('lqStatus', err.message); }
+      });
+      $('lqAdd').addEventListener('click', async () => {
+        const user = $('lqViewer').value.trim();
+        if (!user) return status('lqStatus', 'Enter a viewer name.');
+        try { const r = await rpc('tarot.queue.add', { user, uniqueId: user.toLowerCase().replace(/\s+/g, '.') }); apply({ ...snapshot, queue: r.queue }); status('lqStatus', 'Added at #' + (r.position || '?')); }
+        catch (err) { status('lqStatus', err.message); }
+      });
+      $('lqClear').addEventListener('click', async () => {
+        try { const r = await rpc('tarot.queue.clear', {}); apply({ ...snapshot, queue: r.queue }); status('lqStatus', 'Queue cleared.'); }
+        catch (err) { status('lqStatus', err.message); }
+      });
+      $('lqPump').addEventListener('click', async () => {
+        try { await rpc('tarot.queue.pump', {}); status('lqStatus', 'Reading started.'); setTimeout(refresh, 1200); }
+        catch (err) { status('lqStatus', err.message); }
+      });
+      $('lqRefresh').addEventListener('click', refresh);
+      $('lqRows').addEventListener('click', async (event) => {
+        const up = event.target.getAttribute && event.target.getAttribute('data-lq-up');
+        const remove = event.target.getAttribute && event.target.getAttribute('data-lq-remove');
+        try {
+          if (up) { await rpc('tarot.queue.promote', { user: up, amount: 1, kind: 'manual' }); status('lqStatus', up + ' moved up.'); }
+          if (remove) { await rpc('tarot.queue.remove', { user: remove }); status('lqStatus', remove + ' removed.'); }
+          refresh();
+        } catch (err) { status('lqStatus', err.message); }
+      });
+
+      // topics
+      $('ltAdd').addEventListener('click', async () => {
+        const label = $('ltNew').value.trim();
+        if (!label) return status('ltStatus', 'Enter a topic label.');
+        try { const r = await rpc('tarot.topics.update', { action: 'add', label }); apply(r.tarot); $('ltNew').value = ''; status('ltStatus', 'Topic added.'); }
+        catch (err) { status('ltStatus', err.message); }
+      });
+      $('ltSaveSpeed').addEventListener('click', async () => {
+        try { await saveSettings({ topicSettings: { rotationSeconds: Number($('ltSpeed').value) || 6 } }); status('ltStatus', 'Rotation speed saved.'); }
+        catch (err) { status('ltStatus', err.message); }
+      });
+      $('ltRows').addEventListener('click', async (event) => {
+        const get = (name) => event.target.getAttribute && event.target.getAttribute(name);
+        const id = get('data-topic-save') || get('data-topic-up') || get('data-topic-down') || get('data-topic-delete');
+        if (!id) return;
+        try {
+          if (get('data-topic-delete')) await rpc('tarot.topics.update', { action: 'delete', id });
+          if (get('data-topic-up')) await rpc('tarot.topics.update', { action: 'move', id, delta: -1 });
+          if (get('data-topic-down')) await rpc('tarot.topics.update', { action: 'move', id, delta: 1 });
+          if (get('data-topic-save')) {
+            const label = document.querySelector('[data-topic-label="' + id + '"]').value.trim();
+            const keywords = document.querySelector('[data-topic-keywords="' + id + '"]').value.split(',');
+            await rpc('tarot.topics.update', { action: 'update', id, label, keywords });
+          }
+          status('ltStatus', 'Topics updated.');
+          refresh();
+        } catch (err) { status('ltStatus', err.message); }
+      });
+      $('ltRows').addEventListener('change', async (event) => {
+        const id = event.target.getAttribute && event.target.getAttribute('data-topic-enabled');
+        if (!id) return;
+        try { await rpc('tarot.topics.update', { action: 'update', id, enabled: event.target.checked }); status('ltStatus', 'Topic ' + (event.target.checked ? 'enabled' : 'disabled') + '.'); }
+        catch (err) { status('ltStatus', err.message); }
+      });
+
+      // promotions
+      ['lpWait', 'lpGift', 'lpLike'].forEach((button) => {
+        $(button).addEventListener('click', async () => {
+          const key = button === 'lpWait' ? 'waitEnabled' : button === 'lpGift' ? 'giftEnabled' : 'likeEnabled';
+          try { await rpc('tarot.promotion.update', { [key]: !promotion[key] }); refresh(); status('lpStatus', 'Promotion updated.'); }
+          catch (err) { status('lpStatus', err.message); }
+        });
+      });
+      $('lpSave').addEventListener('click', async () => {
+        const nextMapping = mapping.map((item, index) => ({
+          id: item.id,
+          label: document.querySelector('[data-gift-name="' + index + '"]').value.trim() || item.label,
+          coins: Number(document.querySelector('[data-gift-coins="' + index + '"]').value) || 0,
+          promote: Number(document.querySelector('[data-gift-promote="' + index + '"]').value) || 0,
+          enabled: document.querySelector('[data-gift-enabled="' + index + '"]').checked
+        }));
+        try {
+          const r = await rpc('tarot.promotion.update', {
+            waitIntervalSeconds: Number($('lpWaitInterval').value),
+            waitAmount: Number($('lpWaitAmount').value),
+            likeThreshold: Number($('lpLikeThreshold').value),
+            likeAmount: Number($('lpLikeAmount').value),
+            giftCoinsPerStep: Number($('lpCoinsPerStep').value),
+            mapping: nextMapping
+          });
+          apply(r.tarot);
+          status('lpStatus', 'Promotions saved.');
+        } catch (err) { status('lpStatus', err.message); }
+      });
+
+      // ticker + result
+      $('lkToggle').addEventListener('click', async () => {
+        try { await rpc('tarot.ticker.update', { enabled: !ticker.enabled }); refresh(); status('lkStatus', 'Ticker updated.'); }
+        catch (err) { status('lkStatus', err.message); }
+      });
+      $('lkSave').addEventListener('click', async () => {
+        try { await rpc('tarot.ticker.update', { durationMs: Number($('lkDuration').value), speedMs: Number($('lkSpeed').value) }); refresh(); status('lkStatus', 'Ticker saved.'); }
+        catch (err) { status('lkStatus', err.message); }
+      });
+      $('lrFortune').addEventListener('click', async () => {
+        try { await rpc('tarot.result.update', { showFortune: result.showFortune === false }); refresh(); status('lrStatus', 'Result updated.'); }
+        catch (err) { status('lrStatus', err.message); }
+      });
+      $('lrSave').addEventListener('click', async () => {
+        try {
+          await rpc('tarot.result.update', { displaySeconds: Number($('lrSeconds').value), interpretation: $('lrMode').value });
+          refresh();
+          status('lrStatus', 'Result settings saved.');
+        } catch (err) { status('lrStatus', err.message); }
+      });
+
+      // testing
+      $('lxViewerAdd').addEventListener('click', async () => {
+        try { const r = await rpc('tarot.simulateViewer', { user: $('lxViewer').value || 'Simulated Viewer' }); status('lxStatus', 'Viewer at #' + (r.position || '?') + '.'); refresh(); }
+        catch (err) { status('lxStatus', err.message); }
+      });
+      $('lxComment').addEventListener('click', async () => {
+        try {
+          const r = await rpc('tarot.simulateComment', { comment: $('lxComment').value, user: $('lxViewer').value || 'Chat Tester', uniqueId: 'chat.tester.' + Date.now() });
+          status('lxStatus', r.accepted ? 'Comment queued at #' + r.position + '.' : 'Comment not queued: ' + r.reason);
+          refresh();
+        } catch (err) { status('lxStatus', err.message); }
+      });
+      $('lxGift').addEventListener('click', async () => {
+        try {
+          await rpc('tarot.queue.add', { user: $('lxViewer').value || 'Gift Tester', uniqueId: 'gift.' + Date.now() });
+          const r = await rpc('tarot.queue.promote', { user: $('lxViewer').value || 'Gift Tester', amount: 6, kind: 'gift' });
+          status('lxStatus', r.moved ? (r.movement && r.movement.message) : 'Gift recorded, no movement.');
+          refresh();
+        } catch (err) { status('lxStatus', err.message); }
+      });
+      $('lxLikes').addEventListener('click', async () => {
+        try { const r = await rpc('tarot.simulateLikes', { user: $('lxViewer').value || 'Like Tester' }); status('lxStatus', r.movement ? r.movement.message : 'Likes recorded, no movement.'); refresh(); }
+        catch (err) { status('lxStatus', err.message); }
+      });
+      $('lxReading').addEventListener('click', async () => {
+        try {
+          const r = await rpc('tarot.testThree', { user: $('lxViewer').value || 'Test Viewer', theme: 'love', topicLabel: 'Love Reading', announce: false });
+          status('lxStatus', 'Reading complete: ' + r.reading.result.fortune + '% / ' + r.reading.result.caution + '%');
+          refresh();
+        } catch (err) { status('lxStatus', err.message); }
+      });
+
+      refresh();
+      setInterval(refresh, 4000);
+    })();
+  </script>
+
 </body>
 </html>
