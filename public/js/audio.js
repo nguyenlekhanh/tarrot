@@ -22,7 +22,7 @@
       const savedMusic = parseFloat(localStorage.getItem('shop_music_vol'));
       const savedTts = parseFloat(localStorage.getItem('shop_tts_vol'));
       const savedSfx = parseFloat(localStorage.getItem('shop_sfx_vol'));
-      this.bgBaseVolume = Number.isFinite(savedMusic) ? Math.max(0, Math.min(1, savedMusic)) : 0.55;
+      this.bgBaseVolume = Number.isFinite(savedMusic) ? Math.max(0, Math.min(1, savedMusic)) : 0.28;
       this.ttsVolume = Number.isFinite(savedTts) ? Math.max(0, Math.min(1, savedTts)) : 0.9;
       // SFX sit on their own gain value so music/TTS levels never move them.
       this.sfxVolume = Number.isFinite(savedSfx) ? Math.max(0, Math.min(1, savedSfx)) : 0.85;
@@ -64,7 +64,8 @@
     }
 
     duckedVolume() {
-      return Math.max(0.06, this.bgBaseVolume * 0.32);
+      // Narration drops the bed to roughly 30% of its level.
+      return Math.max(0.06, this.bgBaseVolume * 0.3);
     }
 
     setMusicVolume(vol) {

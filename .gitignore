@@ -23,3 +23,6 @@ config/piper/en/piper-en-us-lessac-high.onnx
 
 # Tarot reading history (runtime viewer data)
 data/tarot-history.json
+
+# Local backup of the removed café music collection
+backups/

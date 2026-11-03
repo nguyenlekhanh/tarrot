@@ -84,17 +84,21 @@ function createHarness(seed = {}) {
 
 test('music: the playlist lists every bundled track', () => {
   const { playlist } = createHarness();
-  assert.equal(playlist.length, 8);
+  assert.equal(playlist.length, 10);
   for (const track of playlist) {
     assert.match(track.url, /^\/assets\/music\/[\w-]+\.mp3$/);
     assert.ok(track.title.length > 0);
   }
   const files = fs.readdirSync(path.join(__dirname, '..', 'public', 'assets', 'music'));
   assert.equal(files.filter((name) => name.endsWith('.mp3')).length, playlist.length);
+  // The café collection must never come back into the active playlist.
+  for (const stale of ['sunny-morning', 'summer-lemonade', 'happy-cafe', 'coffee-break']) {
+    assert.ok(!playlist.some((track) => track.id === stale), `${stale} is not part of the soundtrack`);
+  }
 });
 
 test('music: next and previous move through the list and persist the track', async () => {
-  const { player, store } = createHarness();
+  const { player, store, playlist } = createHarness();
   player.index = 0;
   await player.next();
   assert.equal(player.index, 1);
@@ -104,7 +108,7 @@ test('music: next and previous move through the list and persist the track', asy
   assert.equal(player.index, 0);
 
   await player.previous();
-  assert.equal(player.index, 7, 'previous wraps to the last track');
+  assert.equal(player.index, playlist.length - 1, 'previous wraps to the last track');
 });
 
 test('music: a finished track advances to the next one', async () => {

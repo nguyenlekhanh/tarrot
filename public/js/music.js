@@ -1,7 +1,7 @@
 /**
  * ShopMusicPlayer — Mystic Witch Live background playlist.
  *
- * - Eight original, locally generated instrumental tracks (see tools/generate_music.py)
+ * - Ten curated royalty-free dark-ambient tracks (see docs/MUSIC-LICENSES.md)
  * - One HTMLAudioElement per player, so tracks never overlap
  * - Auto-advance on track end, wrap to the first track after the last one
  * - Preloads the next track, remembers the volume and last track
@@ -13,15 +13,20 @@
  *   playback, the admin panel mirrors it and sends play/pause/next/previous.
  */
 (function () {
+  // Royalty-free soundtrack, ordered so consecutive moods never jar: the ambient
+  // chamber beds sit between the darker ceremonial pieces. Every file is
+  // documented in docs/MUSIC-LICENSES.md under the Pixabay Content License.
   const PLAYLIST = [
-    { id: 'sunny-morning', title: 'Sunny Morning', url: '/assets/music/sunny-morning.mp3' },
-    { id: 'summer-lemonade', title: 'Summer Lemonade', url: '/assets/music/summer-lemonade.mp3' },
-    { id: 'happy-cafe', title: 'Happy Café', url: '/assets/music/happy-cafe.mp3' },
-    { id: 'weekend-vibes', title: 'Weekend Vibes', url: '/assets/music/weekend-vibes.mp3' },
-    { id: 'beachside-drive', title: 'Beachside Drive', url: '/assets/music/beachside-drive.mp3' },
-    { id: 'coffee-break', title: 'Coffee Break', url: '/assets/music/coffee-break.mp3' },
-    { id: 'good-times', title: 'Good Times', url: '/assets/music/good-times.mp3' },
-    { id: 'little-sunshine', title: 'Little Sunshine', url: '/assets/music/little-sunshine.mp3' }
+    { id: 'mystic-chamber', title: 'Mystic Chamber', url: '/assets/music/mystic-chamber.mp3' },
+    { id: 'dark-oracle', title: 'Dark Oracle', url: '/assets/music/dark-oracle.mp3' },
+    { id: 'spirit-realm', title: 'Spirit Realm', url: '/assets/music/spirit-realm.mp3' },
+    { id: 'tarot-reading', title: 'Tarot Reading', url: '/assets/music/tarot-reading.mp3' },
+    { id: 'witch-ritual', title: 'Witch Ritual', url: '/assets/music/witch-ritual.mp3' },
+    { id: 'enchanted-forest', title: 'Enchanted Forest', url: '/assets/music/enchanted-forest.mp3' },
+    { id: 'moonlight-prophecy', title: 'Moonlight Prophecy', url: '/assets/music/moonlight-prophecy.mp3' },
+    { id: 'ancient-mystery', title: 'Ancient Mystery', url: '/assets/music/ancient-mystery.mp3' },
+    { id: 'dark-sanctum', title: 'Dark Sanctum', url: '/assets/music/dark-sanctum.mp3' },
+    { id: 'deep-trance', title: 'Deep Trance', url: '/assets/music/deep-trance.mp3' }
   ];
 
   const clamp01 = (v) => Math.max(0, Math.min(1, Number(v)));
@@ -38,7 +43,8 @@
       this.index = savedIndex;
 
       let savedVolume = parseFloat(localStorage.getItem('shop_music_vol'));
-      this.volume = clamp01(Number.isFinite(savedVolume) ? savedVolume : options.volume ?? 0.55);
+      // 28% keeps the bed audible but clearly under the Witch's voice.
+      this.volume = clamp01(Number.isFinite(savedVolume) ? savedVolume : options.volume ?? 0.28);
 
       // Playback preferences survive reloads and OBS restarts.
       this.shuffle = localStorage.getItem('shop_music_shuffle') === '1';
@@ -61,6 +67,7 @@
       this._unlockAttached = false;
       this._switchGuard = 0;
       this.lastBroadcastKey = '';
+      this.rampTimer = 0;
     }
 
     // ---------------------------------------------------------------- getters
@@ -165,12 +172,19 @@
     // never hears a click when narration starts or ends.
     rampVolume() {
       const audio = this.audio;
-      if (!audio || typeof requestAnimationFrame !== 'function') {
+      if (!audio) return;
+      const target = this.effectiveVolume();
+      // A backgrounded tab throttles requestAnimationFrame to zero, which would
+      // leave the bed stuck at its old level while the Witch speaks. Fall back to
+      // an instant change there instead of relying on the animation.
+      const canAnimate =
+        typeof requestAnimationFrame === 'function' &&
+        !(typeof document === 'object' && document.hidden);
+      if (!canAnimate) {
         this.applyVolume();
         return;
       }
       if (this.rampHandle) cancelAnimationFrame(this.rampHandle);
-      const target = this.effectiveVolume();
       const start = audio.volume;
       const startedAt = (typeof performance === 'object' ? performance.now() : Date.now());
       const step = () => {
@@ -181,6 +195,13 @@
         else this.rampHandle = 0;
       };
       this.rampHandle = requestAnimationFrame(step);
+      // Safety net for a tab that gets backgrounded mid-fade.
+      if (this.rampTimer) clearTimeout(this.rampTimer);
+      this.rampTimer = setTimeout(() => {
+        audio.volume = target;
+        this.rampHandle = 0;
+        this.rampTimer = 0;
+      }, 320);
     }
 
     setShuffle(on) {

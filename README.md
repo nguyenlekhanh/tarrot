@@ -280,16 +280,18 @@ A context-aware announcer keeps the stream talking even when nobody interacts.
 
 | # | Track | File | Feel |
 | --- | --- | --- | --- |
-| 1 | Sunny Morning | `sunny-morning.mp3` | Cheerful acoustic café |
-| 2 | Summer Lemonade | `summer-lemonade.mp3` | Light tropical instrumental |
-| 3 | Happy Café | `happy-cafe.mp3` | Warm soft jazz |
-| 4 | Weekend Vibes | `weekend-vibes.mp3` | Upbeat summer groove |
-| 5 | Beachside Drive | `beachside-drive.mp3` | Breezy marimba + shaker |
-| 6 | Coffee Break | `coffee-break.mp3` | Relaxing lo-fi |
-| 7 | Good Times | `good-times.mp3` | Bright bells and plucks |
-| 8 | Little Sunshine | `little-sunshine.mp3` | Gentle music-box calm |
+| 1 | Mystic Chamber | `mystic-chamber.mp3` | Dark ambient chamber bed |
+| 2 | Dark Oracle | `dark-oracle.mp3` | Mysterious, powerful drone |
+| 3 | Spirit Realm | `spirit-realm.mp3` | Ethereal ghostly atmosphere |
+| 4 | Tarot Reading | `tarot-reading.mp3` | Calm, magical, contemplative |
+| 5 | Witch Ritual | `witch-ritual.mp3` | Occult ceremonial atmosphere |
+| 6 | Enchanted Forest | `enchanted-forest.mp3` | Mystical ambient |
+| 7 | Moonlight Prophecy | `moonlight-prophecy.mp3` | Dreamy, supernatural |
+| 8 | Ancient Mystery | `ancient-mystery.mp3` | Dark cinematic |
+| 9 | Dark Sanctum | `dark-sanctum.mp3` | Low ceremonial drone |
+| 10 | Deep Trance | `deep-trance.mp3` | Long-form meditative bed |
 
-All eight tracks are **original instrumentals generated locally** by `tools/generate_music.py` (numpy additive synthesis → ffmpeg MP3). No third-party, commercial or copyrighted music is included; the files live in `public/assets/music/` and contain no vocals.
+All ten tracks are **royalty-free instrumentals** downloaded from Pixabay under the **Pixabay Content License** (free for commercial and monetised livestream use, no attribution required). Every source URL, artist and licence note lives in [`docs/MUSIC-LICENSES.md`](docs/MUSIC-LICENSES.md). No vocals, no YouTube rips, no commercial releases. The files were levelled to −21 LUFS with 2 s fade-in / 3 s fade-out so track changes never click, and default music volume is 28%.
 
 Playback starts automatically when the shop loads. Browsers that block autoplay retry on the first pointer/key gesture. The player advances when a track ends, wraps from the last track back to the first, preloads the next file, skips files that fail to load (falling back to the synthesized ambience if none play), and uses a single `Audio` element so two tracks can never overlap. Refreshing game state or customers arriving/leaving never restarts the music.
 

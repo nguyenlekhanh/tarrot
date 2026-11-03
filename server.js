@@ -2730,7 +2730,7 @@ const DEFAULT_STATE = {
     ttsMaxChars: 120,
     bgMusicEnabled: true,
     sfxEnabled: true,
-    musicVolume: 0.55,
+    musicVolume: 0.28,
     ttsVolume: 0.9,
     sfxVolume: 0.85,
     autoSim: false,

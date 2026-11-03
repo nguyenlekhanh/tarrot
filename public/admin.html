@@ -710,7 +710,7 @@
             <div class="hint" id="musicHint">The playlist starts automatically with the shop.</div>
           </div>
           <div>
-            <div class="label-line"><span>Music volume</span><strong id="valMusicVol">55%</strong></div>
+            <div class="label-line"><span>Music volume</span><strong id="valMusicVol">28%</strong></div>
             <input type="range" id="sliderMusicVol" min="0" max="100" step="5" value="55" />
           </div>
         </div>
@@ -1586,7 +1586,7 @@
           document.getElementById('valSpeed').textContent = Number(st.settings.ttsSpeed || 1).toFixed(2) + '×';
           document.getElementById('sliderVoiceVol').value = String(Math.round((st.settings.ttsVolume ?? 0.9) * 100));
           document.getElementById('valVoiceVol').textContent = Math.round((st.settings.ttsVolume ?? 0.9) * 100) + '%';
-          const musicVol = Number(st.settings.musicVolume ?? 0.55);
+          const musicVol = Number(st.settings.musicVolume ?? 0.28);
           if (musicPlayer) musicPlayer.setVolume(musicVol);
           if (!musicDragging) {
             document.getElementById('sliderMusicVol').value = String(Math.round(musicVol * 100));
