@@ -53,6 +53,40 @@
   // ---------------------------------------------------------------- effects
   const fx = window.DrinkShopFX ? new window.DrinkShopFX($('fxCanvas')) : null;
 
+  // ---------------------------------------------------------------- music
+  // The playlist player owns the single background <audio> element. The stage
+  // starts it, and every narration clip ducks it while the Witch speaks.
+  const music = window.ShopMusicPlayer
+    ? new window.ShopMusicPlayer({ role: 'stage' })
+    : null;
+  let musicEnabled = true;
+  let musicVolume = null;
+  let musicInitialized = false;
+
+  function applyMusicSettings(settings) {
+    if (!music || !settings) return;
+    const vol = Number(settings.musicVolume);
+    if (Number.isFinite(vol) && vol !== musicVolume) {
+      musicVolume = vol;
+      music.setVolume(vol);
+    }
+    const enabled = settings.bgMusicEnabled !== false;
+    if (musicInitialized && enabled === musicEnabled) return;
+    musicInitialized = true;
+    musicEnabled = enabled;
+    // Only a settings change may restart playback, so a manual pause sticks.
+    music.setEnabled(enabled);
+  }
+
+  if (music) {
+    music.initSync();
+    setTimeout(() => {
+      if (!musicInitialized) music.setEnabled(true);
+    }, 1500);
+    // Exposed for the stage's diagnostics and the browser tests.
+    window.mysticMusic = music;
+  }
+
   // Purple spirits live on their own canvas so they never fight DrinkShopFX
   // for the same context.
   const spiritCanvas = $('spiritCanvas');
@@ -184,11 +218,15 @@
       return pumpTts();
     }
     audio.volume = clip.volume;
+    if (music) music.setDuck(true);
     const finish = () => {
       if (currentClip === audio) currentClip = null;
       audio.onended = null;
       audio.onerror = null;
       ttsPlaying = false;
+      // Stay ducked until the queue is empty so back-to-back lines do not pump
+      // the music up and down between sentences.
+      if (music && !ttsQueue.length) music.setDuck(false);
       pumpTts();
     };
     audio.onended = finish;
@@ -258,6 +296,7 @@
 
   function applyState(state) {
     if (!state) return;
+    applyMusicSettings(state.settings);
     const likes = Number(state.likes) || 0;
     const gifts = Number(state.gifts) || 0;
     $('countLikes').textContent = likes.toLocaleString('en-US');

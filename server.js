@@ -6418,6 +6418,32 @@ app.get('/api/tts/engines', (_req, res) => {
   res.json(ttsStatusSnapshot().engines);
 });
 
+// Lists the background tracks that really exist on disk, so the admin playlist
+// and the stage player can never advertise a file that was removed.
+app.get('/api/music', (_req, res) => {
+  const fs = require('fs');
+  const dir = path.join(__dirname, 'public', 'assets', 'music');
+  let files = [];
+  try {
+    files = fs
+      .readdirSync(dir)
+      .filter((name) => /\.(mp3|wav|ogg|m4a)$/i.test(name))
+      .sort();
+  } catch (_) {}
+  res.json({
+    ok: true,
+    count: files.length,
+    tracks: files.map((name) => ({
+      file: name,
+      url: `/assets/music/${encodeURIComponent(name)}`,
+      title: name
+        .replace(/\.[^.]+$/, '')
+        .replace(/[-_]+/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    }))
+  });
+});
+
 app.all('/api/tts', async (req, res) => {
   const body = req.body || {};
   const text = String(body.text || req.query?.text || '').trim();

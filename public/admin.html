@@ -720,6 +720,11 @@
           <button class="btn" id="btnMusicPause">⏸ Pause</button>
           <button class="btn" id="btnMusicNext">⏭ Next</button>
         </div>
+        <div class="row">
+          <button class="btn" id="btnMusicShuffle">🔀 Shuffle: OFF</button>
+          <button class="btn on" id="btnMusicRepeat">🔁 Repeat: ON</button>
+          <span class="hint" id="musicCount" style="flex: 1 1 220px; align-self: center">Scanning the playlist…</span>
+        </div>
         <div>
           <div class="label-line"><span>Progress</span><strong id="musicTime">0:00 / 0:00</strong></div>
           <div class="music-progress"><div class="music-progress-fill" id="musicProgress"></div></div>
@@ -3110,6 +3115,16 @@
       });
       const playBtn = document.getElementById('btnMusicPlay');
       if (playBtn) playBtn.classList.toggle('on', Boolean(snap.playing));
+      const shuffleBtn = document.getElementById('btnMusicShuffle');
+      if (shuffleBtn) {
+        shuffleBtn.textContent = snap.shuffle ? '🔀 Shuffle: ON' : '🔀 Shuffle: OFF';
+        shuffleBtn.classList.toggle('on', Boolean(snap.shuffle));
+      }
+      const repeatBtn = document.getElementById('btnMusicRepeat');
+      if (repeatBtn) {
+        repeatBtn.textContent = snap.repeat ? '🔁 Repeat: ON' : '🔁 Repeat: OFF';
+        repeatBtn.classList.toggle('on', Boolean(snap.repeat));
+      }
     }
 
     const musicSlider = document.getElementById('sliderMusicVol');
@@ -3131,6 +3146,26 @@
     document.getElementById('btnMusicPause')?.addEventListener('click', () => musicPlayer && musicPlayer.pause());
     document.getElementById('btnMusicNext')?.addEventListener('click', () => musicPlayer && musicPlayer.next());
     document.getElementById('btnMusicPrev')?.addEventListener('click', () => musicPlayer && musicPlayer.previous());
+    document.getElementById('btnMusicShuffle')?.addEventListener('click', () => musicPlayer && musicPlayer.setShuffle(!musicPlayer.shuffle));
+    document.getElementById('btnMusicRepeat')?.addEventListener('click', () => musicPlayer && musicPlayer.setRepeat(!musicPlayer.repeat));
+
+    // Confirm the playlist against the files that really exist.
+    fetch('/api/music')
+      .then((res) => res.json())
+      .then((data) => {
+        const found = Array.isArray(data && data.tracks) ? data.tracks : [];
+        const el = document.getElementById('musicCount');
+        if (el) el.textContent = `${found.length} track${found.length === 1 ? '' : 's'} available on disk`;
+        if (musicPlayer && found.length) {
+          const present = new Set(found.map((track) => track.url.split('/').pop()));
+          musicPlayer.playlist.forEach((track) => {
+            const file = track.url.split('/').pop();
+            if (!present.has(file)) musicPlayer.unavailable.add(track.id);
+          });
+          musicPlayer.emit();
+        }
+      })
+      .catch(() => {});
 
     if (musicPlayer) {
       musicPlayer.initSync();

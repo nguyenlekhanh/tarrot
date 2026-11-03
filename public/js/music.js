@@ -40,6 +40,10 @@
       let savedVolume = parseFloat(localStorage.getItem('shop_music_vol'));
       this.volume = clamp01(Number.isFinite(savedVolume) ? savedVolume : options.volume ?? 0.55);
 
+      // Playback preferences survive reloads and OBS restarts.
+      this.shuffle = localStorage.getItem('shop_music_shuffle') === '1';
+      this.repeat = localStorage.getItem('shop_music_repeat') !== '0';
+
       this.audio = null;
       this.preloadEl = null;
       this.playing = false;
@@ -74,6 +78,8 @@
         blocked: this.blocked,
         volume: this.volume,
         ducked: this.ducked,
+        shuffle: this.shuffle,
+        repeat: this.repeat,
         trackCount: this.playlist.length,
         unavailable: Array.from(this.unavailable),
         remoteLinked: this.remoteLinked,
@@ -99,7 +105,7 @@
       }
       // Push play/pause/track changes to the admin panel immediately. Progress is
       // broadcast on a slower 1s timer so timeupdate never floods the channel.
-      const key = `${this.playing}|${this.index}|${this.blocked}|${this.enabled}`;
+      const key = `${this.playing}|${this.index}|${this.blocked}|${this.enabled}|${this.shuffle}|${this.repeat}`;
       if (this.role === 'stage' && key !== this.lastBroadcastKey) {
         this.lastBroadcastKey = key;
         this.broadcast();
@@ -144,12 +150,54 @@
         localStorage.setItem('shop_music_vol', String(val));
       } catch (_) {}
       this.applyVolume();
+      if (this.role === 'remote' && !this.localMode()) this.send('volume', val);
       this.emit();
     }
 
     setDuck(on) {
-      this.ducked = Boolean(on);
-      this.applyVolume();
+      const next = Boolean(on);
+      if (this.ducked === next) return;
+      this.ducked = next;
+      this.rampVolume();
+    }
+
+    // Music fades under the Witch's voice instead of snapping, so the stream
+    // never hears a click when narration starts or ends.
+    rampVolume() {
+      const audio = this.audio;
+      if (!audio || typeof requestAnimationFrame !== 'function') {
+        this.applyVolume();
+        return;
+      }
+      if (this.rampHandle) cancelAnimationFrame(this.rampHandle);
+      const target = this.effectiveVolume();
+      const start = audio.volume;
+      const startedAt = (typeof performance === 'object' ? performance.now() : Date.now());
+      const step = () => {
+        const elapsed = (typeof performance === 'object' ? performance.now() : Date.now()) - startedAt;
+        const t = Math.min(1, elapsed / 260);
+        audio.volume = clamp01(start + (target - start) * t);
+        if (t < 1) this.rampHandle = requestAnimationFrame(step);
+        else this.rampHandle = 0;
+      };
+      this.rampHandle = requestAnimationFrame(step);
+    }
+
+    setShuffle(on) {
+      this.shuffle = Boolean(on);
+      try {
+        localStorage.setItem('shop_music_shuffle', this.shuffle ? '1' : '0');
+      } catch (_) {}
+      this.preloadNext();
+      this.emit();
+    }
+
+    setRepeat(on) {
+      this.repeat = Boolean(on);
+      try {
+        localStorage.setItem('shop_music_repeat', this.repeat ? '1' : '0');
+      } catch (_) {}
+      this.emit();
     }
 
     localMode() {
@@ -238,6 +286,13 @@
 
     stepIndex(step) {
       const n = this.playlist.length;
+      if (this.shuffle && n > 1) {
+        const pool = [];
+        for (let i = 0; i < n; i += 1) {
+          if (i !== this.index && !this.unavailable.has(this.playlist[i].id)) pool.push(i);
+        }
+        if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+      }
       for (let hop = 1; hop <= n; hop++) {
         const candidate = (((this.index + step * hop) % n) + n) % n;
         const track = this.playlist[candidate];
@@ -293,6 +348,12 @@
     }
 
     handleEnded() {
+      // Repeat off simply stops at the end of the list; otherwise the playlist
+      // (or shuffle) keeps rolling, which is what a 24/7 stream needs.
+      if (!this.repeat && !this.shuffle && this.index >= this.playlist.length - 1) {
+        this.pause();
+        return;
+      }
       // End of the last track wraps back to the first one.
       this.switchTo(this.stepIndex(1), this.enabled).catch(() => {});
     }
@@ -397,6 +458,15 @@
           break;
         case 'select':
           this.select(msg.value);
+          break;
+        case 'shuffle':
+          this.setShuffle(msg.value);
+          break;
+        case 'repeat':
+          this.setRepeat(msg.value);
+          break;
+        case 'volume':
+          this.setVolume(msg.value);
           break;
         case 'toggle':
           this.toggle();
