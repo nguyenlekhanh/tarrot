@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/stage.css" />
   <link rel="stylesheet" href="/css/stage-tarot.css" />
+  <link rel="stylesheet" href="/css/stage-ceremony.css" />
 </head>
 <body>
   <div class="obs-root" id="obsRoot">
@@ -110,10 +111,27 @@
           </div>
           <div class="result-oracle">
             <div class="result-oracle-label">THE ORACLE&#39;S MESSAGE</div>
+            <div class="result-sections" id="resultSections"></div>
             <div class="result-oracle-text" id="oracleText"></div>
           </div>
           <div class="result-closing" id="resultClosing"></div>
         </section>
+
+      <!-- 5c. READING CEREMONY (announcement, deck, closing) -->
+      <section class="ceremony" id="ceremony" aria-live="polite">
+        <div class="ceremony-halo"></div>
+        <div class="ceremony-icon" id="ceremonyIcon"><span class="ceremony-sigil">&#10022;</span></div>
+        <div class="ceremony-kicker" id="ceremonyKicker">&#128302; YOUR TURN HAS ARRIVED</div>
+        <div class="ceremony-name" id="ceremonyName"></div>
+        <div class="ceremony-topic" id="ceremonyTopic"></div>
+        <div class="ceremony-deck" id="ceremonyDeck">
+          <div class="deck-smoke"></div>
+          <div class="deck-card deck-card-1">&#10022;</div>
+          <div class="deck-card deck-card-2">&#9790;</div>
+          <div class="deck-card deck-card-3">&#10022;</div>
+        </div>
+        <div class="ceremony-message" id="ceremonyMessage">THE SPIRITS ARE GATHERING...</div>
+      </section>
 
       <!-- 6. WELCOME / GIFT BANNER -->
       <div class="banner" id="banner">
@@ -223,6 +241,7 @@
   <script src="/js/queue-promo.js"></script>
   <script src="/js/tarot-card-view.js"></script>
   <script src="/js/reading-reset.js"></script>
+  <script src="/js/tarot-ceremony.js"></script>
   <script src="/js/conversation.js"></script>
   <script src="/js/stage.js"></script>
 </body>

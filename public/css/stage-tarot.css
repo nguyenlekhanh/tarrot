@@ -73,7 +73,7 @@
 /* Empty-queue promotion: one centred horizontal line, real gift artwork. */
 .queue-promo {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 8px;
   width: 100%;
@@ -283,6 +283,34 @@
   letter-spacing: 2px;
   color: rgba(216, 185, 120, 0.9);
 }
+
+/* Structured interpretation: one labelled block per topic section. Two columns
+   keep the type large enough to read on the 1080x1920 stage. */
+.result-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+  margin-top: 4px;
+  max-height: 320px;
+  overflow: hidden;
+  font-size: 16px;
+  line-height: 1.28;
+  color: rgba(240, 232, 255, 0.92);
+}
+
+.result-section:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+.result-section-label {
+  font-family: 'Cinzel', serif;
+  font-size: 0.8em;
+  letter-spacing: 1.5px;
+  color: rgba(216, 185, 120, 0.95);
+}
+
+.result-section-text { margin-top: 1px; }
+
+.result-sections.is-hidden,
+.result-oracle-text.is-hidden { display: none; }
 
 .result-oracle-text {
   margin-top: 3px;

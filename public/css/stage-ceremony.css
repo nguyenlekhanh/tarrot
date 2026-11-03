@@ -1,0 +1,218 @@
+/* ==========================================================================
+   MYSTIC WITCH LIVE — tarot reading ceremony overlay
+   Loaded after stage.css and stage-tarot.css. Everything is positioned inside
+   the fixed 1080x1920 stage, so no ceremony element can leave the OBS frame.
+   ========================================================================== */
+
+.ceremony {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  pointer-events: none;
+  background:
+    radial-gradient(64% 46% at 50% 44%, rgba(120, 60, 220, 0.32) 0%, rgba(24, 10, 46, 0.12) 56%, transparent 78%),
+    radial-gradient(42% 28% at 50% 88%, rgba(70, 30, 150, 0.38) 0%, transparent 72%);
+}
+
+.ceremony.show { display: block; }
+
+.ceremony-halo {
+  position: absolute;
+  left: 50%;
+  top: 470px;
+  width: 780px;
+  height: 780px;
+  margin-left: -390px;
+  border-radius: 50%;
+  border: 1px solid rgba(166, 120, 255, 0.22);
+  box-shadow: 0 0 130px rgba(130, 70, 240, 0.45), inset 0 0 170px rgba(120, 60, 220, 0.22);
+  animation: ceremonyHalo 6s ease-in-out infinite;
+}
+
+@keyframes ceremonyHalo {
+  0%, 100% { opacity: 0.5; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Glowing magical user icon. */
+.ceremony-icon {
+  position: absolute;
+  left: 50%;
+  top: 560px;
+  width: 190px;
+  height: 190px;
+  margin-left: -95px;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(216, 185, 120, 0.55);
+  background: radial-gradient(circle at 50% 34%, rgba(206, 168, 255, 0.6), rgba(96, 44, 196, 0.38) 46%, rgba(20, 8, 40, 0.92) 100%);
+  box-shadow: 0 0 80px rgba(150, 90, 255, 0.65), inset 0 0 50px rgba(255, 255, 255, 0.18);
+  animation: ceremonyIcon 4.5s ease-in-out infinite;
+}
+
+@keyframes ceremonyIcon {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 70px rgba(150, 90, 255, 0.55), inset 0 0 40px rgba(255, 255, 255, 0.14);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.04);
+    box-shadow: 0 0 110px rgba(184, 132, 255, 0.85), inset 0 0 60px rgba(255, 255, 255, 0.24);
+  }
+}
+
+.ceremony-sigil {
+  font-size: 88px;
+  line-height: 1;
+  color: #f6ecff;
+  text-shadow: 0 0 38px rgba(200, 160, 255, 0.95);
+}
+
+.ceremony-kicker {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 792px;
+  font-family: 'Cinzel', serif;
+  font-size: 27px;
+  letter-spacing: 5px;
+  text-align: center;
+  color: rgba(216, 185, 120, 0.95);
+  text-shadow: 0 0 30px rgba(150, 90, 255, 0.6);
+}
+
+.ceremony-name {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 848px;
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 86px;
+  line-height: 1.05;
+  letter-spacing: 4px;
+  text-align: center;
+  color: #fbeeff;
+  text-shadow: 0 0 42px rgba(170, 110, 255, 0.9), 0 6px 0 rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ceremony-topic {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 972px;
+  font-family: 'Cinzel', serif;
+  font-size: 34px;
+  letter-spacing: 6px;
+  text-align: center;
+  color: var(--gold, #d8b978);
+  text-shadow: 0 0 24px rgba(216, 185, 120, 0.45);
+}
+
+/* ------------------------------ deck (step 2) ----------------------------- */
+.ceremony-deck {
+  position: absolute;
+  left: 50%;
+  top: 1090px;
+  width: 260px;
+  height: 360px;
+  margin-left: -130px;
+}
+
+.deck-smoke {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 560px;
+  height: 560px;
+  margin: -280px 0 0 -280px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(196, 140, 255, 0.55) 0%, rgba(120, 56, 216, 0.3) 44%, transparent 72%);
+  filter: blur(20px);
+  animation: deckSmoke 5.2s ease-in-out infinite;
+}
+
+@keyframes deckSmoke {
+  0%, 100% { opacity: 0.55; transform: scale(0.9) translateY(8px); }
+  50% { opacity: 0.95; transform: scale(1.12) translateY(-12px); }
+}
+
+.deck-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150px;
+  height: 238px;
+  margin: -119px 0 0 -75px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  color: rgba(206, 168, 255, 0.85);
+  border: 2px solid rgba(166, 120, 255, 0.5);
+  background:
+    radial-gradient(circle at 50% 28%, rgba(124, 62, 220, 0.4), transparent 62%),
+    repeating-linear-gradient(45deg, #150b28 0 12px, #1d1036 12px 24px);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.85), 0 20px 45px rgba(0, 0, 0, 0.7);
+}
+
+.deck-card-1 { transform: rotate(-13deg) translate(-46px, 10px); }
+.deck-card-2 { transform: rotate(-2deg) translate(-16px, -4px); }
+.deck-card-3 { transform: rotate(9deg) translate(22px, 6px); }
+
+.ceremony-message {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 1500px;
+  font-family: 'Cinzel', serif;
+  font-size: 34px;
+  line-height: 1.3;
+  letter-spacing: 4px;
+  text-align: center;
+  color: #ead9ff;
+  text-shadow: 0 0 34px rgba(160, 100, 255, 0.8);
+}
+
+/* ------------------------- which phase shows what ------------------------- */
+.ceremony-icon,
+.ceremony-kicker,
+.ceremony-name,
+.ceremony-topic,
+.ceremony-deck,
+.ceremony-message { display: none; }
+
+.ceremony.phase-announce .ceremony-icon,
+.ceremony.phase-announce .ceremony-kicker,
+.ceremony.phase-announce .ceremony-name,
+.ceremony.phase-announce .ceremony-topic { display: block; }
+
+.ceremony.phase-announce .ceremony-icon { display: flex; }
+
+.ceremony.phase-prepare .ceremony-deck,
+.ceremony.phase-prepare .ceremony-message { display: block; }
+
+.ceremony.phase-closing .ceremony-icon,
+.ceremony.phase-closing .ceremony-kicker,
+.ceremony.phase-closing .ceremony-message { display: block; }
+
+.ceremony.phase-closing .ceremony-icon { display: flex; }
+.ceremony.phase-closing .ceremony-halo { animation-duration: 3.4s; }
+
+.ceremony.phase-closing .ceremony-message {
+  top: 900px;
+  font-size: 46px;
+  letter-spacing: 5px;
+}
+
+.ceremony.phase-closing .ceremony-kicker { top: 786px; }
+
+/* The result panel owns the stage once the cards are down. */
+.stage.showing-result .ceremony { display: none; }

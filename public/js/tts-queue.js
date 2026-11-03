@@ -16,6 +16,10 @@
       this.create = typeof options.create === 'function' ? options.create : null;
       this.onChange = typeof options.onChange === 'function' ? options.onChange : null;
       this.onIdle = typeof options.onIdle === 'function' ? options.onIdle : null;
+      // Playback boundaries are reported per clip so the ceremony can advance on
+      // real audio instead of on synthesis or on an RPC reply.
+      this.onStart = typeof options.onStart === 'function' ? options.onStart : null;
+      this.onEnd = typeof options.onEnd === 'function' ? options.onEnd : null;
       this.items = [];
       this.audio = null;
       this.playing = false;
@@ -68,12 +72,18 @@
         if (this.audio === audio) this.audio = null;
         this.playing = false;
         this.total += 1;
+        if (this.onEnd) {
+          try { this.onEnd(clip); } catch (_) {}
+        }
         this.emit();
         if (!this.items.length) this.idle();
         this.pump();
       };
       audio.onended = finish;
       audio.onerror = finish;
+      if (this.onStart) {
+        try { this.onStart(clip); } catch (_) {}
+      }
       try {
         const started = audio.play();
         if (started && typeof started.catch === 'function') started.catch(finish);

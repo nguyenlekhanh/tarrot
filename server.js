@@ -41,7 +41,7 @@ const STATE_FILE = path.join(DATA_DIR, 'game-state.json');
 const { TarotEngine } = require('./tarot-engine');
 const { TarotQueue } = require('./tarot-queue');
 const { normalizeTopics, normalizeTopicSettings, detectTopic, extractQuestion, rotateTopics } = require('./tarot-topics');
-const { buildReadingResult, applyAiInterpretation } = require('./tarot-reading-library');
+const { buildReadingResult, applyAiInterpretation, buildCeremonyClips } = require('./tarot-reading-library');
 const tarotEngine = new TarotEngine({ historyFile: path.join(DATA_DIR, 'tarot-history.json') });
 
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
@@ -6243,11 +6243,13 @@ async function tarotAiNarration(reading, result) {
   const cardLines = reading.cards
     .map((card) => `${card.position}: ${card.name}${card.reversed ? ' (reversed)' : ''} — ${card.meaning}`)
     .join('\n');
+  const sectionLabels = (result.sections || []).map((section) => section.label);
   const prompt = [
     `Viewer name: ${result.user}`,
     `Topic: ${result.topicLabel} (${reading.theme})`,
     `Question: ${reading.question || 'a general reading'}`,
     `Good fortune ${result.fortune}%, points to watch ${result.caution}%`,
+    `Sections: ${sectionLabels.join(' | ')}`,
     cardLines
   ].join('\n');
 
@@ -6273,14 +6275,17 @@ async function tarotAiNarration(reading, result) {
               {
                 role: 'system',
                 content:
-                  'You are the Mystic Witch, an ancient tarot reader on a live stream. Write three short English sentences in second person, ' +
-                  'atmospheric but concrete, plain prose only. Use ONLY the cards listed by the user, never invent another card, ' +
-                  'never change the spread or the percentages, no markdown, no lists, no emoji.'
+                  'You are the Mystic Witch, an ancient tarot reader on a live stream. Write one line for EACH section label the user lists, ' +
+                  'in this exact format: "Section Label: one or two sentences". Use the labels verbatim and keep their order. ' +
+                  'Write in second person, atmospheric but concrete, plain prose only. Ground every section in the cards that were actually drawn, ' +
+                  'naming the card and saying whether it is upright or reversed and which spread position it fell in. ' +
+                  'Use ONLY the cards listed by the user, never invent another card, never change the spread or the percentages, ' +
+                  'no markdown, no bullets, no emoji, and stay under 1100 characters in total.'
               },
               { role: 'user', content: prompt }
             ],
-            temperature: 0.8,
-            max_tokens: 220
+            temperature: 0.9,
+            max_tokens: 700
           }),
           signal: controller.signal
         });
@@ -6305,18 +6310,22 @@ async function tarotAiNarration(reading, result) {
   return { ok: false, text: '', provider: '', reason: 'llm_unavailable' };
 }
 
+const MAX_CEREMONY_PARTS = 20;
+
 /**
- * The Oracle narrates a reading in sequence through the shared TTS queue:
- * welcome, topic, draw, cards, verdict. Each clip is one broadcast, so the
- * stage queue plays them in order and never overlaps.
+ * The Oracle narrates the ceremony in phases: announcement, preparation, one
+ * line per revealed card, the interpretation and the closing. Each clip carries
+ * its phase and order, so the stage can hold every screen until the matching
+ * audio has actually finished playing instead of guessing from synthesis.
  */
-async function announceTarotReading(reading, result) {
-  if (!result || !Array.isArray(result.spoken) || !result.spoken.length) return { ok: false, parts: 0 };
+async function announceTarotReading(reading, result, clips) {
+  const plan = Array.isArray(clips) && clips.length ? clips : buildCeremonyClips(reading, result);
+  if (!plan.length) return { ok: false, parts: 0 };
   if (state.settings.ttsEnabled === false) return { ok: false, parts: 0, reason: 'tts_disabled' };
   const useKokoro = state.settings.ttsEngine !== 'piper';
   let parts = 0;
-  for (const line of result.spoken.slice(0, 9)) {
-    const text = String(line || '').slice(0, 240);
+  for (const clip of plan.slice(0, MAX_CEREMONY_PARTS)) {
+    const text = String((clip && clip.text) || '').slice(0, 240);
     if (!text) continue;
     try {
       const synthesis = await synthesizeSpeech(text, {
@@ -6339,6 +6348,8 @@ async function announceTarotReading(reading, result) {
         url: synthesis.url,
         fallback: Boolean(synthesis.fallback),
         readingId: reading.id,
+        phase: clip.phase,
+        order: clip.order,
         part: parts,
         priority: 'tarot'
       });
@@ -6384,6 +6395,21 @@ async function runTarotReading(request = {}) {
   reading.narrationError = ai.ok ? '' : ai.reason || '';
   tarotEngine.store.save();
 
+  // The stage gates each ceremony phase on its clips, so the plan travels with
+  // the reading: it says how many clips to expect per phase before synthesis.
+  // With the voice off there will be no clips at all, so the plan is empty and
+  // the stage runs the ceremony on its animation timings instead of waiting.
+  const ceremonyClips = request.announce === true && state.settings.ttsEnabled !== false
+    ? buildCeremonyClips(reading, result)
+    : [];
+  const ceremonyPlan = {
+    expected: ceremonyClips.length,
+    byPhase: ceremonyClips.reduce((acc, clip) => {
+      acc[clip.phase] = (acc[clip.phase] || 0) + 1;
+      return acc;
+    }, {})
+  };
+
   const event = pushEventLog({
     type: 'tarotReading',
     user: reading.user,
@@ -6406,13 +6432,13 @@ async function runTarotReading(request = {}) {
   delete event.speech;
   saveState();
 
-  broadcastNotification('tarot.reading', { reading, tarot: tarotSnapshot() });
+  broadcastNotification('tarot.reading', { reading, tarot: tarotSnapshot(), ceremony: ceremonyPlan });
   broadcastNotification('temple.event', { event });
   if (request.announce === true) {
     // Narration must not block the caller: every clip is broadcast as soon as it
     // is synthesised, so the Admin button answers immediately and the stage
     // plays the sequence in order instead of the UI waiting ~30-60 s.
-    announceTarotReading(reading, result).catch((err) => {
+    announceTarotReading(reading, result, ceremonyClips).catch((err) => {
       console.warn('[Tarot] Narration failed:', err && err.message ? err.message : err);
     });
   }

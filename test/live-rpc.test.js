@@ -39,8 +39,8 @@ test('the admin gift test uses a configured coin tier', () => {
 
 test('narration never blocks the reading RPC', () => {
   const server = read('server.js');
-  assert.doesNotMatch(server, /await announceTarotReading\(reading, result\);/);
-  assert.match(server, /announceTarotReading\(reading, result\)\.catch/);
+  assert.doesNotMatch(server, /await announceTarotReading\(reading, result/);
+  assert.match(server, /announceTarotReading\(reading, result, ceremonyClips\)\.catch/);
 });
 
 test('the stage handles each temple.event once', () => {

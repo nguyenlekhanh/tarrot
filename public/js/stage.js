@@ -4,7 +4,9 @@
  * Responsibilities:
  *   - keep the fixed 1080x1920 stage fitted to the viewport (OBS browser source);
  *   - speak JSON-RPC 2.0 over the existing /ws socket (fetch /rpc fallback);
- *   - reveal tarot readings pushed by the server through `tarot.reading`;
+ *   - run the tarot ceremony state machine (tarot-ceremony.js): announce the
+ *     viewer, gather the spirits, reveal the cards, show the interpretation and
+ *     close — each step advanced by real clip playback and animation timing;
  *   - ambient spirits + reaction effects, reusing the existing DrinkShopFX
  *     particle engine for gift/like bursts;
  *   - play the existing server-side TTS clips delivered as `tts.play`.
@@ -207,16 +209,20 @@
         onChange: ({ size, playing }) => {
           if (music) music.setDuck(playing || size > 0);
         },
+        // The ceremony advances on these boundaries: a phase is over when its
+        // last clip has actually finished playing, not when it was synthesised.
+        onStart: (clip) => handleClipStart(clip),
+        onEnd: (clip) => handleClipEnd(clip),
         onIdle: () => {
-          // The reading is over once its narration has drained: ambient dialogue
-          // resumes on its own relaxed interval.
-          if (readingHold) {
+          // Ambient dialogue stays paused for the whole ceremony. Only the
+          // closing phase may arm the final reset.
+          const settled = !ceremony || ceremony.state === 'CLOSING' || ceremony.state === 'RESETTING';
+          if (!settled) return;
+          if (readingReset) readingReset.queueIdle();
+          if (!ceremony && readingHold) {
             readingHold = false;
             if (conversation) conversation.notifyReading(false);
           }
-          // Real playback has finished (not just TTS generation): the cards may
-          // now start their way back to the idle table.
-          if (readingReset) readingReset.queueIdle();
         }
       })
     : null;
@@ -288,18 +294,427 @@
     return 3000;
   }
 
+  // ---------------------------------------------------------- ceremony flow
+  // One state machine owns the whole ceremony. Visuals and audio are driven
+  // from here; only real clip playback and animation completion move it
+  // forward. Every timer carries `ceremonyEpoch`, so a late callback from an
+  // earlier reading can never touch a newer one.
+  const ceremonyEl = $('ceremony');
+  const ceremonyKickerEl = $('ceremonyKicker');
+  const ceremonyNameEl = $('ceremonyName');
+  const ceremonyTopicEl = $('ceremonyTopic');
+  const ceremonyMessageEl = $('ceremonyMessage');
+
+  const PHASE_BY_STATE = {
+    ANNOUNCING: 'announce',
+    PREPARING: 'prepare',
+    REVEALING: 'reveal',
+    INTERPRETING: 'interpret',
+    CLOSING: 'closing'
+  };
+  const MIN_PHASE_MS = { ANNOUNCING: 1400, PREPARING: 2400, REVEALING: 0, INTERPRETING: 2200, CLOSING: 2600 };
+  const NO_AUDIO_MS = 1800;
+  const PHASE_GUARD_MS = 45000;
+
+  let ceremonyReading = null;
+  let ceremonyPlan = { byPhase: {} };
+  let ceremonyEpoch = 0;
+  let phaseStartedAt = 0;
+  let phaseExpected = 0;
+  let phaseEnded = 0;
+  let phasePlanned = false;
+  let revealStarted = 0;
+  let lastRevealAt = 0;
+  let ceremonyHeardClip = false;
+  let advanceTimer = null;
+  let revealFallbackTimer = null;
+  let phaseGuardTimer = null;
+  let ceremonyResetTimer = null;
+  const revealedSlots = new Set();
+  const clipPools = new Map();
+  const pendingReadings = [];
+
+  const ceremony = window.TarotCeremony
+    ? new window.TarotCeremony({ onEnter: handleCeremonyState })
+    : null;
+  // Exposed for diagnostics and the browser ceremony checks.
+  window.mysticCeremony = ceremony;
+  window.mysticPendingReadings = pendingReadings;
+
+  function ceremonyBusy() {
+    return Boolean(ceremony && ceremony.busy);
+  }
+
+  function showCeremonyPhase(phase) {
+    if (!ceremonyEl) return;
+    ceremonyEl.classList.add('show');
+    ceremonyEl.classList.remove('phase-announce', 'phase-prepare', 'phase-reveal', 'phase-interpret', 'phase-closing');
+    ceremonyEl.classList.add(`phase-${phase}`);
+  }
+
+  function hideCeremony() {
+    if (!ceremonyEl) return;
+    ceremonyEl.classList.remove('show', 'phase-announce', 'phase-prepare', 'phase-reveal', 'phase-interpret', 'phase-closing');
+  }
+
+  function clearCeremonyTimers() {
+    clearTimeout(advanceTimer);
+    advanceTimer = null;
+    clearTimeout(revealFallbackTimer);
+    revealFallbackTimer = null;
+    clearTimeout(phaseGuardTimer);
+    phaseGuardTimer = null;
+    clearTimeout(ceremonyResetTimer);
+    ceremonyResetTimer = null;
+  }
+
+  function phaseOf(state) {
+    return PHASE_BY_STATE[state] || '';
+  }
+
+  function poolFor(readingId) {
+    const key = String(readingId || '');
+    if (!clipPools.has(key)) {
+      clipPools.set(key, { announce: [], prepare: [], reveal: [], interpret: [], closing: [] });
+    }
+    return clipPools.get(key);
+  }
+
+  function dropPool(readingId) {
+    clipPools.delete(String(readingId || ''));
+  }
+
+  // A reading that arrives mid-ceremony waits its turn; it is never merged into
+  // the running ceremony and never interrupted by it.
+  function queuePending(reading) {
+    if (!reading || !Array.isArray(reading.cards) || !reading.cards.length) return;
+    pendingReadings.push(reading);
+    while (pendingReadings.length > 3) {
+      const dropped = pendingReadings.shift();
+      dropPool(dropped && dropped.id);
+    }
+  }
+
+  function startNextPending() {
+    if (ceremonyBusy() || !pendingReadings.length) return;
+    startCeremony(pendingReadings.shift());
+  }
+
+  function pushClip(clip) {
+    if (!speech || !clip || !clip.url) return false;
+    speech.push({
+      url: clip.url,
+      volume: clip.volume,
+      phase: clip.phase,
+      order: clip.order,
+      readingId: clip.readingId
+    });
+    return true;
+  }
+
+  function takePhaseClips(readingId, phase) {
+    const pool = clipPools.get(String(readingId || ''));
+    if (!pool || !pool[phase]) return [];
+    const clips = pool[phase];
+    pool[phase] = [];
+    return clips.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+  }
+
+  // Clips are buffered per reading and per phase: a clip for a phase that has
+  // not started yet waits, and a clip for another reading never plays over this
+  // one.
+  function routeClip(clip) {
+    if (!clip) return false;
+    const readingId = String(clip.readingId || '');
+    const phase = String(clip.phase || 'interpret');
+    const pool = poolFor(readingId);
+    if (!pool[phase]) pool.interpret.push(clip);
+    else pool[phase].push(clip);
+    if (!ceremonyReading || readingId !== String(ceremonyReading.id || '')) return false;
+    if (!ceremony || phaseOf(ceremony.state) !== phase) return false;
+    // The plan already counted every clip of this phase. Only a server that
+    // sends no plan at all relies on counting the arrivals instead.
+    if (!phasePlanned) phaseExpected += 1;
+    return pushClip(clip);
+  }
+
+  function beginPhaseAudio(state, epoch) {
+    clearTimeout(phaseGuardTimer);
+    phaseStartedAt = Date.now();
+    phaseExpected = Number((ceremonyPlan.byPhase || {})[phaseOf(state)] || 0);
+    phasePlanned = phaseExpected > 0;
+    phaseEnded = 0;
+    const clips = ceremonyReading ? takePhaseClips(ceremonyReading.id, phaseOf(state)) : [];
+    clips.forEach(pushClip);
+    // No narration for this phase (TTS off): the animation itself moves on.
+    if (!phaseExpected) scheduleAdvance(state, epoch, NO_AUDIO_MS);
+    else {
+      phaseGuardTimer = setTimeout(() => {
+        if (!ceremony || !ceremony.isCurrent(epoch) || ceremony.state !== state) return;
+        if (phaseEnded >= phaseExpected) return;
+        // Audio never finished (blocked tab, dead clip): keep the ceremony alive.
+        phaseEnded = phaseExpected;
+        maybeAdvance(state, epoch);
+      }, PHASE_GUARD_MS);
+    }
+  }
+
+  function scheduleAdvance(state, epoch, ms) {
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(() => {
+      advanceTimer = null;
+      maybeAdvance(state, epoch);
+    }, Math.max(60, Number(ms) || 0));
+  }
+
+  function maybeAdvance(state, epoch) {
+    if (!ceremony || !ceremony.isCurrent(epoch) || ceremony.state !== state) return false;
+    if (phaseEnded < phaseExpected) return false;
+    const wait = (MIN_PHASE_MS[state] || 0) - (Date.now() - phaseStartedAt);
+    if (wait > 0) {
+      scheduleAdvance(state, epoch, wait + 50);
+      return false;
+    }
+    if (state === 'REVEALING') {
+      const total = ceremonyReading ? Math.min(3, ceremonyReading.cards.length) : 0;
+      if (revealedSlots.size < total) return false;
+      const settle = 900 - (Date.now() - lastRevealAt);
+      if (settle > 0) {
+        scheduleAdvance(state, epoch, settle + 50);
+        return false;
+      }
+    }
+    return ceremony.advance(state, epoch);
+  }
+
+  function handleClipStart(clip) {
+    if (!clip || !ceremony || !ceremonyReading) return;
+    if (clip.phase !== 'reveal' || ceremony.state !== 'REVEALING') return;
+    const total = Math.min(3, ceremonyReading.cards.length);
+    const index = Math.min(total - 1, revealStarted);
+    revealStarted += 1;
+    revealCard(index);
+  }
+
+  function handleClipEnd(clip) {
+    if (!clip || !ceremony || !ceremonyReading) return;
+    if (String(clip.readingId || '') !== String(ceremonyReading.id || '')) return;
+    if (clip.phase !== phaseOf(ceremony.state)) return;
+    phaseEnded += 1;
+    maybeAdvance(ceremony.state, ceremonyEpoch);
+  }
+
+  function prepareCardRow(reading) {
+    const cards = reading.cards.slice(0, 3);
+    cardRow.classList.toggle('single', cards.length === 1);
+    cardRow.innerHTML = cards.map(cardMarkup).join('');
+    questionEl.textContent = reading.question && reading.question !== 'Gift reading'
+      ? `“${reading.question}” — ${reading.user || 'a seeker'}`
+      : `${reading.user || 'A seeker'} asks the cards`;
+    narrationEl.textContent = '';
+    narrationEl.classList.remove('show');
+    revealedSlots.clear();
+    revealStarted = 0;
+    lastRevealAt = 0;
+  }
+
+  function revealCard(index) {
+    const slots = cardRow.querySelectorAll('.card-slot');
+    const slot = slots[index];
+    if (!slot || revealedSlots.has(index)) return;
+    revealedSlots.add(index);
+    lastRevealAt = Date.now();
+    slot.classList.add('revealed');
+    if (fx) {
+      const rect = slot.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const scale = stageRect.width / 1080;
+      fx.sparkle((rect.left - stageRect.left + rect.width / 2) / scale, (rect.top - stageRect.top + rect.height / 2) / scale, 12);
+    }
+    spawnSpirit({ x: 300 + index * 240, y: 1180, count: 3, bright: true });
+  }
+
+  function revealAllCards() {
+    const total = cardRow.querySelectorAll('.card-slot').length;
+    for (let index = 0; index < total; index += 1) revealCard(index);
+  }
+
+  // When the reveal narration is missing, the cards still turn in order.
+  function scheduleRevealFallback(epoch) {
+    clearTimeout(revealFallbackTimer);
+    revealFallbackTimer = setTimeout(() => {
+      if (!ceremony || !ceremony.isCurrent(epoch) || ceremony.state !== 'REVEALING') return;
+      if (revealStarted > 0) return;
+      const total = ceremonyReading ? Math.min(3, ceremonyReading.cards.length) : 0;
+      for (let index = 0; index < total; index += 1) {
+        setTimeout(() => {
+          if (!ceremony || !ceremony.isCurrent(epoch) || ceremony.state !== 'REVEALING') return;
+          revealCard(index);
+          if (revealedSlots.size >= total) maybeAdvance('REVEALING', epoch);
+        }, index * 900);
+      }
+    }, 900);
+  }
+
+  function handleCeremonyState(state, info) {
+    const epoch = info && info.epoch;
+    const reading = ceremonyReading;
+    switch (state) {
+      case 'ANNOUNCING': {
+        if (reading) {
+          if (ceremonyKickerEl) ceremonyKickerEl.textContent = '🔮 YOUR TURN HAS ARRIVED';
+          if (ceremonyNameEl) ceremonyNameEl.textContent = String(reading.user || 'Seeker').toUpperCase();
+          if (ceremonyMessageEl) {
+            ceremonyMessageEl.textContent = 'THE SPIRITS ARE GATHERING...';
+          }
+          if (ceremonyTopicEl) {
+            const label = (reading.result && reading.result.topicLabel) || reading.topicLabel || 'Tarot Reading';
+            ceremonyTopicEl.textContent = String(label).toUpperCase();
+          }
+        }
+        showCeremonyPhase('announce');
+        resultEl.classList.remove('show');
+        stage.classList.remove('showing-result');
+        // The ambient Oracle is silent for the entire ceremony.
+        if (conversation) conversation.notifyReading(true, 180000);
+        beginPhaseAudio(state, epoch);
+        break;
+      }
+      case 'PREPARING':
+        if (ceremonyMessageEl) ceremonyMessageEl.textContent = 'THE SPIRITS ARE GATHERING...';
+        showCeremonyPhase('prepare');
+        spawnSpirit({ x: 540, y: 1240, count: 16, bright: true });
+        if (fx) fx.sparkle(540, 1240, 28);
+        beginPhaseAudio(state, epoch);
+        break;
+      case 'REVEALING':
+        hideCeremony();
+        prepareCardRow(reading);
+        beginPhaseAudio(state, epoch);
+        scheduleRevealFallback(epoch);
+        break;
+      case 'INTERPRETING':
+        hideCeremony();
+        revealAllCards();
+        showResult(reading);
+        beginPhaseAudio(state, epoch);
+        break;
+      case 'CLOSING':
+        if (ceremonyKickerEl) ceremonyKickerEl.textContent = '✦ YOUR READING IS COMPLETE ✦';
+        if (ceremonyMessageEl) ceremonyMessageEl.textContent = 'May the spirits guide your path.';
+        resultEl.classList.remove('show');
+        stage.classList.remove('showing-result');
+        showCeremonyPhase('closing');
+        spawnSpirit({ x: 540, y: 1200, count: 12, bright: true });
+        if (fx) fx.confetti(30);
+        beginPhaseAudio(state, epoch);
+        break;
+      case 'RESETTING':
+        // Nothing to play (TTS off): still arm the final 3 second reset.
+        if (!ceremonyHeardClip && readingReset) {
+          readingReset.heardClip(currentReadingId);
+          readingReset.queueIdle();
+        }
+        // The ceremony owns this last step: 3 seconds after the closing audio,
+        // the cards turn down, the stage clears and the ceremony goes idle. It
+        // does not depend on a later queue-idle event arriving.
+        clearTimeout(ceremonyResetTimer);
+        ceremonyResetTimer = setTimeout(() => {
+          ceremonyResetTimer = null;
+          if (!ceremony || !ceremony.isCurrent(epoch) || ceremony.state !== 'RESETTING') return;
+          resetReading(currentReadingId);
+        }, cardResetDelayMs() + 150);
+        break;
+      case 'IDLE':
+        hideCeremony();
+        clearCeremonyTimers();
+        dropPool(currentReadingId);
+        ceremonyReading = null;
+        ceremonyPlan = { byPhase: {} };
+        readingHold = false;
+        if (conversation) conversation.notifyReading(false);
+        startNextPending();
+        break;
+      default:
+        break;
+    }
+  }
+
+  function startCeremony(reading) {
+    if (!reading || !Array.isArray(reading.cards) || !reading.cards.length) return false;
+    if (!ceremony) {
+      showReadingLegacy(reading);
+      return true;
+    }
+    if (ceremonyBusy()) {
+      queuePending(reading);
+      return false;
+    }
+    ceremonyReading = reading;
+    ceremonyPlan = reading.ceremony && reading.ceremony.byPhase ? reading.ceremony : { byPhase: {} };
+    ceremonyHeardClip = false;
+    readingGeneration += 1;
+    currentReadingId = String(reading.id || reading.readingId || `stage-${Date.now()}`);
+    if (!ceremony.begin(currentReadingId)) return false;
+    ceremonyEpoch = ceremony.epoch;
+    clearTimeout(resultHideTimer);
+    clearTimeout(cardClearTimer);
+    clearTimeout(revealTimer);
+    clearCeremonyTimers();
+    resultEl.classList.remove('show');
+    stage.classList.remove('showing-result');
+    narrationEl.classList.remove('show');
+    cardRow.classList.remove('single');
+    cardRow.innerHTML = IDLE_CARD_ROW;
+    if (readingReset) readingReset.begin(currentReadingId);
+    addTick(`${reading.user || 'Seeker'} · ${reading.cards.slice(0, 3).map((c) => c.name).join(' / ')}`);
+    return true;
+  }
+
+  // Fallback for an older page that does not load the ceremony module.
+  function showReadingLegacy(reading) {
+    if (!reading || !Array.isArray(reading.cards) || !reading.cards.length) return;
+    clearTimeout(revealTimer);
+    readingGeneration += 1;
+    currentReadingId = String(reading.id || reading.readingId || `stage-${Date.now()}`);
+    prepareCardRow(reading);
+    const slots = [...cardRow.querySelectorAll('.card-slot')];
+    slots.forEach((slot, index) => {
+      revealTimer = setTimeout(() => {
+        slot.classList.add('revealed');
+        if (fx) fx.sparkle(540, 1100, 12);
+        spawnSpirit({ x: 300 + index * 240, y: 1180, count: 3, bright: true });
+      }, 320 + index * 620);
+    });
+    revealTimer = setTimeout(() => {
+      narrationEl.textContent = reading.narration || reading.summary || '';
+      narrationEl.classList.add('show');
+      showResult(reading);
+      if (fx) fx.confetti(slots.length === 3 ? 40 : 22);
+    }, 320 + slots.length * 620 + 260);
+  }
+
   // Flip the cards face-down, then clear the finished reading from the stage.
   function resetReading(readingId) {
-    if (readingId && currentReadingId && readingId !== currentReadingId) return;
+    // A stale reset from a finished reading never touches the live table.
+    if (readingId && readingId !== currentReadingId) return;
+    // The ceremony owns its own ending: a legacy reset request (the old 25 s
+    // narration fallback) may never cut an announcement, reveal or
+    // interpretation short. Only the closing phases release the table.
+    if (ceremony && ceremony.busy && ceremony.state !== 'CLOSING' && ceremony.state !== 'RESETTING') return;
+    const epoch = ceremonyEpoch;
     currentReadingId = '';
     clearTimeout(resultHideTimer);
     clearTimeout(cardClearTimer);
+    clearTimeout(revealTimer);
+    clearCeremonyTimers();
     const generation = readingGeneration;
     // Removing .revealed runs the same 0.85s turn as the reveal, in reverse.
     cardRow.querySelectorAll('.card-slot.revealed').forEach((slot) => slot.classList.remove('revealed'));
     resultEl.classList.remove('show');
     stage.classList.remove('showing-result');
     narrationEl.classList.remove('show');
+    hideCeremony();
     cardClearTimer = setTimeout(() => {
       // A new reading arrived during the flip: leave its cards alone.
       if (generation !== readingGeneration) return;
@@ -311,6 +726,10 @@
       if (headline) headline.textContent = '';
       const cardsBox = $('resultCards');
       if (cardsBox) cardsBox.innerHTML = '';
+      if (!ceremony) return;
+      // Idle only after the table is clear, so the next viewer never sees the
+      // previous reading's cards.
+      if (!ceremony.finish(epoch)) ceremony.abort();
     }, 950);
   }
 
@@ -323,44 +742,6 @@
       })
     : null;
 
-  function showReading(reading) {
-    if (!reading || !Array.isArray(reading.cards) || !reading.cards.length) return;
-    clearTimeout(revealTimer);
-    readingGeneration += 1;
-    currentReadingId = String(reading.id || reading.readingId || `stage-${Date.now()}`);
-
-    const cards = reading.cards.slice(0, 3);
-    cardRow.classList.toggle('single', cards.length === 1);
-    cardRow.innerHTML = cards.map(cardMarkup).join('');
-    questionEl.textContent = reading.question && reading.question !== 'Gift reading'
-      ? `“${reading.question}” — ${reading.user || 'a seeker'}`
-      : `${reading.user || 'A seeker'} asks the cards`;
-    narrationEl.textContent = '';
-    narrationEl.classList.remove('show');
-
-    const slots = [...cardRow.querySelectorAll('.card-slot')];
-    slots.forEach((slot, index) => {
-      revealTimer = setTimeout(() => {
-        slot.classList.add('revealed');
-        if (fx) {
-          const rect = slot.getBoundingClientRect();
-          const stageRect = stage.getBoundingClientRect();
-          const scale = stageRect.width / 1080;
-          fx.sparkle((rect.left - stageRect.left + rect.width / 2) / scale, (rect.top - stageRect.top + rect.height / 2) / scale, 12);
-        }
-        spawnSpirit({ x: 300 + index * 240, y: 1180, count: 3, bright: true });
-      }, 320 + index * 620);
-    });
-
-    revealTimer = setTimeout(() => {
-      narrationEl.textContent = reading.narration || reading.summary || '';
-      narrationEl.classList.add('show');
-      if (fx) fx.confetti(cards.length === 3 ? 40 : 22);
-    }, 320 + slots.length * 620 + 260);
-
-    addTick(`${reading.user || 'Seeker'} · ${cards.map((c) => c.name).join(' / ')}`);
-  }
-
   function addTick(text) {
     const el = document.createElement('div');
     el.className = 'tick';
@@ -368,6 +749,16 @@
     tickerEl.prepend(el);
     while (tickerEl.children.length > 3) tickerEl.lastChild.remove();
   }
+
+  // A hidden tab pauses audio; when it comes back the ceremony must not stall on
+  // clips that were reported as playing forever.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !ceremony || !ceremony.busy) return;
+    if (phaseEnded < phaseExpected && (!speech || (!speech.busy && speech.size === 0))) {
+      phaseEnded = phaseExpected;
+    }
+    maybeAdvance(ceremony.state, ceremonyEpoch);
+  });
 
   // ------------------------------------------------------------ live tarot UI
   const queueCurrentEl = $('queueCurrent');
@@ -378,6 +769,7 @@
   const queueRecentEl = $('queueRecent');
   const destinyColumnsEl = $('destinyColumns');
   const resultEl = $('readingResult');
+  const resultSectionsEl = $('resultSections');
   const moveLineEls = [$('moveLineA'), $('moveLineB')];
 
   let tarotState = null;
@@ -471,19 +863,54 @@
     $('cautionValue').textContent = `${result.caution}%`;
     $('fortuneBar').style.width = `${result.fortune}%`;
     $('cautionBar').style.width = `${result.caution}%`;
-    $('oracleText').textContent = result.oracleMessage || '';
+    renderResultSections(result);
     $('resultClosing').textContent = result.closing || '';
     resultEl.classList.add('show');
     stage.classList.add('showing-result');
     clearTimeout(resultHideTimer);
     const seconds = Number(tarotState && tarotState.result && tarotState.result.displaySeconds) || 45;
     resultHideTimer = setTimeout(() => {
-      // While the narration is still playing the reset owns the table: the panel
-      // must stay up until the last spoken clip has finished.
+      // While the ceremony (or its narration) is still running the reset owns
+      // the panel: it must stay up until the ceremony closes.
       if (readingReset && readingReset.pending) return;
+      if (ceremonyBusy()) return;
       resultEl.classList.remove('show');
       stage.classList.remove('showing-result');
     }, Math.max(5000, seconds * 1000));
+  }
+
+  // Every topic ships its own labelled sections; the flat message is only the
+  // fallback for an older reading that has none.
+  function renderResultSections(result) {
+    const oracle = $('oracleText');
+    const sections = Array.isArray(result && result.sections)
+      ? result.sections.filter((section) => section && section.label && section.text)
+      : [];
+    if (resultSectionsEl) {
+      resultSectionsEl.innerHTML = sections
+        .map((section) => `<div class="result-section"><div class="result-section-label">${escapeHtml(section.label)}</div><div class="result-section-text">${escapeHtml(section.text)}</div></div>`)
+        .join('');
+      resultSectionsEl.classList.toggle('is-hidden', !sections.length);
+      if (sections.length) fitResultSections();
+    }
+    if (oracle) {
+      oracle.classList.toggle('is-hidden', Boolean(sections.length));
+      if (!sections.length) oracle.textContent = (result && result.oracleMessage) || '';
+    }
+  }
+
+  // Shrink the section text until the whole interpretation fits the result box,
+  // so a long reading stays readable on the 1080x1920 stage instead of clipping.
+  function fitResultSections() {
+    if (!resultSectionsEl || resultSectionsEl.classList.contains('is-hidden')) return;
+    let size = 16;
+    resultSectionsEl.style.fontSize = `${size}px`;
+    let guard = 0;
+    while (size > 11 && resultSectionsEl.scrollHeight > resultSectionsEl.clientHeight && guard < 20) {
+      size -= 0.5;
+      resultSectionsEl.style.fontSize = `${size}px`;
+      guard += 1;
+    }
   }
 
   // One movement at a time per ticker line, animated upward and expired by the
@@ -619,15 +1046,13 @@
       } else if (msg.method === 'tarot.queue.move') {
         pushMovement(msg.params && msg.params.movement);
       } else if (msg.method === 'tarot.reading') {
-        // The reading owns the voice; ambient dialogue holds until it drains.
-        readingHold = true;
-        if (conversation) conversation.notifyReading(true, 25000);
+        const reading = msg.params && msg.params.reading;
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
-        showReading(msg.params && msg.params.reading);
-        showResult(msg.params && msg.params.reading);
-        // The cards flip back only after this reading's clips have finished
-        // playing and the shared queue reports idle, then a short delay.
-        if (readingReset) readingReset.begin(currentReadingId);
+        if (reading && msg.params.ceremony) reading.ceremony = msg.params.ceremony;
+        // The ceremony owns the voice and holds ambient dialogue for its whole run.
+        readingHold = true;
+        if (conversation) conversation.notifyReading(true, 180000);
+        startCeremony(reading);
       } else if (msg.method === 'temple.event') {
         handleServerEvent(msg.params && msg.params.event);
       } else if (msg.method === 'mystic.fx') {
@@ -639,9 +1064,11 @@
         }
       } else if (msg.method === 'tts.play') {
         const p = msg.params || {};
-        playTts(p.url, p.volume);
-        // Only this reading's own narration may arm the reset.
+        // Clips carry their ceremony phase; they are buffered per reading so a
+        // queued viewer's narration can never play over the current ceremony.
+        routeClip(p);
         if (readingReset) readingReset.heardClip(p.readingId);
+        if (String(p.readingId || '') === currentReadingId) ceremonyHeardClip = true;
       }
     };
     socket.onclose = () => setTimeout(connectSocket, 2200);
