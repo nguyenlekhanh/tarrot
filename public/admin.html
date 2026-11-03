@@ -1,0 +1,3258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunny Side Sips — Stream Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #fff7e4;
+      --ink: #3b2a20;
+      --ink-soft: #6b5140;
+      --coral: #ef5a4b;
+      --coral-dark: #c93a2c;
+      --sun: #ffc94d;
+      --mint: #45b980;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      padding: 26px;
+      background: radial-gradient(circle at 20% 0%, #4a4761 0%, #232135 55%, #17161f 100%);
+      color: var(--ink);
+      font-family: 'Nunito', sans-serif;
+    }
+    .container { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: var(--cream); border: 4px solid var(--ink); border-radius: 20px;
+      padding: 18px 22px; box-shadow: 0 8px 0 rgba(0, 0, 0, 0.35);
+    }
+    .title { font-family: 'Baloo 2', sans-serif; font-size: 28px; color: var(--coral-dark); line-height: 1.1; }
+    .subtitle { font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-top: 4px; }
+    .links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      cursor: pointer; font-family: inherit; font-weight: 800; font-size: 13.5px;
+      color: var(--ink); background: #fff; border: 3px solid var(--ink); border-radius: 11px;
+      padding: 9px 13px; text-decoration: none; display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); }
+    .btn.gold { background: linear-gradient(180deg, #ffd76a 0%, #f0b12c 100%); }
+    .btn.danger { background: linear-gradient(180deg, #ff9a8c 0%, #ef5a4b 100%); color: #2b0d08; }
+    .btn.on { background: linear-gradient(180deg, #9be9bd 0%, #45b980 100%); }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .card {
+      background: var(--cream); border: 4px solid var(--ink); border-radius: 18px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 7px 0 rgba(0, 0, 0, 0.28);
+    }
+    .card h2 {
+      font-family: 'Baloo 2', sans-serif; font-size: 19px; color: var(--coral-dark);
+      border-bottom: 2px dashed rgba(59, 42, 32, 0.25); padding-bottom: 8px;
+    }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .row > * { flex: 1 1 150px; }
+    input[type="text"], textarea, select {
+      width: 100%; background: #fff; border: 2px solid rgba(59, 42, 32, 0.5);
+      border-radius: 10px; padding: 9px 11px; font-family: inherit; font-size: 13.5px;
+      font-weight: 600; color: var(--ink); outline: none;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: var(--coral); }
+    textarea { min-height: 96px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+    input[type="range"] { width: 100%; accent-color: var(--coral); }
+    .actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .label-line { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 800; color: var(--ink-soft); }
+    .hint { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); line-height: 1.4; }
+    pre {
+      background: #241f1a; color: #9ef0c0; border-radius: 12px; padding: 12px;
+      font-size: 12px; max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid rgba(59, 42, 32, 0.15); }
+    th { font-size: 11.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-soft); }
+    .status-bar { font-size: 13px; font-weight: 800; color: var(--ink-soft); }
+    .pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 800; background: var(--sun); border: 2px solid var(--ink); }
+    #statusBanner { margin-top: 6px; }
+    .music-progress {
+      height: 10px; background: rgba(59, 42, 32, 0.15); border-radius: 999px;
+      border: 2px solid rgba(59, 42, 32, 0.35); overflow: hidden;
+    }
+    .music-progress-fill {
+      height: 100%; width: 0%; background: linear-gradient(90deg, #ffc94d, #ef5a4b);
+      transition: width 0.25s linear;
+    }
+    .music-list { display: flex; flex-direction: column; gap: 6px; }
+    .music-item {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+      font-family: inherit; font-size: 13px; font-weight: 800; color: var(--ink);
+      background: #fff; border: 2px solid rgba(59, 42, 32, 0.35); border-radius: 10px;
+      padding: 7px 10px; text-align: left;
+    }
+    .music-item:hover { border-color: var(--coral); }
+    .music-item.active { background: linear-gradient(180deg, #ffe9a8 0%, #ffd76a 100%); border-color: var(--ink); }
+    .music-index {
+      width: 22px; height: 22px; border-radius: 999px; background: var(--cream);
+      border: 2px solid rgba(59, 42, 32, 0.35); display: inline-flex;
+      align-items: center; justify-content: center; font-size: 11px; flex: 0 0 auto;
+    }
+    .music-title { flex: 1; }
+    .music-state { font-size: 11.5px; color: var(--coral-dark); }
+    .ann-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+    .ann-row {
+      display: flex; align-items: flex-start; gap: 8px; background: #fff;
+      border: 2px solid rgba(59, 42, 32, 0.3); border-radius: 10px; padding: 8px 10px;
+    }
+    .ann-row.disabled { opacity: 0.55; }
+    .ann-row .btn { flex: 0 0 auto; padding: 6px 9px; font-size: 12px; }
+    .ann-text { flex: 1; min-width: 0; font-size: 12.5px; font-weight: 700; line-height: 1.35; }
+    .ann-cat {
+      display: inline-block; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase;
+      color: var(--coral-dark); font-weight: 800; margin-bottom: 2px;
+    }
+    .ann-vi { color: var(--ink-soft); font-weight: 600; font-size: 12px; }
+    .ann-toggle { padding-top: 2px; }
+    .voice-list { display: flex; flex-direction: column; gap: 6px; max-height: 240px; overflow-y: auto; padding-right: 4px; }
+    .voice-item {
+      display: flex; align-items: center; gap: 8px; background: #fff;
+      border: 2px solid rgba(59, 42, 32, 0.3); border-radius: 10px; padding: 6px 9px;
+      font-size: 12.5px; font-weight: 700;
+    }
+    .voice-item.invalid { opacity: 0.55; }
+    .voice-item .btn { flex: 0 0 auto; padding: 4px 8px; font-size: 11.5px; }
+    .voice-name { flex: 0 0 110px; }
+    .voice-gender { flex: 0 0 88px; font-size: 11px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.4px; }
+    .voice-path { flex: 1; min-width: 0; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .engine-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; margin: 10px 0; }
+    .engine-card { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: rgba(255,255,255,0.035); }
+    .engine-card.ready { border-color: #69c58d; }
+    .engine-card.offline { border-color: #e37d6b; }
+    .engine-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px; }
+    .engine-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: #e37d6b; box-shadow: 0 0 0 3px rgba(227,125,107,0.12); }
+    .engine-card.ready .engine-dot { background: #69c58d; box-shadow: 0 0 0 3px rgba(105,197,141,0.12); }
+    .engine-meta { font-size: 10.8px; color: var(--ink-soft); line-height: 1.55; }
+    .audition-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+    .audition-row > div { flex: 1 1 180px; }
+    .vp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 1080px) { .vp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 640px) { .vp-grid { grid-template-columns: 1fr; } }
+    .vp-card {
+      background: #fff; border: 3px solid rgba(59, 42, 32, 0.4); border-radius: 14px;
+      padding: 11px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+    }
+    .vp-card.disabled { opacity: 0.62; }
+    .vp-card.missing-voice { border-color: var(--coral); }
+    .vp-head { display: flex; align-items: center; gap: 7px; }
+    .vp-head strong { flex: 1; font-family: 'Baloo 2', sans-serif; font-size: 15px; }
+    .vp-head .btn { flex: 0 0 auto; padding: 5px 8px; font-size: 11px; }
+    .vp-icon { font-size: 18px; }
+    .vp-persona { font-size: 11.5px; line-height: 1.3; min-height: 30px; }
+    .vp-card select { font-size: 12.5px; padding: 7px 8px; }
+    .vp-setting { display: flex; flex-direction: column; gap: 3px; }
+    .vp-pitch {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      font-size: 11.5px; color: var(--ink-soft); font-weight: 800;
+    }
+    .vp-test-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .vp-test-row .btn { flex: 0 0 auto; padding: 6px 9px; font-size: 12px; }
+    .vp-hint { font-size: 11px; line-height: 1.3; color: var(--ink-soft); font-weight: 600; }
+    .vp-meta { font-size: 10.5px; letter-spacing: 0.2px; color: var(--ink-soft); font-weight: 700; text-align: right; }
+    .llm-summary {
+      flex: 2 1 320px; display: flex; flex-direction: column; gap: 3px;
+      background: #fff; border: 2px solid rgba(59, 42, 32, 0.28); border-radius: 12px; padding: 9px 11px;
+    }
+    .llm-summary strong { font-family: 'Baloo 2', sans-serif; font-size: 18px; }
+    .llm-provider-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 900px) { .llm-provider-grid { grid-template-columns: 1fr; } }
+    .llm-provider-card {
+      background: #fff; border: 3px solid rgba(59, 42, 32, 0.4); border-radius: 14px;
+      padding: 11px; display: flex; flex-direction: column; gap: 8px; min-width: 0;
+    }
+    .llm-provider-card.primary { border-color: var(--coral); box-shadow: inset 0 0 0 2px rgba(239, 90, 75, 0.12); }
+    .llm-provider-card.disabled { opacity: 0.68; }
+    .llm-provider-head { display: flex; align-items: flex-start; gap: 8px; }
+    .llm-provider-head strong { flex: 1; font-family: 'Baloo 2', sans-serif; font-size: 17px; overflow-wrap: anywhere; }
+    .llm-role, .llm-health {
+      border: 2px solid var(--ink); border-radius: 999px; padding: 2px 8px;
+      font-size: 10px; font-weight: 800; white-space: nowrap; background: var(--sun);
+    }
+    .llm-health.healthy { background: #bdecca; }
+    .llm-health.error { background: #ffbdb5; }
+    .llm-health.missing_key, .llm-health.not_configured { background: #ffd4a3; }
+    .llm-health.disabled { background: #ddd; }
+    .llm-health.not_tested { background: #d9e8ff; }
+    .llm-kv { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 3px 8px; font-size: 12px; line-height: 1.35; }
+    .llm-kv span:nth-child(odd) { color: var(--ink-soft); font-weight: 800; }
+    .llm-kv span:nth-child(even) { overflow-wrap: anywhere; }
+    .llm-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+    .llm-actions .btn { padding: 5px 8px; font-size: 11.5px; flex: 0 0 auto; }
+    .llm-editor { border-top: 2px dashed rgba(59, 42, 32, 0.25); padding-top: 10px; display: flex; flex-direction: column; gap: 9px; }
+    .llm-editor summary { cursor: pointer; font-weight: 800; color: var(--coral-dark); }
+    .llm-check { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; align-self: flex-end; min-width: 140px; }
+    .llm-check input { accent-color: var(--coral); }
+    .llm-error { color: var(--coral-dark); font-weight: 800; }
+    .conv-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12.5px; font-weight: 800; color: var(--ink-soft); }
+    .conv-status strong { color: var(--ink); }
+    .conv-cats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    @media (max-width: 780px) { .conv-cats { grid-template-columns: 1fr 1fr; } }
+    .conv-cat { display: flex; align-items: center; gap: 6px; background: #fff; border: 2px solid rgba(59, 42, 32, 0.25); border-radius: 9px; padding: 6px 8px; font-size: 12px; font-weight: 700; }
+    .conv-cat input { accent-color: var(--coral); }
+    .conv-cat .hint { margin-left: auto; font-size: 10.5px; }
+    .conv-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+    .conv-row { background: #fff; border: 2px solid rgba(59, 42, 32, 0.28); border-radius: 10px; padding: 8px 10px; }
+    .conv-row.disabled { opacity: 0.55; }
+    .conv-row-head { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+    .conv-row-head .conv-id { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 10.5px; color: var(--ink-soft); }
+    .conv-row-head .ann-cat { margin-bottom: 0; }
+    .conv-row-head .conv-actions { margin-left: auto; display: flex; gap: 4px; }
+    .conv-row-head .conv-actions .btn { padding: 3px 7px; font-size: 11px; }
+    .conv-line { font-size: 12.5px; font-weight: 700; line-height: 1.35; margin-top: 3px; }
+    .conv-line strong { color: var(--coral-dark); }
+    .conv-line.follow { color: var(--ink-soft); font-weight: 600; }
+    .conv-editor { display: none; flex-direction: column; gap: 6px; margin-top: 6px; }
+    .conv-row.editing .conv-editor { display: flex; }
+    .conv-row.editing .conv-body { display: none; }
+    .conv-editor textarea { min-height: 54px; font-family: inherit; font-size: 12.5px; }
+    .conv-history { display: flex; flex-direction: column; gap: 5px; max-height: 260px; overflow-y: auto; }
+    .conv-hist-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; background: #fff; border: 2px solid rgba(59, 42, 32, 0.2); border-radius: 9px; padding: 6px 8px; font-size: 12px; font-weight: 700; }
+    .conv-hist-row .hint { margin-left: auto; }
+    .conv-hist-status.completed { color: #1f7a3d; }
+    .conv-hist-status.interrupted { color: var(--coral-dark); }
+    details.conv-add { background: #fff; border: 2px dashed rgba(59, 42, 32, 0.35); border-radius: 10px; padding: 9px 11px; }
+    details.conv-add summary { cursor: pointer; font-weight: 800; font-size: 13px; }
+    details.conv-add[open] summary { margin-bottom: 8px; }
+    .reactive-stats { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 7px; }
+    .crowd-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .crowd-stat { background: #fff; border: 2px solid rgba(59, 42, 32, 0.25); border-radius: 10px; padding: 8px 9px; }
+    .crowd-stat span { display: block; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-soft); }
+    .crowd-stat strong { display: block; font-family: 'Baloo 2', sans-serif; font-size: 19px; line-height: 1.1; margin-top: 2px; }
+    .crowd-warning { color: var(--coral-dark); font-weight: 800; }
+    @media (max-width: 640px) { .crowd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 900px) { .reactive-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .reactive-stat { background: #fff; border: 2px solid rgba(59, 42, 32, 0.25); border-radius: 10px; padding: 8px; }
+    .reactive-stat span { display: block; font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase; color: var(--ink-soft); font-weight: 800; }
+    .reactive-stat strong { display: block; font-family: 'Baloo 2', sans-serif; font-size: 21px; }
+    .reactive-panels { display: grid; grid-template-columns: 1.3fr 1fr; gap: 9px; }
+    @media (max-width: 780px) { .reactive-panels { grid-template-columns: 1fr; } }
+    .reactive-panel { background: #fff; border: 2px solid rgba(59, 42, 32, 0.25); border-radius: 10px; padding: 9px; font-size: 12px; font-weight: 700; min-width: 0; }
+    .reactive-panel .label-line { margin-top: 0; }
+    .reactive-queue { display: flex; flex-direction: column; gap: 4px; max-height: 130px; overflow-y: auto; color: var(--ink-soft); }
+    .reactive-queue-row { border-bottom: 1px dashed rgba(59, 42, 32, 0.2); padding-bottom: 4px; }
+    .reactive-test-result { max-height: 220px; overflow: auto; font-size: 11px; }
+    #reactiveHint { font-weight: 700; }
+    .tt-state {
+      display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 0.8px;
+      padding: 4px 10px; border-radius: 8px; background: rgba(59, 42, 32, 0.12); color: var(--ink-soft);
+    }
+    .tt-state.pending { background: #fdf0c9; color: #8a6d13; }
+    .tt-state.connected { background: #dff3e3; color: #1f7a3d; }
+    .tt-state.error { background: #ffe0dd; color: #b3261e; }
+    #ttError { color: #b3261e; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <div class="title">🥤 SUNNY SIDE SIPS — STREAM CONTROL PANEL</div>
+        <div class="subtitle">Bun.js · Express · WebSocket · JSON-RPC 2.0 · TikTok Live</div>
+        <div class="status-bar" id="statusBanner">Loading shop state…</div>
+      </div>
+      <div class="links">
+        <a class="btn" href="/?obs=1" target="_blank">📺 OBS 9:16 Clean View</a>
+        <a class="btn gold" href="/" target="_blank">🥤 Open Live Screen</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <h2>🎮 1. Game Controls</h2>
+        <div class="row">
+          <button class="btn gold" id="btnStart">▶ Start</button>
+          <button class="btn" id="btnPause">⏸ Pause / Resume</button>
+          <button class="btn danger" id="btnReset">⟲ Reset Shop</button>
+        </div>
+        <div>
+          <div class="label-line"><span>🚶 Customer spawn rate</span><strong id="valSpawn">1.00×</strong></div>
+          <input type="range" id="sliderSpawn" min="25" max="300" step="5" value="100" />
+        </div>
+        <div class="row">
+          <button class="btn" id="btnSpawnCustomer">🙋 Spawn one customer</button>
+        </div>
+        <div class="hint" id="gameHint">Running · the queue, tables and drink service are simulated in the browser.</div>
+      </section>
+
+      <section class="card">
+        <h2>📊 Crowd Simulation Diagnostics</h2>
+        <div class="crowd-grid">
+          <div class="crowd-stat"><span>Total viewers</span><strong id="crowdViewers">0</strong></div>
+          <div class="crowd-stat"><span>Rendered</span><strong id="crowdRendered">0</strong></div>
+          <div class="crowd-stat"><span>Moving</span><strong id="crowdMoving">0</strong></div>
+          <div class="crowd-stat"><span>Waiting</span><strong id="crowdWaiting">0</strong></div>
+          <div class="crowd-stat"><span>Seated</span><strong id="crowdSeated">0</strong></div>
+          <div class="crowd-stat"><span>Stuck</span><strong id="crowdStuck">0</strong></div>
+          <div class="crowd-stat"><span>Update ms</span><strong id="crowdUpdate">0</strong></div>
+          <div class="crowd-stat"><span>Render ms</span><strong id="crowdRender">0</strong></div>
+          <div class="crowd-stat"><span>FPS</span><strong id="crowdFps">0</strong></div>
+          <div class="crowd-stat"><span>Grid cells</span><strong id="crowdGridCells">0</strong></div>
+          <div class="crowd-stat"><span>Collision checks</span><strong id="crowdChecks">0</strong></div>
+          <div class="crowd-stat"><span>Mode</span><strong id="crowdMode">—</strong></div>
+        </div>
+        <div class="hint" id="crowdHint">Open the live stage to receive crowd metrics.</div>
+        <div class="hint crowd-warning" id="crowdWarning"></div>
+      </section>
+
+      <section class="card">
+        <h2>📡 2. TikTok Live Connection</h2>
+        <div class="row">
+          <input type="text" id="ttUser" placeholder="@username or live link" value="@tinytails99" />
+          <button class="btn gold" id="btnConn">Connect</button>
+          <button class="btn" id="btnDisc">Disconnect</button>
+        </div>
+        <button class="btn" id="btnAutoSim">🤖 Auto Demo Interactions: OFF</button>
+        <div class="row">
+          <span class="tt-state" id="ttState">DISCONNECTED</span>
+          <div class="hint" id="ttMeta" style="flex: 1; margin: 0">No TikTok LIVE connection.</div>
+        </div>
+        <div class="hint" id="ttError"></div>
+        <div class="hint" id="tiktokHint">Follow, like, comment and gift events are mapped onto shop interactions.</div>
+        <div class="hint">
+          Event → gameplay: <strong>Follow</strong> = VIP free drink · <strong>Like</strong> = crowd rush ·
+          <strong>Comment</strong> = reactive seller reply / chat order · <strong>Gift</strong> = party tray.
+        </div>
+      </section>
+
+      <section class="card" id="eventEngineCard" style="grid-column: 1 / -1">
+        <h2>⚡ LIVE EVENT ENGINE</h2>
+        <style>
+          #eventEngineCard .event-engine-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 7px; }
+          @media (max-width: 900px) { #eventEngineCard .event-engine-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+          #eventEngineCard .event-engine-stat { background: #fff; border: 2px solid rgba(59, 42, 32, 0.25); border-radius: 10px; padding: 8px; min-width: 0; }
+          #eventEngineCard .event-engine-stat span { display: block; font-size: 10px; letter-spacing: 0.4px; text-transform: uppercase; font-weight: 800; color: var(--ink-soft); }
+          #eventEngineCard .event-engine-stat strong { display: block; font-family: 'Baloo 2', sans-serif; font-size: 21px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+          #eventEngineCard .event-engine-table { width: 100%; border-collapse: collapse; font-size: 12px; font-weight: 700; margin-top: 9px; }
+          #eventEngineCard .event-engine-table th, #eventEngineCard .event-engine-table td { text-align: left; padding: 5px 7px; border-bottom: 1px solid rgba(59, 42, 32, 0.16); }
+          #eventEngineCard .event-engine-table th { font-size: 10px; text-transform: uppercase; color: var(--ink-soft); }
+          #eventEngineCard .event-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 9px; }
+          #eventEngineCard .event-controls label { display: flex; flex-direction: column; gap: 3px; font-size: 11px; font-weight: 800; color: var(--ink-soft); }
+          #eventEngineCard input, #eventEngineCard select { min-height: 34px; }
+          #eventEngineCard .event-state { font-size: 11px; font-weight: 800; }
+        </style>
+        <div class="row">
+          <span class="pill connected" id="eventWsState">DISCONNECTED</span>
+          <span class="hint" id="eventLastEvent">No live events yet.</span>
+          <span class="hint" id="eventRate">0 events/sec</span>
+        </div>
+        <div class="event-engine-grid">
+          <div class="event-engine-stat"><span>Received</span><strong id="eventReceived">0</strong></div>
+          <div class="event-engine-stat"><span>Processed</span><strong id="eventProcessed">0</strong></div>
+          <div class="event-engine-stat"><span>Dropped</span><strong id="eventDropped">0</strong></div>
+          <div class="event-engine-stat"><span>Pending</span><strong id="eventPending">0</strong></div>
+          <div class="event-engine-stat"><span>Total likes</span><strong id="eventTotalLikes">0</strong></div>
+          <div class="event-engine-stat"><span>Batch likes</span><strong id="eventBatchLikes">0</strong></div>
+          <div class="event-engine-stat"><span>Like reactions</span><strong id="eventReactions">0</strong></div>
+          <div class="event-engine-stat"><span>Like batch</span><strong id="eventBatchState">Idle</strong></div>
+        </div>
+        <table class="event-engine-table">
+          <thead><tr><th>Event</th><th>Received</th><th>Processed</th><th>Dropped</th><th>Duplicates</th><th>Pending</th></tr></thead>
+          <tbody id="eventTypeRows"><tr><td colspan="6" class="hint">Waiting for the live engine…</td></tr></tbody>
+        </table>
+        <div class="event-controls">
+          <button class="btn on" id="btnLikeBatchToggle">Like batching: ON</button>
+          <label>Batch interval
+            <select id="likeBatchWindow">
+              <option value="3">3 seconds</option>
+              <option value="5" selected>5 seconds</option>
+              <option value="10">10 seconds</option>
+              <option value="15">15 seconds</option>
+            </select>
+          </label>
+          <label>Min likes for speech
+            <input type="number" id="likeBatchMin" min="1" max="100000" step="1" value="10" style="width:100px" />
+          </label>
+          <label>Reaction cooldown (sec)
+            <input type="number" id="likeBatchCooldown" min="0" max="300" step="1" value="20" style="width:100px" />
+          </label>
+          <button class="btn gold" id="btnLikeBatchTest">Test Like Batch</button>
+          <button class="btn danger" id="btnEventReset">Reset event statistics</button>
+        </div>
+        <div class="hint" id="eventEngineHint">Gift, follow and member events keep priority. Like reactions are aggregated and never interrupt speech already playing.</div>
+      </section>
+
+      <section class="card">
+        <h2>🎬 3. Send Interactions (JSON-RPC 2.0)</h2>
+        <div class="row">
+          <input type="text" id="rpcUser" placeholder="Viewer name" value="Mia Carter" />
+          <input type="text" id="rpcOrder" placeholder="Order / comment" value="One fresh lemonade, extra ice please!" />
+        </div>
+        <div class="actions">
+          <button class="btn" data-act="follow">💛 Follow guest</button>
+          <button class="btn" data-act="like">❤️ Like rush</button>
+          <button class="btn" data-act="comment">💬 Comment order</button>
+          <button class="btn" data-act="gift">🎁 Gift party tray</button>
+          <button class="btn gold" data-act="mystery">🥤 Mystery sip</button>
+          <button class="btn" data-act="free">🧊 Free sample</button>
+        </div>
+        <div class="hint">Every action also spawns the matching customer and updates the live stage.</div>
+      </section>
+
+      <section class="card">
+        <h2>🎙️ 4. TTS Engine</h2>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Speech engine</span></div>
+            <select id="ttsEngine">
+              <option value="piper">Piper · local ONNX</option>
+              <option value="kokoro">Kokoro · local neural</option>
+            </select>
+          </div>
+          <button class="btn" id="btnRefreshVoices">🔄 Refresh engine</button>
+          <button class="btn gold" id="btnTestEngine">🔊 Test engine</button>
+          <span class="hint" id="voiceSummary" style="flex: 1 1 240px; align-self: center">Scanning local engines…</span>
+        </div>
+        <div class="engine-grid" id="ttsEngineStatus"></div>
+        <div class="hint" id="ttsEngineMetrics">Loading engine status…</div>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Language</span></div>
+            <select id="ttsLanguage">
+              <option value="en">English</option>
+              <option value="vi">Vietnamese</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Voice</span></div>
+            <select id="ttsVoice"></select>
+          </div>
+          <div>
+            <div class="label-line"><span>Spoken comments</span></div>
+            <button class="btn on" id="btnTtsToggle">Voice: ON</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="hint" id="engineVoiceCount" style="flex: 1 1 240px; align-self: center"></span>
+        </div>
+        <div class="hint" id="voiceDetail">Select a voice to see its model file, gender and status.</div>
+        <div class="voice-list" id="voiceList"></div>
+        <div>
+          <div class="label-line"><span>Speech speed</span><strong id="valSpeed">1.00×</strong></div>
+          <input type="range" id="sliderSpeed" min="50" max="200" step="5" value="100" />
+        </div>
+        <div>
+          <div class="label-line"><span>Voice volume</span><strong id="valVoiceVol">90%</strong></div>
+          <input type="range" id="sliderVoiceVol" min="0" max="100" step="5" value="90" />
+        </div>
+        <div class="row">
+          <input type="text" id="ttsText" value="Welcome to Sunny Side Sips! Fresh lemonade, ice cold cola and berry smoothies all day long." />
+          <button class="btn gold" id="btnSpeak">Test voice</button>
+        </div>
+        <audio id="audioPreview" controls style="width: 100%; height: 38px;"></audio>
+        <div class="hint" id="ttsHint">Both engines run locally. Kokoro uses the isolated .venv-kokoro worker and falls back to Piper if it is unavailable.</div>
+      </section>
+
+      <section class="card" id="kokoroAuditionCard">
+        <h2>🎧 KOKORO VOICE AUDITION</h2>
+        <div class="audition-row">
+          <div>
+            <div class="label-line"><span>Kokoro voice</span></div>
+            <select id="auditionVoice"></select>
+          </div>
+          <div style="flex: 2 1 320px">
+            <div class="label-line"><span>Custom English text</span></div>
+            <input type="text" id="auditionText" value="Welcome to Sunny Side Sips! Fresh drinks, warm smiles, and the sunny side of your day." />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn gold" id="btnAuditionGenerate">🎧 Generate &amp; play</button>
+          <button class="btn" id="btnAuditionSellers">⚖️ Compare Male / Female</button>
+          <button class="btn" id="btnAuditionEngines">⚖️ Compare Piper / Kokoro</button>
+          <span class="hint" id="auditionHint">Select a Kokoro voice or compare profiles. Generation uses the same local WAV cache as live speech.</span>
+        </div>
+        <audio id="auditionAudio" controls style="width: 100%; height: 38px;"></audio>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>🎭 VOICE CHARACTER PROFILES</h2>
+        <div class="row">
+          <div style="flex: 2 1 320px">
+            <div class="label-line"><span>Voice preview text</span></div>
+            <input type="text" id="vpPreviewText" value="Welcome to Sunny Side Sips! Fresh drinks, sunny vibes, all day long." />
+          </div>
+          <button class="btn" id="btnVoiceProfilesRefresh" style="align-self: flex-end">🔄 Refresh engine voices</button>
+          <button class="btn danger" id="btnVoiceProfilesReset" style="align-self: flex-end">↺ Restore Default Settings</button>
+        </div>
+        <div class="hint" id="vpStatus">Loading voice profiles…</div>
+        <div class="vp-grid" id="vpGrid"></div>
+        <audio id="vpAudio" controls style="width: 100%; height: 38px;"></audio>
+        <div class="hint" id="vpPitchNote">Pitch is not exposed by either local engine — no simulated pitch is applied.</div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>💬 SELLER CONVERSATION SYSTEM</h2>
+        <div class="row">
+          <button class="btn on" id="btnConvToggle">Conversations: ON</button>
+          <button class="btn" id="btnConvStartStop">⏸ Stop</button>
+          <div>
+            <div class="label-line"><span>Conversation interval</span></div>
+            <select id="convInterval"></select>
+          </div>
+          <button class="btn on" id="btnConvShuffle">🔀 Shuffle: ON</button>
+          <button class="btn gold" id="btnConvTest">🎧 Test Conversation</button>
+          <button class="btn danger" id="btnConvRestore">↺ Restore Default Conversations</button>
+        </div>
+        <div class="conv-status">
+          <span class="pill" id="convState">Loading…</span>
+          <span>Currently speaking: <strong id="convNow">—</strong></span>
+          <span>Next conversation: <strong id="convNext">—</strong></span>
+          <span id="convCount" class="hint"></span>
+        </div>
+        <audio id="convAudio" controls style="width: 100%; height: 38px;"></audio>
+        <div class="hint" id="convHint">The scheduler runs on the live stage and speaks one line at a time through the shared Piper queue. Gifts, VIP lines and viewer replies always go first.</div>
+        <div class="row">
+          <button class="btn" id="btnConvPreviewMale">🧑‍🍳 Male Seller preview</button>
+          <button class="btn" id="btnConvPreviewFemale">👩‍🍳 Female Seller preview</button>
+          <span class="hint" id="convPreviewHint">Previews use the current 🎭 profile voice, speed and volume.</span>
+        </div>
+        <div class="label-line"><span>Conversation categories</span><span class="hint">Disabled categories are never scheduled</span></div>
+        <div class="conv-cats" id="convCategories"></div>
+        <div class="label-line"><span>Conversation manager</span><span class="hint" id="convManagerCount"></span></div>
+        <div class="row">
+          <input type="text" id="convSearch" placeholder="Search dialogue, ID or category…" />
+          <select id="convFilter"><option value="">All categories</option></select>
+        </div>
+        <div class="conv-list" id="convList"></div>
+        <details class="conv-add">
+          <summary>➕ Add a conversation</summary>
+          <div class="row">
+            <div>
+              <div class="label-line"><span>Category</span></div>
+              <select id="convAddCategory"></select>
+            </div>
+            <div>
+              <div class="label-line"><span>Contexts (optional)</span></div>
+              <input type="text" id="convAddContexts" placeholder="any, quiet, busy…" />
+            </div>
+          </div>
+          <div class="label-line"><span>🧑‍🍳 Male Seller</span></div>
+          <textarea id="convAddMale" placeholder="Male Seller line"></textarea>
+          <div class="label-line"><span>👩‍🍳 Female Seller</span></div>
+          <textarea id="convAddFemale" placeholder="Female Seller response"></textarea>
+          <div class="label-line"><span>Follow-up (optional)</span></div>
+          <textarea id="convAddFollow" placeholder="Optional follow-up line"></textarea>
+          <div class="row">
+            <button class="btn gold" id="btnConvAdd">Add conversation</button>
+            <span class="hint" id="convAddHint"></span>
+          </div>
+        </details>
+        <div class="label-line">
+          <span>Conversation history</span>
+          <button class="btn" id="btnConvClearHistory">Clear history</button>
+        </div>
+        <div class="conv-history" id="convHistory"><div class="hint">No conversations recorded yet.</div></div>
+      </section>
+
+      <section class="card" id="reactiveSection" style="grid-column: 1 / -1">
+        <h2>🤖 LIVE REACTIVE SELLER AI</h2>
+        <div class="row">
+          <button class="btn on" id="btnReactiveToggle">AI Responses: ON</button>
+          <button class="btn on" id="btnReactiveUnderstanding">Comment understanding: ON</button>
+          <button class="btn on" id="btnReactiveOrders">Chat orders: ON</button>
+          <button class="btn" id="btnReactiveLlm">LLM provider: OFF</button>
+          <span class="pill" id="reactiveProviderState">Checking…</span>
+        </div>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Response language</span></div>
+            <select id="reactiveLanguage">
+              <option value="en">English</option>
+              <option value="vi">Vietnamese</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Default seller</span></div>
+            <select id="reactiveDefaultSeller">
+              <option value="alternate">Alternate sellers</option>
+              <option value="maleSeller">Male Seller first</option>
+              <option value="femaleSeller">Female Seller first</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Per-viewer cooldown (sec)</span></div>
+            <input type="number" id="reactiveViewerCooldown" min="5" max="300" step="1" value="20" style="width:110px" />
+          </div>
+          <div>
+            <div class="label-line"><span>Global cooldown (sec)</span></div>
+            <input type="number" id="reactiveGlobalCooldown" min="3" max="60" step="1" value="8" style="width:100px" />
+          </div>
+          <div>
+            <div class="label-line"><span>Max response chars</span></div>
+            <input type="number" id="reactiveMaxLength" min="80" max="320" step="10" value="180" style="width:100px" />
+          </div>
+          <div>
+            <div class="label-line"><span>Confidence threshold</span></div>
+            <input type="number" id="reactiveConfidence" min="0.3" max="0.95" step="0.05" value="0.55" style="width:90px" />
+          </div>
+          <div>
+            <div class="label-line"><span>Max pending</span></div>
+            <input type="number" id="reactiveMaxPending" min="1" max="20" step="1" value="6" style="width:80px" />
+          </div>
+        </div>
+        <div class="row">
+          <div style="flex:2 1 360px">
+            <div class="label-line"><span>Active LLM provider</span></div>
+            <div class="hint" id="reactiveActiveProvider">Loading provider manager…</div>
+          </div>
+          <div>
+            <div class="label-line"><span>Dedupe window (sec)</span></div>
+            <input type="number" id="reactiveDedupe" min="10" max="300" step="5" value="45" style="width:100px" />
+          </div>
+          <button class="btn gold" id="btnReactiveSave" style="align-self:flex-end">💾 Save AI settings</button>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnReactiveTestProvider">🔌 Test Active Provider</button>
+          <button class="btn" id="btnOpenLlmManager">🌐 Manage Providers</button>
+          <span class="hint">Sends one small structured request using the saved server-side configuration.</span>
+        </div>
+        <pre class="rpc-output reactive-test-result" id="reactiveProviderResult">No connection test yet.</pre>
+        <div class="hint" id="reactiveHint">
+          Providers are configured below. API keys remain server-side and are never sent to the browser.
+          Local intent detection and templates keep working when every provider is unavailable.
+        </div>
+        <div class="reactive-stats" id="reactiveStats">
+          <div class="reactive-stat"><span>Comments received</span><strong id="rsReceived">0</strong></div>
+          <div class="reactive-stat"><span>Understood</span><strong id="rsUnderstood">0</strong></div>
+          <div class="reactive-stat"><span>Generated</span><strong id="rsGenerated">0</strong></div>
+          <div class="reactive-stat"><span>Spoken</span><strong id="rsSpoken">0</strong></div>
+          <div class="reactive-stat"><span>Ignored</span><strong id="rsIgnored">0</strong></div>
+          <div class="reactive-stat"><span>Orders</span><strong id="rsOrders">0</strong></div>
+          <div class="reactive-stat"><span>Fallbacks</span><strong id="rsFallback">0</strong></div>
+        </div>
+        <div class="reactive-panels">
+          <div class="reactive-panel">
+            <div class="label-line"><span>Last response</span><span class="hint" id="reactiveProviderNote"></span></div>
+            <div id="reactiveLast">No reactive response yet.</div>
+          </div>
+          <div class="reactive-panel">
+            <div class="label-line"><span>Processing queue</span><span class="hint" id="reactiveQueueCount">0 pending</span></div>
+            <div class="reactive-queue" id="reactiveQueue"><div class="hint">Queue is empty.</div></div>
+          </div>
+        </div>
+        <div class="row">
+          <input type="text" id="reactiveTestUser" value="Admin Test Viewer" placeholder="Viewer username" />
+          <input type="text" id="reactiveTestComment" value="Can I get a lemonade?" placeholder="Sample comment" />
+          <button class="btn gold" id="btnReactiveTest">🧪 Test Comment</button>
+          <button class="btn" id="btnReactiveResetStats">Reset stats</button>
+        </div>
+        <pre class="rpc-output reactive-test-result" id="reactiveTestResult">Test comment runs the same classification, rate-limit bypass, provider/fallback, validation, order and speech pipeline.</pre>
+      </section>
+
+      <section class="card" id="llmManagerSection" style="grid-column: 1 / -1">
+        <h2>🌐 LLM PROVIDER MANAGER</h2>
+        <div class="row">
+          <div class="llm-summary">
+            <span class="hint">Active provider</span>
+            <strong id="llmActiveName">—</strong>
+            <span class="hint" id="llmActiveMeta">No provider configured.</span>
+          </div>
+          <div>
+            <div class="label-line"><span>Max attempts</span></div>
+            <input type="number" id="llmMaxAttempts" min="1" max="10" step="1" value="3" />
+          </div>
+          <button class="btn gold" id="btnLlmSaveSettings" style="align-self:flex-end">💾 Save manager</button>
+          <button class="btn" id="btnLlmAdd" style="align-self:flex-end">➕ Add Provider</button>
+          <button class="btn" id="btnLlmTestChain" style="align-self:flex-end">🧪 Test Primary + Fallbacks</button>
+        </div>
+        <div class="hint" id="llmManagerHint">Providers are tried in order. Authentication and invalid-model failures stop immediately; temporary failures may continue to the next configured provider.</div>
+        <div class="llm-provider-grid" id="llmProviderGrid"><div class="hint">Loading providers…</div></div>
+        <details class="llm-editor" id="llmProviderEditor">
+          <summary id="llmEditorTitle">➕ Add provider</summary>
+          <input type="hidden" id="llmFormId" />
+          <div class="row">
+            <div style="flex:2 1 220px"><div class="label-line"><span>Provider name</span></div><input type="text" id="llmFormName" maxlength="60" placeholder="My Provider" /></div>
+            <div style="flex:2 1 260px"><div class="label-line"><span>Base URL</span></div><input type="text" id="llmFormBase" placeholder="https://api.example.com/v1" /></div>
+            <div style="flex:1 1 180px"><div class="label-line"><span>Endpoint path</span></div><input type="text" id="llmFormPath" value="/chat/completions" /></div>
+          </div>
+          <div class="row">
+            <div style="flex:2 1 260px"><div class="label-line"><span>Model ID</span></div><input type="text" id="llmFormModel" placeholder="provider/model" /></div>
+            <div style="flex:1 1 220px"><div class="label-line"><span>API key</span></div><input type="password" id="llmFormKey" autocomplete="new-password" placeholder="Leave blank to keep current key" /></div>
+            <div><div class="label-line"><span>Timeout (ms)</span></div><input type="number" id="llmFormTimeout" min="3000" max="60000" step="500" value="8000" /></div>
+            <div><div class="label-line"><span>Max tokens</span></div><input type="number" id="llmFormMaxTokens" min="128" max="8000" step="64" value="600" /></div>
+          </div>
+          <div class="row">
+            <div><div class="label-line"><span>Reasoning</span></div><select id="llmFormReasoning"><option value="auto">Provider default / auto</option><option value="off">Disable reasoning</option></select></div>
+            <label class="llm-check"><input type="checkbox" id="llmFormJson" checked /> JSON response format</label>
+            <label class="llm-check"><input type="checkbox" id="llmFormRequiresKey" checked /> API key required</label>
+            <label class="llm-check"><input type="checkbox" id="llmFormEnabled" checked /> Enabled</label>
+          </div>
+          <div class="label-line"><span>Custom headers (JSON, optional)</span><span class="hint">Authorization, cookies and secret-like header names are blocked.</span></div>
+          <textarea id="llmFormHeaders" placeholder='{ "HTTP-Referer": "https://example.com" }'></textarea>
+          <div class="row">
+            <button class="btn gold" id="btnLlmSave">💾 Save Provider</button>
+            <button class="btn" id="btnLlmCancel">Cancel</button>
+            <button class="btn" id="btnLlmFetchModels">🔎 Fetch Models</button>
+            <button class="btn danger" id="btnLlmDeleteKey">🗑 Saved Key</button>
+          </div>
+          <select id="llmModelOptions" hidden></select>
+          <pre class="rpc-output reactive-test-result" id="llmEditorResult">No provider test yet.</pre>
+        </details>
+        <pre class="rpc-output reactive-test-result" id="llmProviderResult">Connection and model results will appear here.</pre>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>🎵 Background Music</h2>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Now playing</span><strong id="musicNow">—</strong></div>
+            <div class="hint" id="musicHint">The playlist starts automatically with the shop.</div>
+          </div>
+          <div>
+            <div class="label-line"><span>Music volume</span><strong id="valMusicVol">55%</strong></div>
+            <input type="range" id="sliderMusicVol" min="0" max="100" step="5" value="55" />
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" id="btnMusicPrev">⏮ Previous</button>
+          <button class="btn gold" id="btnMusicPlay">▶ Play</button>
+          <button class="btn" id="btnMusicPause">⏸ Pause</button>
+          <button class="btn" id="btnMusicNext">⏭ Next</button>
+        </div>
+        <div>
+          <div class="label-line"><span>Progress</span><strong id="musicTime">0:00 / 0:00</strong></div>
+          <div class="music-progress"><div class="music-progress-fill" id="musicProgress"></div></div>
+        </div>
+        <div class="music-list" id="musicList"></div>
+        <div class="hint" id="musicFoot">All eight tracks are original royalty-free instrumentals generated locally — no vocals, safe for TikTok livestreams.</div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>💝 Gift Donations</h2>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Total coins</span><strong id="donCoins">0</strong></div>
+          </div>
+          <div>
+            <div class="label-line"><span>Drinks served</span><strong id="donDrinks">0</strong></div>
+          </div>
+          <div>
+            <div class="label-line"><span>Gifts received</span><strong id="donGifts">0</strong></div>
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn" data-coins="1">1 coin → Cola</button>
+          <button class="btn" data-coins="5">5 coins → Smoothie</button>
+          <button class="btn" data-coins="10">10 coins → Slushie</button>
+          <button class="btn" data-coins="15">15 coins → Orange Soda</button>
+          <button class="btn gold" data-coins="20">20 coins → Iced Coffee</button>
+          <button class="btn gold" data-coins="25">25 coins → Lemonade</button>
+        </div>
+        <div class="hint">The drink is chosen by the gift's coin value only (1, 5, 10, 15, 20, 25). The gift icons are decorative menu art — gift identity never picks the drink.</div>
+        <table>
+          <thead><tr><th>Gift</th><th>Viewer</th><th>Drink</th><th>Coins</th></tr></thead>
+          <tbody id="recentGiftsBody">
+            <tr><td colspan="4" class="hint">No gifts yet.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>🔌 5. JSON-RPC Console</h2>
+        <div class="row">
+          <input type="text" id="rpcMethod" value="shop.getState" />
+          <button class="btn gold" id="btnSendRpc">Send RPC</button>
+          <button class="btn" id="btnRefresh">Refresh State</button>
+        </div>
+        <textarea id="rpcParams">{
+  "user": "Mia Carter",
+  "drinkId": "lemonade"
+}</textarea>
+        <pre id="rpcOutput">{ "status": "Ready for JSON-RPC 2.0" }</pre>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>📣 AI SHOP ANNOUNCER</h2>
+        <div class="row">
+          <button class="btn on" id="btnAnnEnable">Enabled</button>
+          <button class="btn" id="btnAnnRun">▶ Start</button>
+          <button class="btn gold" id="btnAnnTest">🔊 Test voice</button>
+          <div>
+            <div class="label-line"><span>Interval</span></div>
+            <select id="annInterval">
+              <option value="5">5 seconds</option>
+              <option value="8">8 seconds</option>
+              <option value="10">10 seconds</option>
+              <option value="15">15 seconds</option>
+              <option value="20">20 seconds</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Language</span></div>
+            <select id="annLanguage">
+              <option value="en">English</option>
+              <option value="vi">Vietnamese</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Seller voice</span></div>
+            <select id="annVoiceMode">
+              <option value="female">Female seller</option>
+              <option value="male">Male seller</option>
+              <option value="random">Random seller</option>
+            </select>
+          </div>
+          <div>
+            <div class="label-line"><span>Exact voice</span></div>
+            <select id="annVoice">
+              <option value="">Auto (by seller gender)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Speech speed</span><strong id="valAnnSpeed">1.00×</strong></div>
+            <input type="range" id="annSpeed" min="50" max="200" step="5" value="100" />
+          </div>
+          <div>
+            <div class="label-line"><span>Speech volume</span><strong id="valAnnVol">90%</strong></div>
+            <input type="range" id="annVol" min="0" max="100" step="5" value="90" />
+          </div>
+          <div>
+            <div class="label-line"><span>Order</span></div>
+            <button class="btn on" id="btnAnnShuffle">Shuffle: ON</button>
+          </div>
+        </div>
+        <div class="hint" id="annStatus">Waiting for the live stage…</div>
+        <div class="hint" id="annProfileNote">Voice, language, speed and volume come from the 🎭 Voice Character Profiles section.</div>
+
+        <div class="label-line"><span>Announcement manager</span><strong id="annCount">0</strong></div>
+        <div class="row">
+          <select id="annFilter"><option value="">All categories</option></select>
+          <input type="text" id="annSearch" placeholder="Search English or Vietnamese text" />
+        </div>
+        <div class="ann-list" id="annList"></div>
+        <div class="row">
+          <select id="annNewCategory"></select>
+          <select id="annNewLanguage">
+            <option value="both">English + Vietnamese</option>
+            <option value="en">English only</option>
+            <option value="vi">Vietnamese only</option>
+          </select>
+        </div>
+        <div class="row">
+          <input type="text" id="annNewEn" placeholder="New English sentence" />
+          <input type="text" id="annNewVi" placeholder="Vietnamese version" />
+          <button class="btn gold" id="btnAnnAdd">＋ Add sentence</button>
+          <button class="btn" id="btnAnnReset">Restore defaults</button>
+        </div>
+        <div class="hint">
+          Automatic announcements use the local Piper models only, never cloud TTS. They wait for the current
+          sentence to finish, never repeat the previous line, and pause with the shop.
+        </div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>👑 6. VIP &amp; Supporters</h2>
+        <div class="row">
+          <div>
+            <div class="label-line"><span>Session donations</span><strong id="vipDonations">0</strong></div>
+          </div>
+          <div>
+            <div class="label-line"><span>VIP customers</span><strong id="vipCount">0</strong></div>
+          </div>
+          <div>
+            <div class="label-line"><span>Super VIP</span><strong id="superVipCount">0</strong></div>
+          </div>
+          <div>
+            <div class="label-line"><span>Diamond VIP</span><strong id="diamondCount">0</strong></div>
+          </div>
+        </div>
+        <div id="vipTopList" class="hint">No supporters yet.</div>
+        <div class="row">
+          <button class="btn" data-vip-test="25">Test VIP 25 coins</button>
+          <button class="btn" data-vip-test="50">Test Super VIP 50</button>
+          <button class="btn gold" data-vip-test="100">Test Diamond VIP 100</button>
+          <button class="btn danger" data-vip-test="500">Test Grand Celebration 500</button>
+        </div>
+        <div class="hint">
+          Test buttons replay the real celebration and VIP handlers on the live screen. They never add
+          leaderboard entries, session coins or supporter history.
+        </div>
+      </section>
+
+      <section class="card" style="grid-column: 1 / -1">
+        <h2>🏆 7. Top Supporters</h2>
+        <table>
+          <thead><tr><th>#</th><th>Viewer</th><th>Coins</th><th>Tips</th><th>Drinks</th><th>Gifts</th></tr></thead>
+          <tbody id="supportersBody">
+            <tr><td colspan="6" class="hint">No supporters yet.</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script src="/js/announcer.js"></script>
+  <script src="/js/music.js"></script>
+  <script src="/js/llm-provider-manager-ui.js"></script>
+  <script>
+    async function sendRpc(method, extraParams = {}) {
+      const user = document.getElementById('rpcUser').value.trim() || 'Guest';
+      const order = document.getElementById('rpcOrder').value.trim();
+      const body = { jsonrpc: '2.0', id: Date.now(), method, params: { user, order, ...extraParams } };
+      const res = await fetch('/rpc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      document.getElementById('rpcOutput').textContent = JSON.stringify(data, null, 2);
+      refreshStatus();
+      return data;
+    }
+
+    document.querySelectorAll('[data-act]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const act = btn.getAttribute('data-act');
+        if (act === 'follow') sendRpc('shop.follow', {});
+        if (act === 'like') sendRpc('shop.like', { count: 6 });
+        if (act === 'comment') sendRpc('shop.comment', { comment: document.getElementById('rpcOrder').value.trim() });
+        if (act === 'gift') sendRpc('shop.gift', { coins: 48, giftName: 'Coffee Run' });
+        if (act === 'mystery') sendRpc('shop.mysteryDrink', {});
+        if (act === 'free') sendRpc('shop.freeDrink', {});
+      });
+    });
+
+    document.querySelectorAll('[data-vip-test]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const coins = Number(btn.getAttribute('data-vip-test'));
+        sendRpc(coins >= 500 ? 'shop.testCelebration' : 'shop.testVip', { coins });
+      });
+    });
+
+    document.querySelectorAll('[data-coins]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        sendRpc('shop.giftOrder', {
+          coins: Number(btn.getAttribute('data-coins')),
+          units: 1
+        });
+      });
+    });
+
+    document.getElementById('btnStart').onclick = () => sendRpc('game.start');
+    document.getElementById('btnPause').onclick = () => sendRpc('game.pause', { paused: true });
+    document.getElementById('btnReset').onclick = () => {
+      if (confirm('Reset all shop counters and supporters?')) sendRpc('game.reset');
+    };
+    document.getElementById('btnSpawnCustomer').onclick = () => sendRpc('game.spawnCustomer', { user: 'Walk-in guest' });
+    document.getElementById('sliderSpawn').oninput = (e) => {
+      document.getElementById('valSpawn').textContent = (Number(e.target.value) / 100).toFixed(2) + '×';
+    };
+    document.getElementById('sliderSpawn').onchange = (e) => {
+      sendRpc('game.setSpawnRate', { rate: Number(e.target.value) / 100 });
+    };
+
+    document.getElementById('btnConn').onclick = async () => {
+      const username = document.getElementById('ttUser').value.trim();
+      const btn = document.getElementById('btnConn');
+      const errorEl = document.getElementById('ttError');
+      if (!username) {
+        errorEl.textContent = 'Enter a TikTok @username first.';
+        return;
+      }
+      btn.disabled = true;
+      errorEl.textContent = `CONNECTING to ${username}…`;
+      const data = await sendRpc('live.connect', { username });
+      btn.disabled = false;
+      if (data && data.error) {
+        errorEl.textContent = 'CONNECTION ERROR: ' + data.error.message;
+      } else {
+        errorEl.textContent = '';
+      }
+    };
+    document.getElementById('btnDisc').onclick = () => sendRpc('live.disconnect');
+    let autoSimOn = false;
+    document.getElementById('btnAutoSim').onclick = (e) => {
+      autoSimOn = !autoSimOn;
+      e.currentTarget.textContent = '🤖 Auto Demo Interactions: ' + (autoSimOn ? 'ON' : 'OFF');
+      e.currentTarget.classList.toggle('on', autoSimOn);
+      sendRpc('live.setAutoSim', { enabled: autoSimOn });
+    };
+
+    let ttsVoices = [];
+    let kokoroVoices = [];
+    let ttsState = null;
+    let ttsCatalog = { en: [], vi: [], vn: [] };
+    let lastVoiceSignature = '';
+    let lastKokoroSignature = '';
+    let voiceHintUntil = 0;
+    let ttsEnabled = true;
+
+    function genderLabel(gender) {
+      if (gender === 'female') return '♀ Female';
+      if (gender === 'male') return '♂ Male';
+      return '—';
+    }
+
+    function voiceOptionLabel(voice) {
+      const gender = voice.gender ? ' · ' + (voice.gender === 'female' ? 'Female' : 'Male') : '';
+      const unavailable = voice.valid === false ? ' · unavailable' : '';
+      return `${voice.name}${gender}${unavailable}`;
+    }
+
+    function activeTtsEngine() {
+      const select = document.getElementById('ttsEngine');
+      return select && select.value === 'kokoro' ? 'kokoro' : 'piper';
+    }
+
+    function engineVoices(engine = activeTtsEngine()) {
+      return engine === 'kokoro' ? kokoroVoices : ttsVoices;
+    }
+
+    function voiceFor(id) {
+      return engineVoices().find((voice) => voice.id === id) || null;
+    }
+
+    function renderVoiceOptions() {
+      const engine = activeTtsEngine();
+      const language = engine === 'kokoro' ? 'en' : document.getElementById('ttsLanguage').value;
+      const select = document.getElementById('ttsVoice');
+      const previous = select.value;
+      const list = engineVoices(engine).filter((voice) => voice.language === language);
+      select.innerHTML = list.length
+        ? list
+            .map(
+              (voice) =>
+                `<option value="${escapeHtml(voice.id)}"${voice.valid === false ? ' disabled' : ''}>${escapeHtml(voiceOptionLabel(voice))}</option>`
+            )
+            .join('')
+        : `<option value="">No ${engine === 'kokoro' ? 'Kokoro' : 'Piper'} voice available</option>`;
+      const saved = ttsState && ttsState.selectedEngine === engine
+        ? engine === 'kokoro'
+          ? ttsState.kokoroVoice
+          : ttsState.voice
+        : null;
+      const wanted = [previous, saved, list[0] && list[0].id].find(
+        (id) => id && list.some((voice) => voice.id === id && voice.valid !== false)
+      );
+      if (wanted) select.value = wanted;
+      renderVoiceDetail();
+    }
+
+    function renderVoiceDetail() {
+      const select = document.getElementById('ttsVoice');
+      const voice = voiceFor(select.value);
+      const detail = document.getElementById('voiceDetail');
+      const engine = activeTtsEngine();
+      if (!detail) return;
+      detail.textContent = voice
+        ? `${voice.name} · ${genderLabel(voice.gender)} · ` +
+          (voice.valid === false
+            ? 'UNAVAILABLE: ' + (voice.problem || 'cannot load')
+            : engine === 'kokoro' ? 'Kokoro local model · data/kokoro-cache' : voice.path || 'model inside config/piper')
+        : `No ${engine === 'kokoro' ? 'Kokoro' : 'Piper'} model found for this language.`;
+    }
+
+    function renderVoiceList() {
+      const wrap = document.getElementById('voiceList');
+      if (!wrap) return;
+      const engine = activeTtsEngine();
+      const language = engine === 'kokoro' ? 'en' : document.getElementById('ttsLanguage').value;
+      const list = engineVoices(engine).filter((voice) => voice.language === language);
+      wrap.innerHTML = list.length
+        ? list
+            .map(
+              (voice) => `
+          <div class="voice-item${voice.valid === false ? ' invalid' : ''}">
+            <span class="voice-name">${escapeHtml(voice.name)}</span>
+            <span class="voice-gender">${escapeHtml(genderLabel(voice.gender))}</span>
+            <span class="voice-path" title="${escapeHtml(voice.path || '')}">${escapeHtml(voice.path || '—')}</span>
+            <button class="btn" data-voice-test="${escapeHtml(voice.id)}" ${voice.valid === false ? 'disabled' : ''}>▶ Test</button>
+          </div>`
+            )
+            .join('')
+        : `<div class="hint">No ${engine === 'kokoro' ? 'Kokoro' : 'Piper'} voice models for this language yet.</div>`;
+      wrap.querySelectorAll('[data-voice-test]').forEach((btn) => {
+        btn.onclick = () => speakWithVoice(btn.getAttribute('data-voice-test'));
+      });
+    }
+
+    function renderVoiceSummary(status) {
+      const summary = document.getElementById('voiceSummary');
+      if (!summary) return;
+      const engine = activeTtsEngine();
+      const list = engineVoices(engine);
+      const en = list.filter((voice) => voice.language === 'en').length;
+      const vi = list.filter((voice) => voice.language === 'vi').length;
+      const invalid = list.filter((voice) => voice.valid === false).length;
+      const scanned = status && status.lastScanAt ? new Date(status.lastScanAt).toLocaleTimeString() : '—';
+      summary.textContent =
+        `${engine === 'kokoro' ? 'Kokoro' : 'Piper'} · ${list.length} voices · English ${en}` +
+        (engine === 'piper' ? ` · Vietnamese ${vi}` : '') +
+        (invalid ? ` · ${invalid} unavailable` : '') +
+        ` · scanned ${scanned}`;
+    }
+
+    function applyVoiceCatalog(catalog) {
+      if (!catalog) return;
+      ttsCatalog = catalog;
+      const merged = [];
+      const seen = new Set();
+      for (const voice of [...(catalog.en || []), ...(catalog.vi || catalog.vn || [])]) {
+        if (!voice || !voice.id || seen.has(voice.id)) continue;
+        seen.add(voice.id);
+        merged.push(voice);
+      }
+      if (merged.length) ttsVoices = merged;
+      renderVoiceOptions();
+      renderVoiceList();
+      renderVoiceSummary(catalog);
+      populateAnnVoiceOptions();
+    }
+
+    function syncVoiceData(tts) {
+      if (!tts) return;
+      ttsState = tts;
+      const engineSelect = document.getElementById('ttsEngine');
+      if (engineSelect && (tts.selectedEngine === 'piper' || tts.selectedEngine === 'kokoro')) {
+        engineSelect.value = tts.selectedEngine;
+      }
+      const languageSelect = document.getElementById('ttsLanguage');
+      if (languageSelect) {
+        languageSelect.disabled = activeTtsEngine() === 'kokoro';
+        if (activeTtsEngine() === 'kokoro') languageSelect.value = 'en';
+      }
+      const voices = Array.isArray(tts.voices) ? tts.voices : [];
+      const signature = voices
+        .map((voice) => `${voice.id}:${voice.gender || ''}:${voice.valid === false ? 0 : 1}`)
+        .join('|');
+      if (signature && signature !== lastVoiceSignature) {
+        lastVoiceSignature = signature;
+        ttsVoices = voices.map((voice) => ({ ...voice }));
+        renderVoiceOptions();
+        renderVoiceList();
+        populateAnnVoiceOptions();
+      }
+      const kokoro = (tts.kokoro) || (tts.engines && tts.engines.kokoro);
+      if (kokoro && Array.isArray(kokoro.voices)) {
+        const signature = kokoro.voices
+          .map((voice) => `${voice.id}:${voice.valid === false ? 0 : 1}`)
+          .join('|');
+        if (signature !== lastKokoroSignature) {
+          lastKokoroSignature = signature;
+          kokoroVoices = kokoro.voices.map((voice) => ({ ...voice }));
+          renderKokoroAudition();
+        }
+      }
+      renderEngineStatus(tts);
+      renderVoiceOptions();
+      renderVoiceList();
+      if (tts.catalog) {
+        ttsCatalog = tts.catalog;
+        renderVoiceSummary(tts.catalog);
+      } else {
+        renderVoiceSummary(tts);
+      }
+    }
+
+    function renderEngineStatus(tts) {
+      const wrap = document.getElementById('ttsEngineStatus');
+      if (!wrap) return;
+      const engines = tts && tts.engines ? tts.engines : {};
+      const piper = engines.piper || tts.piper || {};
+      const kokoro = engines.kokoro || tts.kokoro || {};
+      const card = (id, label, state) => {
+        const ready = Boolean(state.ready);
+        const status = String(state.status || (ready ? 'ready' : 'offline')).toUpperCase();
+        return `<div class="engine-card ${ready ? 'ready' : 'offline'}">
+          <div class="engine-head"><strong><span class="engine-dot"></span> ${escapeHtml(label)}</strong><span class="hint">${escapeHtml(status)}</span></div>
+          <div class="engine-meta">${
+            id === 'kokoro'
+              ? `${escapeHtml(state.device || 'cpu')} · ${escapeHtml(String((state.voices || []).length))} voices · load ${state.loadMs ? Math.round(state.loadMs) + ' ms' : '—'}`
+              : `${escapeHtml(String((state.voices || []).length))} voices · ${escapeHtml(state.executableKind || 'worker')}`
+          }</div>
+          <div class="engine-meta">${escapeHtml(state.error || state.lastError || 'No engine error')}</div>
+        </div>`;
+      };
+      wrap.innerHTML = card('piper', 'Piper', piper) + card('kokoro', 'Kokoro', kokoro);
+      const metrics = document.getElementById('ttsEngineMetrics');
+      if (metrics) {
+        const parts = [];
+        if (kokoro.ready) {
+          parts.push(`Kokoro ${kokoro.device || 'cpu'} · last ${kokoro.lastGenerationMs != null ? kokoro.lastGenerationMs + ' ms' : '—'}`);
+          parts.push(`cache hits ${kokoro.cacheHits || 0} · failures ${kokoro.failures || 0}`);
+          if (kokoro.lastDurationSec) parts.push(`audio ${kokoro.lastDurationSec}s`);
+        } else if (kokoro.error) {
+          parts.push(`Kokoro offline: ${kokoro.error}`);
+        }
+        parts.push(`Piper ${piper.ready ? 'ready' : piper.status || 'offline'}`);
+        parts.push('Fallback: Kokoro → profile Piper voice');
+        metrics.textContent = parts.join(' · ');
+      }
+      const count = document.getElementById('engineVoiceCount');
+      if (count) {
+        count.textContent = activeTtsEngine() === 'kokoro'
+          ? `${kokoroVoices.length} Kokoro voices · US English · 24 kHz mono WAV`
+          : `${ttsVoices.length} Piper voices · ${ttsVoices.filter((voice) => voice.language === 'vi').length} Vietnamese`;
+      }
+      renderKokoroAudition();
+    }
+
+    function renderKokoroAudition() {
+      const select = document.getElementById('auditionVoice');
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = kokoroVoices.length
+        ? kokoroVoices
+            .map(
+              (voice) =>
+                `<option value="${escapeHtml(voice.id)}">${escapeHtml(voice.name)} · ${escapeHtml(genderLabel(voice.gender))}</option>`
+            )
+            .join('')
+        : '<option value="">Waiting for Kokoro worker…</option>';
+      const wanted = [previous, 'af_heart', kokoroVoices[0] && kokoroVoices[0].id].find((id) =>
+        kokoroVoices.some((voice) => voice.id === id)
+      );
+      if (wanted) select.value = wanted;
+      const hint = document.getElementById('auditionHint');
+      if (hint && !hint.dataset.locked) {
+        hint.textContent = kokoroVoices.length
+          ? `${kokoroVoices.length} Kokoro voices available · 24 kHz mono WAV · generation runs in the local worker.`
+          : 'Kokoro is still loading. Piper remains available in the meantime.';
+      }
+    }
+
+    function playAuditionUrl(url) {
+      return new Promise((resolve) => {
+        const player = document.getElementById('auditionAudio');
+        if (!player) return resolve();
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          player.onended = null;
+          player.onerror = null;
+          resolve();
+        };
+        player.onended = finish;
+        player.onerror = finish;
+        player.src = url;
+        player.play().catch(() => {
+          const hint = document.getElementById('auditionHint');
+          if (hint) hint.textContent = 'Audio generated. Press play on the player above to audition it.';
+          finish();
+        });
+        setTimeout(finish, 30000);
+      });
+    }
+
+    async function auditionClip(engine, voice, text, label) {
+      const hint = document.getElementById('auditionHint');
+      if (hint) {
+        hint.dataset.locked = '1';
+        hint.textContent = `Generating ${label} with ${engine === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
+      }
+      const data = await sendRpc('tts.test', {
+        engine,
+        voice,
+        text,
+        speed: Number(document.getElementById('sliderSpeed').value) / 100,
+        allowFallback: false
+      });
+      const result = data && data.result;
+      if (!result || !result.ok || !result.url) {
+        if (hint) {
+          delete hint.dataset.locked;
+          hint.textContent = `${label} failed: ${
+            (result && result.error) || (data && data.error && data.error.message) || 'unknown error'
+          }`;
+        }
+        return false;
+      }
+      if (hint) {
+        const ms = result.latencyMs != null ? result.latencyMs : result.synthSec != null ? Math.round(result.synthSec * 1000) : null;
+        hint.textContent =
+          `${label} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ` +
+          (result.cached ? 'cache hit' : ms != null ? `${ms} ms generation` : 'generated') +
+          (result.durationSec ? ` · ${result.durationSec}s audio` : '');
+      }
+      await playAuditionUrl(result.url);
+      if (hint) delete hint.dataset.locked;
+      return true;
+    }
+
+    async function runAudition(sequence, label) {
+      const hint = document.getElementById('auditionHint');
+      const text = document.getElementById('auditionText').value.trim() || 'Welcome to Sunny Side Sips!';
+      for (const clip of sequence) {
+        const ok = await auditionClip(clip.engine, clip.voice, text, clip.label || label);
+        if (!ok) return;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+    }
+
+    async function speakWithVoice(voiceId) {
+      const engine = activeTtsEngine();
+      const voice = voiceFor(voiceId);
+      if (!voice) return;
+      const hint = document.getElementById('ttsHint');
+      if (voice.valid === false) {
+        hint.textContent = `${voice.name} cannot load: ${voice.problem || 'unknown error'}`;
+        voiceHintUntil = Date.now() + 8000;
+        return;
+      }
+      document.getElementById('ttsVoice').value = voice.id;
+      if (engine === 'piper') document.getElementById('ttsLanguage').value = voice.language;
+      renderVoiceDetail();
+      renderVoiceList();
+      const text = document.getElementById('ttsText').value.trim() || 'Welcome to Sunny Side Sips!';
+      const speed = Number(document.getElementById('sliderSpeed').value) / 100;
+      hint.textContent = `Synthesizing ${voice.name} with ${engine === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
+      voiceHintUntil = Date.now() + 20000;
+      const data = await sendRpc('tts.test', {
+        text,
+        engine,
+        language: voice.language,
+        voice: voice.id,
+        speed,
+        allowFallback: false
+      });
+      const result = data && data.result;
+      if (result && result.ok && result.url) {
+        const player = document.getElementById('audioPreview');
+        player.src = result.url;
+        player.play().catch(() => {});
+        hint.textContent =
+          `${engine === 'kokoro' ? 'Kokoro' : 'Piper'} · ${result.voice} (${result.language})` +
+          (result.cached ? ' · cached' : result.latencyMs != null ? ` · ${result.latencyMs} ms` : ` · ${result.synthSec || 0}s`) +
+          (result.fallback ? ` · ⚠ ${result.fallbackError}` : '');
+      } else {
+        hint.textContent =
+          'Voice failed: ' +
+          ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+      }
+      voiceHintUntil = Date.now() + 12000;
+    }
+
+    document.getElementById('btnRefreshVoices').onclick = async () => {
+      const btn = document.getElementById('btnRefreshVoices');
+      const hint = document.getElementById('ttsHint');
+      btn.disabled = true;
+      hint.textContent = `Refreshing ${activeTtsEngine() === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
+      voiceHintUntil = Date.now() + 6000;
+      const data = await sendRpc('tts.refreshEngine', { engine: activeTtsEngine() });
+      btn.disabled = false;
+      const status = data && data.result;
+      if (status && status.engines) {
+        lastVoiceSignature = '';
+        lastKokoroSignature = '';
+        syncVoiceData(status);
+        hint.textContent = `${activeTtsEngine() === 'kokoro' ? 'Kokoro' : 'Piper'} status refreshed.`;
+      } else {
+        hint.textContent =
+          'Voice refresh failed: ' + ((data && data.error && data.error.message) || 'unknown error');
+      }
+      voiceHintUntil = Date.now() + 10000;
+    };
+
+    document.getElementById('btnTestEngine').onclick = () => {
+      const select = document.getElementById('ttsVoice');
+      if (select && select.value) speakWithVoice(select.value);
+    };
+
+    document.getElementById('ttsEngine').onchange = async (event) => {
+      const engine = event.target.value === 'kokoro' ? 'kokoro' : 'piper';
+      document.getElementById('ttsLanguage').disabled = engine === 'kokoro';
+      if (engine === 'kokoro') document.getElementById('ttsLanguage').value = 'en';
+      const data = await sendRpc('temple.updateSettings', { ttsEngine: engine });
+      const state = data && data.result;
+      if (state && state.tts) {
+        lastVoiceSignature = '';
+        lastKokoroSignature = '';
+        syncVoiceData(state.tts);
+      }
+    };
+
+    document.getElementById('ttsLanguage').onchange = async (e) => {
+      if (activeTtsEngine() === 'kokoro') {
+        e.target.value = 'en';
+        return;
+      }
+      const language = e.target.value;
+      const list = ttsVoices.filter((voice) => voice.language === language && voice.valid !== false);
+      await sendRpc('temple.updateSettings', {
+        ttsLanguage: language,
+        ttsVoice: list[0] ? list[0].id : undefined
+      });
+      renderVoiceOptions();
+      renderVoiceList();
+    };
+    document.getElementById('ttsVoice').onchange = (e) => {
+      renderVoiceDetail();
+      sendRpc('temple.updateSettings', activeTtsEngine() === 'kokoro'
+        ? { ttsKokoroVoice: e.target.value }
+        : { ttsVoice: e.target.value });
+    };
+
+    document.getElementById('btnTtsToggle').onclick = (e) => {
+      ttsEnabled = !ttsEnabled;
+      e.currentTarget.textContent = 'Voice: ' + (ttsEnabled ? 'ON' : 'OFF');
+      e.currentTarget.classList.toggle('on', ttsEnabled);
+      sendRpc('temple.updateSettings', { ttsEnabled });
+    };
+
+    const speedSlider = document.getElementById('sliderSpeed');
+    speedSlider.oninput = (e) => {
+      document.getElementById('valSpeed').textContent = (Number(e.target.value) / 100).toFixed(2) + '×';
+    };
+    speedSlider.onchange = (e) => sendRpc('temple.updateSettings', { ttsSpeed: Number(e.target.value) / 100 });
+
+    const voiceVolSlider = document.getElementById('sliderVoiceVol');
+    voiceVolSlider.oninput = (e) => {
+      document.getElementById('valVoiceVol').textContent = e.target.value + '%';
+    };
+    voiceVolSlider.onchange = (e) =>
+      sendRpc('temple.updateSettings', { ttsVolume: Number(e.target.value) / 100 });
+
+    document.getElementById('btnSpeak').onclick = () =>
+      speakWithVoice(document.getElementById('ttsVoice').value);
+
+    document.getElementById('btnAuditionGenerate')?.addEventListener('click', () => {
+      const voice = document.getElementById('auditionVoice').value;
+      if (!voice) {
+        document.getElementById('auditionHint').textContent = 'Kokoro is not ready yet; waiting for a voice.';
+        return;
+      }
+      const text = document.getElementById('auditionText').value;
+      runAudition([{ engine: 'kokoro', voice, label: `Kokoro ${voice}` }]);
+    });
+
+    document.getElementById('btnAuditionSellers')?.addEventListener('click', () => {
+      const profiles = (voiceProfilesState && voiceProfilesState.profiles) || {};
+      const pick = (id, fallback) => {
+        const profile = profiles[id];
+        return profile && profile.resolvedEngine === 'kokoro' && profile.resolvedVoice
+          ? profile.resolvedVoice
+          : fallback;
+      };
+      runAudition([
+        { engine: 'kokoro', voice: pick('maleSeller', 'am_adam'), label: 'Male Seller' },
+        { engine: 'kokoro', voice: pick('femaleSeller', 'af_heart'), label: 'Female Seller' }
+      ]);
+    });
+
+    document.getElementById('btnAuditionEngines')?.addEventListener('click', () => {
+      const kokoroVoice = document.getElementById('auditionVoice').value;
+      const piperVoice = (ttsVoices.find((voice) => voice.language === 'en' && voice.valid !== false) || {}).id;
+      if (!kokoroVoice || !piperVoice) {
+        document.getElementById('auditionHint').textContent = 'Both engines need an available English voice before comparison.';
+        return;
+      }
+      runAudition([
+        { engine: 'piper', voice: piperVoice, label: 'Piper comparison' },
+        { engine: 'kokoro', voice: kokoroVoice, label: 'Kokoro comparison' }
+      ]);
+    });
+
+    document.getElementById('btnSendRpc').onclick = async () => {
+      const method = document.getElementById('rpcMethod').value.trim();
+      let params = {};
+      try {
+        params = JSON.parse(document.getElementById('rpcParams').value || '{}');
+      } catch (err) {
+        document.getElementById('rpcOutput').textContent = 'Invalid JSON params: ' + err.message;
+        return;
+      }
+      const res = await fetch('/rpc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
+      });
+      const data = await res.json();
+      document.getElementById('rpcOutput').textContent = JSON.stringify(data, null, 2);
+      refreshStatus();
+    };
+
+    document.getElementById('btnRefresh').onclick = refreshStatus;
+
+    let lastAdminState = null;
+
+    function ttFormatDuration(ms) {
+      const total = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const sec = total % 60;
+      if (h) return `${h}h ${String(m).padStart(2, '0')}m`;
+      if (m) return `${m}m ${String(sec).padStart(2, '0')}s`;
+      return `${sec}s`;
+    }
+
+    function renderTikTokStatus(st) {
+      if (st) lastAdminState = st;
+      const source = lastAdminState || {};
+      const t = source.tiktok || {};
+      const label = t.connected
+        ? 'CONNECTED'
+        : t.connecting
+          ? 'CONNECTING...'
+          : t.reconnecting
+            ? 'RECONNECTING...'
+            : t.status === 'error' || t.lastError
+              ? 'CONNECTION ERROR'
+              : 'DISCONNECTED';
+      const stateEl = document.getElementById('ttState');
+      stateEl.textContent = label;
+      stateEl.className =
+        'tt-state' +
+        (t.connected
+          ? ' connected'
+          : t.connecting || t.reconnecting
+            ? ' pending'
+            : label === 'CONNECTION ERROR'
+              ? ' error'
+              : '');
+
+      let meta;
+      if (t.connected) {
+        const parts = [`@${t.username}`];
+        parts.push(`LIVE ${ttFormatDuration(t.durationMs)}`);
+        parts.push(`${t.viewerCount || 0} viewers`);
+        const ev = t.lastEvent;
+        parts.push(
+          ev
+            ? `last event: ${ev.type} @${ev.user}${ev.detail ? ' · ' + ev.detail : ''}`
+            : 'waiting for the first LIVE event…'
+        );
+        meta = parts.join(' · ');
+      } else if (t.connecting) {
+        meta = `Opening the TikTok LIVE stream for @${t.username || '…'}…`;
+      } else if (t.reconnecting) {
+        meta = t.lastError || 'Reconnecting to TikTok LIVE…';
+      } else if (label === 'CONNECTION ERROR') {
+        meta = t.lastError || 'Connection failed.';
+      } else {
+        meta = 'No TikTok LIVE connection.';
+      }
+      document.getElementById('ttMeta').textContent = meta;
+      document.getElementById('ttError').textContent = label === 'CONNECTION ERROR' ? t.lastError || '' : '';
+      document.getElementById('btnConn').disabled = Boolean(t.connecting);
+    }
+
+    setInterval(() => renderTikTokStatus(), 1000);
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/api/state');
+        const st = await res.json();
+
+        document.getElementById('statusBanner').innerHTML =
+          `<span class="pill">${st.settings.paused ? 'PAUSED' : 'RUNNING'}</span> ` +
+          `Served: ${st.customersServed} · Drinks: ${st.drinksSold} · Tips: $${Number(st.totalTips).toFixed(2)} · ` +
+          `Likes: ${st.likes} · Follows: ${st.follows} · Comments: ${st.comments} · Gifts: ${st.gifts} · ` +
+          `Spawn: ${Number(st.settings.spawnRate).toFixed(2)}× · TikTok: ${st.tiktok.connected ? '@' + st.tiktok.username : 'offline'}`;
+
+        document.getElementById('sliderSpawn').value = String(Math.round(st.settings.spawnRate * 100));
+        document.getElementById('valSpawn').textContent = Number(st.settings.spawnRate).toFixed(2) + '×';
+        autoSimOn = Boolean(st.settings.autoSim);
+        const simBtn = document.getElementById('btnAutoSim');
+        simBtn.textContent = '🤖 Auto Demo Interactions: ' + (autoSimOn ? 'ON' : 'OFF');
+        simBtn.classList.toggle('on', autoSimOn);
+
+        document.getElementById('gameHint').textContent = st.settings.paused
+          ? 'Paused · customers wait where they are.'
+          : 'Running · the queue, tables and drink service are simulated in the browser.';
+
+        renderTikTokStatus(st);
+        if (st.conversations) renderConversations(st.conversations);
+        if (st.reactive) renderReactive(st.reactive);
+
+        if (st.tts) {
+          document.getElementById('ttsLanguage').value = st.settings.ttsLanguage || 'en';
+          const voiceSelect = document.getElementById('ttsVoice');
+          voiceSelect.dataset.setting = st.settings.ttsVoice || '';
+          syncVoiceData(st.tts);
+          renderVoiceProfiles(st.voiceProfiles);
+          renderVoiceOptions();
+          if (st.settings.ttsVoice) voiceSelect.value = st.settings.ttsVoice;
+          renderVoiceDetail();
+          document.getElementById('sliderSpeed').value = String(Math.round((st.settings.ttsSpeed || 1) * 100));
+          document.getElementById('valSpeed').textContent = Number(st.settings.ttsSpeed || 1).toFixed(2) + '×';
+          document.getElementById('sliderVoiceVol').value = String(Math.round((st.settings.ttsVolume ?? 0.9) * 100));
+          document.getElementById('valVoiceVol').textContent = Math.round((st.settings.ttsVolume ?? 0.9) * 100) + '%';
+          const musicVol = Number(st.settings.musicVolume ?? 0.55);
+          if (musicPlayer) musicPlayer.setVolume(musicVol);
+          if (!musicDragging) {
+            document.getElementById('sliderMusicVol').value = String(Math.round(musicVol * 100));
+            document.getElementById('valMusicVol').textContent = Math.round(musicVol * 100) + '%';
+          }
+          ttsEnabled = st.settings.ttsEnabled !== false;
+          const voiceBtn = document.getElementById('btnTtsToggle');
+          voiceBtn.textContent = 'Voice: ' + (ttsEnabled ? 'ON' : 'OFF');
+          voiceBtn.classList.toggle('on', ttsEnabled);
+          if (Date.now() > voiceHintUntil) {
+            document.getElementById('ttsHint').textContent = st.tts.ready
+              ? `Piper ready · ${st.tts.voices.length} local voices (auto-discovered) · ${st.tts.executable || 'python -m piper'}`
+              : `Piper ${st.tts.status}${st.tts.error ? ' · ' + st.tts.error : ''}`;
+          }
+        }
+
+        const vip = st.vipSummary || {};
+        document.getElementById('vipDonations').textContent = Number(vip.sessionDonations || 0).toLocaleString('en-US');
+        document.getElementById('vipCount').textContent = String(vip.vip || 0);
+        document.getElementById('superVipCount').textContent = String(vip.superVip || 0);
+        document.getElementById('diamondCount').textContent = String(vip.diamond || 0);
+        const vipTop = Array.isArray(st.leaderboard) ? st.leaderboard.slice(0, 3) : [];
+        document.getElementById('vipTopList').innerHTML = vipTop.length
+          ? vipTop
+              .map(
+                (s) =>
+                  `<div>${['🥇', '🥈', '🥉'][s.rank - 1] || s.rank} <strong>@${escapeHtml(s.name)}</strong> · ` +
+                  `${Number(s.coins || 0).toLocaleString('en-US')} coins · ${escapeHtml(s.vipName || 'Regular Customer')}</div>`
+              )
+              .join('')
+          : 'No supporters yet.';
+
+        const donationState = st.donation || {};
+        document.getElementById('donCoins').textContent = Number(donationState.totalCoins || 0).toLocaleString('en-US');
+        document.getElementById('donDrinks').textContent = Number(donationState.drinksServed || 0).toLocaleString('en-US');
+        document.getElementById('donGifts').textContent = Number(donationState.giftsReceived || 0).toLocaleString('en-US');
+        const recentGifts = Array.isArray(donationState.recentGifts) ? donationState.recentGifts : [];
+        document.getElementById('recentGiftsBody').innerHTML = recentGifts.length
+          ? recentGifts
+              .map(
+                (gift) =>
+                  `<tr><td><img src="${gift.giftIcon}" alt="" style="width:22px;height:22px;vertical-align:middle;object-fit:contain" /> ${escapeHtml(gift.giftName)}</td>` +
+                  `<td>${escapeHtml(gift.user)}</td><td>${escapeHtml(gift.drinkName)}</td><td>${gift.coins}</td></tr>`
+              )
+              .join('')
+          : '<tr><td colspan="4" class="hint">No gifts yet.</td></tr>';
+
+        const body = document.getElementById('supportersBody');
+        if (!st.leaderboard || st.leaderboard.length === 0) {
+          body.innerHTML = '<tr><td colspan="6" class="hint">No supporters yet.</td></tr>';
+        } else {
+          body.innerHTML = st.leaderboard
+            .map(
+              (s) =>
+                `<tr><td>${s.rank}</td><td>${escapeHtml(s.name)}</td><td>${Number(s.coins || 0).toLocaleString('en-US')}</td><td>$${Number(s.tips).toFixed(2)}</td>` +
+                `<td>${s.drinks}</td><td>${s.lastNote ? escapeHtml(s.lastNote) : '-'}</td></tr>`
+            )
+            .join('');
+        }
+      } catch (err) {
+        document.getElementById('statusBanner').textContent = 'Server not reachable: ' + err.message;
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // ---------------------------------------------------- voice character profiles
+    let voiceProfilesState = null;
+    let profileCardSignature = '';
+
+    const VP_MODE_LABELS = {
+      maleSeller: 'Use Male Seller',
+      femaleSeller: 'Use Female Seller',
+      alternate: 'Alternate Male / Female',
+      random: 'Random enabled seller'
+    };
+
+    function profileCardHtml(id, profile) {
+      const modes = (voiceProfilesState && voiceProfilesState.announcerModes) || [
+        'maleSeller',
+        'femaleSeller',
+        'alternate',
+        'random'
+      ];
+      const modeBlock =
+        id === 'announcer'
+          ? `<div class="vp-setting">
+              <div class="label-line"><span>Voice selection</span></div>
+              <select data-vp-mode>${modes
+                .map((mode) => `<option value="${mode}">${escapeHtml(VP_MODE_LABELS[mode] || mode)}</option>`)
+                .join('')}</select>
+            </div>`
+          : '';
+      return `
+        <div class="vp-card" data-profile="${escapeHtml(id)}">
+          <div class="vp-head">
+            <span class="vp-icon">${escapeHtml(profile.icon || '🎙️')}</span>
+            <strong>${escapeHtml(profile.label || id)}</strong>
+            <button class="btn" data-vp-toggle>Enabled</button>
+          </div>
+          <div class="hint vp-persona">${escapeHtml(profile.personality || '')}</div>
+          <div class="vp-setting">
+            <div class="label-line"><span>Engine</span></div>
+            <select data-vp-engine>
+              <option value="piper">Piper · local ONNX</option>
+              <option value="kokoro">Kokoro · local neural</option>
+            </select>
+          </div>
+          <div class="vp-setting">
+            <div class="label-line"><span>Engine voice</span><span class="vp-meta" data-vp-meta>—</span></div>
+            <select data-vp-voice></select>
+          </div>
+          <div class="vp-setting">
+            <div class="label-line"><span>Language</span></div>
+            <select data-vp-language>
+              <option value="en">English</option>
+              <option value="vi">Vietnamese</option>
+            </select>
+          </div>
+          ${modeBlock}
+          <div class="vp-setting">
+            <div class="label-line"><span>Speed</span><strong data-vp-speed-val>1.00×</strong></div>
+            <input type="range" data-vp-speed min="50" max="200" step="5" value="100" />
+          </div>
+          <div class="vp-setting">
+            <div class="label-line"><span>Volume</span><strong data-vp-volume-val>90%</strong></div>
+            <input type="range" data-vp-volume min="0" max="100" step="5" value="90" />
+          </div>
+          <div class="vp-setting">
+            <div class="vp-pitch"><span>Pitch</span><span>Not supported</span></div>
+            <input type="range" data-vp-pitch min="-50" max="50" step="10" value="0" disabled />
+            <span class="vp-hint">Neither local engine exposes pitch — disabled, never simulated.</span>
+          </div>
+          <div class="vp-test-row">
+            <button class="btn gold" data-vp-test>🔊 Test Voice</button>
+            <span class="vp-hint" data-vp-hint></span>
+          </div>
+        </div>`;
+    }
+
+    function buildProfileCards(snapshot) {
+      const grid = document.getElementById('vpGrid');
+      if (!grid) return;
+      const ids = snapshot.ids || Object.keys(snapshot.profiles);
+      const signature = ids.join(',');
+      if (signature === profileCardSignature) return;
+      profileCardSignature = signature;
+      grid.innerHTML = ids
+        .filter((id) => snapshot.profiles[id])
+        .map((id) => profileCardHtml(id, snapshot.profiles[id]))
+        .join('');
+    }
+
+    function fillProfileVoiceSelect(card, profile) {
+      const select = card.querySelector('[data-vp-voice]');
+      if (!select) return;
+      const engine = profile.engine === 'kokoro' ? 'kokoro' : 'piper';
+      const language = engine === 'kokoro' ? 'en' : profile.language === 'vi' ? 'vi' : 'en';
+      const source = engine === 'kokoro' ? kokoroVoices : ttsVoices;
+      const list = source.filter((voice) => voice.language === language && voice.valid !== false);
+      const configured = engine === 'kokoro' ? profile.kokoroVoice || '' : profile.voice || '';
+      const options = [];
+      if (profile.id === 'announcer') options.push('<option value="">Auto (mode below)</option>');
+      if (profile.missing && configured) {
+        options.push(
+          `<option value="${escapeHtml(configured)}">⚠ ${escapeHtml(configured + ' (missing — fallback)')}</option>`
+        );
+      }
+      for (const voice of list) {
+        options.push(`<option value="${escapeHtml(voice.id)}">${escapeHtml(voiceOptionLabel(voice))}</option>`);
+      }
+      if (!options.length) {
+        options.push(`<option value="">No ${engine === 'kokoro' ? 'Kokoro' : 'Piper'} voice available</option>`);
+      }
+      select.innerHTML = options.join('');
+      const auto = profile.id === 'announcer' && !configured;
+      const wanted = auto ? '' : configured || profile.resolvedVoice || '';
+      select.value = [...select.options].some((option) => option.value === wanted)
+        ? wanted
+        : list[0]
+          ? list[0].id
+          : '';
+    }
+
+    function updateProfileCard(id) {
+      if (!voiceProfilesState) return;
+      const profile = voiceProfilesState.profiles[id];
+      const card = document.querySelector(`.vp-card[data-profile="${id}"]`);
+      if (!profile || !card) return;
+      const active = card.contains(document.activeElement);
+
+      card.classList.toggle('disabled', profile.enabled === false);
+      card.classList.toggle('missing-voice', Boolean(profile.missing));
+      const toggle = card.querySelector('[data-vp-toggle]');
+      if (toggle) {
+        toggle.textContent = profile.enabled === false ? 'Disabled' : 'Enabled';
+        toggle.classList.toggle('on', profile.enabled !== false);
+      }
+
+      if (!active) {
+        const engineSelect = card.querySelector('[data-vp-engine]');
+        if (engineSelect) engineSelect.value = profile.engine === 'kokoro' ? 'kokoro' : 'piper';
+        const language = card.querySelector('[data-vp-language]');
+        if (language) {
+          language.value = profile.engine === 'kokoro' ? 'en' : profile.language === 'vi' ? 'vi' : 'en';
+          language.disabled = profile.engine === 'kokoro';
+        }
+        fillProfileVoiceSelect(card, profile);
+        const mode = card.querySelector('[data-vp-mode]');
+        if (mode) mode.value = profile.mode || 'alternate';
+        const speed = card.querySelector('[data-vp-speed]');
+        if (speed) speed.value = String(Math.round((profile.speed || 1) * 100));
+        const volume = card.querySelector('[data-vp-volume]');
+        if (volume) volume.value = String(Math.round((profile.volume ?? 0.9) * 100));
+      }
+
+      const speedVal = card.querySelector('[data-vp-speed-val]');
+      if (speedVal) speedVal.textContent = Number(profile.speed || 1).toFixed(2) + '×';
+      const volumeVal = card.querySelector('[data-vp-volume-val]');
+      if (volumeVal) volumeVal.textContent = Math.round((profile.volume ?? 0.9) * 100) + '%';
+      const meta = card.querySelector('[data-vp-meta]');
+      if (meta) {
+        const gender =
+          profile.gender === 'female' ? '♀ Female' : profile.gender === 'male' ? '♂ Male' : '—';
+        meta.textContent = `${profile.resolvedEngine === 'kokoro' ? 'Kokoro' : 'Piper'} · ${gender} · ${profile.resolvedVoiceName || profile.resolvedVoice || 'none'}`;
+      }
+      const hint = card.querySelector('[data-vp-hint]');
+      if (hint && !hint.dataset.locked) {
+        if (profile.inheritedFrom) {
+          hint.textContent = `Following ${profile.inheritedFrom === 'femaleSeller' ? 'Female Seller' : 'Male Seller'} · ${profile.resolvedEngine === 'kokoro' ? 'Kokoro' : 'Piper'} / ${profile.resolvedVoice}`;
+        } else {
+          hint.textContent =
+            profile.resolvedEngine === 'kokoro' && !profile.available
+              ? '⚠ Kokoro is offline — this profile will use its saved Piper voice until the worker recovers.'
+              : profile.missing
+                ? `⚠ ${profile.missingVoice} is missing — safe fallback: ${profile.resolvedVoice}`
+                : '';
+        }
+      }
+      const test = card.querySelector('[data-vp-test]');
+      if (test) test.disabled = profile.enabled === false;
+    }
+
+    function lockAnnouncerVoiceControls(snapshot) {
+      const announcer = snapshot.profiles.announcer;
+      const note = document.getElementById('annProfileNote');
+      if (note && announcer) {
+        note.textContent =
+          `Announcer voice comes from profile C · ${VP_MODE_LABELS[announcer.mode] || announcer.mode}` +
+          ((announcer.engine === 'kokoro' ? announcer.kokoroVoice : announcer.voice)
+            ? ` · exact ${announcer.engine === 'kokoro' ? 'Kokoro' : 'Piper'} voice ${
+                announcer.engine === 'kokoro' ? announcer.kokoroVoice : announcer.voice
+              }`
+            : '') +
+          '. Speed, volume and language follow that seller.';
+      }
+      ['annVoiceMode', 'annVoice', 'annSpeed', 'annVol', 'annLanguage'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = true;
+      });
+    }
+
+    function renderVoiceProfiles(snapshot) {
+      if (!snapshot || !snapshot.profiles) return;
+      voiceProfilesState = snapshot;
+      buildProfileCards(snapshot);
+      for (const id of Object.keys(snapshot.profiles)) updateProfileCard(id);
+      lockAnnouncerVoiceControls(snapshot);
+
+      const status = document.getElementById('vpStatus');
+      if (status) {
+        status.textContent =
+          `${Object.keys(snapshot.profiles).length} profiles · saved on the server` +
+          (snapshot.savedAt ? ` · ${new Date(snapshot.savedAt).toLocaleString()}` : '') +
+          ` · announcer: ${VP_MODE_LABELS[snapshot.announcerMode] || snapshot.announcerMode}`;
+      }
+      const note = document.getElementById('vpPitchNote');
+      if (note && snapshot.capabilities) {
+        note.textContent =
+          'Pitch: not supported by either local engine. ' +
+          snapshot.capabilities.pitchReason +
+          ' Speech volume is applied per item, so changing it never alters audio already playing.';
+      }
+    }
+
+    async function applyProfilePatch(id, patch) {
+      const data = await sendRpc('voice.updateProfile', { profile: id, patch });
+      const result = data && data.result;
+      if (result && result.voiceProfiles) renderVoiceProfiles(result.voiceProfiles);
+      return data;
+    }
+
+    async function testVoiceProfile(id, textOverride) {
+      if (!voiceProfilesState) return;
+      const card = document.querySelector(`.vp-card[data-profile="${id}"]`);
+      const hint = card && card.querySelector('[data-vp-hint]');
+      const preview = document.getElementById('vpPreviewText');
+      const text =
+        String(textOverride || (preview && preview.value) || '').trim() ||
+        'Welcome to Sunny Side Sips!';
+      if (hint) {
+        hint.dataset.locked = '1';
+        hint.textContent = `Synthesizing through ${voiceProfilesState.profiles[id].resolvedEngine === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
+      }
+      const data = await sendRpc('voice.test', { profile: id, text, broadcast: false });
+      const result = data && data.result;
+      if (result && result.ok && result.url) {
+        const player = document.getElementById('vpAudio');
+        if (player) {
+          player.src = result.url;
+          player.play().catch(() => {});
+        }
+        if (hint) {
+          hint.textContent =
+            `${result.profileLabel || id} · ${result.engine === 'kokoro' ? 'Kokoro' : 'Piper'} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ` +
+            `${Math.round((result.volume ?? 0.9) * 100)}%` +
+            (result.fallback ? ` · ⚠ ${result.fallbackError} → Piper fallback` : '') +
+            (result.missingVoice ? ` · ⚠ ${result.missingVoice} missing → fallback` : '');
+        }
+      } else if (hint) {
+        hint.textContent =
+          'Voice failed: ' +
+          ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+      }
+      setTimeout(() => {
+        if (hint) delete hint.dataset.locked;
+      }, 7000);
+    }
+
+    (function wireVoiceProfiles() {
+      const grid = document.getElementById('vpGrid');
+      if (!grid) return;
+      grid.addEventListener('input', (event) => {
+        const card = event.target.closest('.vp-card');
+        if (!card) return;
+        if (event.target.matches('[data-vp-speed]')) {
+          const label = card.querySelector('[data-vp-speed-val]');
+          if (label) label.textContent = (Number(event.target.value) / 100).toFixed(2) + '×';
+        }
+        if (event.target.matches('[data-vp-volume]')) {
+          const label = card.querySelector('[data-vp-volume-val]');
+          if (label) label.textContent = event.target.value + '%';
+        }
+      });
+      grid.addEventListener('change', (event) => {
+        const card = event.target.closest('.vp-card');
+        if (!card) return;
+        const id = card.dataset.profile;
+        if (event.target.matches('[data-vp-speed]')) {
+          applyProfilePatch(id, { speed: Number(event.target.value) / 100 });
+        } else if (event.target.matches('[data-vp-volume]')) {
+          applyProfilePatch(id, { volume: Number(event.target.value) / 100 });
+        } else if (event.target.matches('[data-vp-language]')) {
+          if ((voiceProfilesState.profiles[id] || {}).engine === 'kokoro') return;
+          const language = event.target.value === 'vi' ? 'vi' : 'en';
+          const first = ttsVoices.find((voice) => voice.language === language && voice.valid !== false);
+          applyProfilePatch(id, { language, voice: first ? first.id : '' });
+        } else if (event.target.matches('[data-vp-engine]')) {
+          const engine = event.target.value === 'kokoro' ? 'kokoro' : 'piper';
+          event.target.blur();
+          applyProfilePatch(id, { engine, language: engine === 'kokoro' ? 'en' : undefined });
+        } else if (event.target.matches('[data-vp-voice]')) {
+          const engine = (voiceProfilesState.profiles[id] || {}).engine;
+          applyProfilePatch(id, engine === 'kokoro'
+            ? { kokoroVoice: event.target.value }
+            : { voice: event.target.value });
+        } else if (event.target.matches('[data-vp-mode]')) {
+          applyProfilePatch(id, { mode: event.target.value });
+        }
+      });
+      grid.addEventListener('click', (event) => {
+        const card = event.target.closest('.vp-card');
+        if (!card || !voiceProfilesState) return;
+        const id = card.dataset.profile;
+        if (event.target.closest('[data-vp-toggle]')) {
+          const profile = voiceProfilesState.profiles[id];
+          applyProfilePatch(id, { enabled: profile.enabled === false });
+        } else if (event.target.closest('[data-vp-test]')) {
+          testVoiceProfile(id);
+        }
+      });
+
+      const refresh = document.getElementById('btnVoiceProfilesRefresh');
+      if (refresh) {
+        refresh.onclick = async () => {
+          const status = document.getElementById('vpStatus');
+          if (status) status.textContent = 'Refreshing the selected TTS engine…';
+          const engineStatus = await sendRpc('tts.refreshEngine', { engine: activeTtsEngine() });
+          if (engineStatus && engineStatus.result) {
+            lastVoiceSignature = '';
+            lastKokoroSignature = '';
+            syncVoiceData(engineStatus.result);
+          }
+          const data = await sendRpc('voice.getProfiles');
+          const snapshot = data && data.result;
+          if (snapshot && snapshot.profiles) renderVoiceProfiles(snapshot);
+          if (status) status.textContent = 'Engine voices refreshed · profile selectors updated.';
+        };
+      }
+      const reset = document.getElementById('btnVoiceProfilesReset');
+      if (reset) {
+        reset.onclick = async () => {
+          if (!confirm('Restore all four voice profiles to their default voices and levels?')) return;
+          const data = await sendRpc('voice.resetProfiles');
+          const result = data && data.result;
+          if (result && result.voiceProfiles) renderVoiceProfiles(result.voiceProfiles);
+        };
+      }
+    })();
+
+    // ------------------------------------------------- seller conversations
+    let conversationState = null;
+    let convListSignature = '';
+    let convCategorySignature = '';
+    let convHistorySignature = '';
+    let convTestToken = 0;
+
+    const CONV_SPEAKER_LABELS = { maleSeller: '🧑‍🍳 Male Seller', femaleSeller: '👩‍🍳 Female Seller' };
+
+    function convCategory(id) {
+      const list = (conversationState && conversationState.categories) || [];
+      return list.find((category) => category.id === id) || { id, label: id, icon: '💬' };
+    }
+
+    function convCategoryLabel(id) {
+      const category = convCategory(id);
+      return `${category.icon || '💬'} ${category.label || id}`;
+    }
+
+    function convSpeakerLabel(id) {
+      return CONV_SPEAKER_LABELS[id] || '—';
+    }
+
+    function renderConvStatus() {
+      if (!conversationState) return;
+      const settings = conversationState.settings || {};
+      const runtime = conversationState.runtime || {};
+      const stateEl = document.getElementById('convState');
+      const nowEl = document.getElementById('convNow');
+      const nextEl = document.getElementById('convNext');
+      const countEl = document.getElementById('convCount');
+      if (countEl) {
+        countEl.textContent = `${conversationState.enabledTotal}/${conversationState.total} exchanges enabled · ${conversationState.defaultTotal} defaults`;
+      }
+      if (stateEl) {
+        stateEl.textContent = settings.enabled === false
+          ? 'DISABLED'
+          : settings.running === false
+            ? 'STOPPED'
+            : runtime.status === 'speaking'
+              ? 'SPEAKING'
+              : runtime.status === 'paused'
+                ? 'SHOP PAUSED'
+                : 'SCHEDULED';
+      }
+      if (nowEl) {
+        nowEl.textContent = runtime.currentSpeaker
+          ? convSpeakerLabel(runtime.currentSpeaker)
+          : runtime.phase === 'waiting'
+            ? 'pause between lines'
+            : '—';
+      }
+      if (nextEl) {
+        let text = '—';
+        if (settings.enabled === false) text = 'disabled';
+        else if (settings.running === false) text = 'stopped';
+        else if (runtime.status === 'paused') text = 'shop paused';
+        else if (runtime.status === 'speaking') text = 'speaking now';
+        else if (runtime.nextAt > 0) {
+          const seconds = Math.max(0, Math.ceil((runtime.nextAt - Date.now()) / 1000));
+          text = `in ${seconds}s`;
+        } else if (!runtime.updatedAt) {
+          text = 'waiting for stage';
+        }
+        nextEl.textContent = text;
+      }
+    }
+
+    function renderConvCategories() {
+      const grid = document.getElementById('convCategories');
+      if (!grid || !conversationState) return;
+      const categories = conversationState.categories || [];
+      const settings = conversationState.settings || {};
+      const signature = JSON.stringify(categories.map((category) => [category.id, category.count])) + JSON.stringify(settings.categories || {});
+      if (signature === convCategorySignature) return;
+      convCategorySignature = signature;
+      grid.innerHTML = categories
+        .map(
+          (category) =>
+            `<label class="conv-cat"><input type="checkbox" data-conv-cat="${escapeHtml(category.id)}" ${
+              settings.categories && settings.categories[category.id] !== false ? 'checked' : ''
+            } /> <span>${escapeHtml(category.icon || '💬')} ${escapeHtml(category.label)}</span><span class="hint">${Number(category.count) || 0}</span></label>`
+        )
+        .join('');
+
+      const filter = document.getElementById('convFilter');
+      if (filter) {
+        const value = filter.value;
+        filter.innerHTML =
+          '<option value="">All categories</option>' +
+          categories
+            .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)} (${Number(category.count) || 0})</option>`)
+            .join('');
+        filter.value = [...filter.options].some((option) => option.value === value) ? value : '';
+      }
+      const add = document.getElementById('convAddCategory');
+      if (add) {
+        const value = add.value || 'daily';
+        add.innerHTML = categories
+          .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)}</option>`)
+          .join('');
+        add.value = [...add.options].some((option) => option.value === value) ? value : 'daily';
+      }
+    }
+
+    function renderConvList(force = false) {
+      const list = document.getElementById('convList');
+      if (!list || !conversationState) return;
+      if (document.querySelector('#convList .conv-row.editing') && !force) return;
+      const search = String((document.getElementById('convSearch') || {}).value || '').trim().toLowerCase();
+      const filter = String((document.getElementById('convFilter') || {}).value || '');
+      const entries = conversationState.list || [];
+      const signature = JSON.stringify(entries.map((entry) => [entry.id, entry.enabled, entry.male, entry.female, entry.followUp, entry.category, entry.contexts]));
+      if (!force && signature === convListSignature && !search && !filter) return;
+      convListSignature = signature;
+
+      const visible = entries.filter((entry) => {
+        if (filter && entry.category !== filter) return false;
+        if (!search) return true;
+        return [entry.id, entry.category, entry.male, entry.female, entry.followUp, (entry.contexts || []).join(' ')]
+          .join(' ')
+          .toLowerCase()
+          .includes(search);
+      });
+      if (!visible.length) {
+        list.innerHTML = '<div class="hint" style="padding:10px">No conversations match that search or category.</div>';
+        return;
+      }
+      const categories = conversationState.categories || [];
+      const categoryOptions = categories
+        .map((category) => `<option value="${escapeHtml(category.id)}">${escapeHtml(category.label)}</option>`)
+        .join('');
+      list.innerHTML = visible
+        .map((entry) => {
+          const contexts = Array.isArray(entry.contexts) ? entry.contexts.join(', ') : 'any';
+          return `
+          <div class="conv-row${entry.enabled === false ? ' disabled' : ''}" data-conv-id="${escapeHtml(entry.id)}">
+            <div class="conv-body">
+              <div class="conv-row-head">
+                <label class="hint"><input type="checkbox" data-conv-enable ${entry.enabled === false ? '' : 'checked'} /> enabled</label>
+                <span class="ann-cat">${escapeHtml(convCategoryLabel(entry.category))}</span>
+                <span class="conv-id">${escapeHtml(entry.id)}${entry.custom ? ' · custom' : entry.edited ? ' · edited' : ''}</span>
+                <span class="conv-actions">
+                  <button class="btn" data-conv-edit>✏️ Edit</button>
+                  <button class="btn danger" data-conv-delete>🗑</button>
+                </span>
+              </div>
+              <div class="conv-line"><strong>🧑‍🍳 M</strong> ${escapeHtml(entry.male)}</div>
+              <div class="conv-line"><strong>👩‍🍳 F</strong> ${escapeHtml(entry.female)}</div>
+              ${entry.followUp ? `<div class="conv-line follow"><strong>🧑‍🍳 M</strong> ${escapeHtml(entry.followUp)}</div>` : ''}
+              <div class="hint">Context: ${escapeHtml(contexts)}</div>
+            </div>
+            <div class="conv-editor">
+              <select data-conv-category>${categoryOptions}</select>
+              <textarea data-conv-male>${escapeHtml(entry.male)}</textarea>
+              <textarea data-conv-female>${escapeHtml(entry.female)}</textarea>
+              <textarea data-conv-follow placeholder="Optional follow-up line">${escapeHtml(entry.followUp || '')}</textarea>
+              <input type="text" data-conv-contexts value="${escapeHtml(contexts)}" placeholder="any, quiet, busy…" />
+              <div class="row">
+                <button class="btn gold" data-conv-save>💾 Save</button>
+                <button class="btn" data-conv-cancel>Cancel</button>
+              </div>
+            </div>
+          </div>`;
+        })
+        .join('');
+      for (const row of list.querySelectorAll('.conv-row')) {
+        const entry = entries.find((item) => item.id === row.dataset.convId);
+        const select = row.querySelector('[data-conv-category]');
+        if (entry && select) select.value = entry.category;
+      }
+      const count = document.getElementById('convManagerCount');
+      if (count) count.textContent = `${visible.length} shown · ${entries.length} total`;
+    }
+
+    function renderConvHistory() {
+      const box = document.getElementById('convHistory');
+      if (!box || !conversationState) return;
+      const history = conversationState.history || [];
+      const signature = JSON.stringify(history.map((entry) => [entry.runId, entry.status, entry.endedAt]));
+      if (signature === convHistorySignature) return;
+      convHistorySignature = signature;
+      if (!history.length) {
+        box.innerHTML = '<div class="hint">No conversations recorded yet.</div>';
+        return;
+      }
+      box.innerHTML = history
+        .slice(0, 12)
+        .map((entry) => {
+          const first = entry.lines && entry.lines[0] ? entry.lines[0].text : '';
+          const when = entry.startedAt ? new Date(entry.startedAt).toLocaleTimeString() : '';
+          return `<div class="conv-hist-row">
+            <strong>${escapeHtml(convCategoryLabel(entry.category))}</strong>
+            <span class="hint">${escapeHtml(String(first).slice(0, 90))}</span>
+            <span class="conv-hist-status ${escapeHtml(entry.status || '')}">${escapeHtml(entry.status || 'started')}</span>
+            <span class="hint">${escapeHtml(when)} · ${Array.isArray(entry.lines) ? entry.lines.length : 0} lines</span>
+          </div>`;
+        })
+        .join('');
+    }
+
+    function renderConversations(snapshot, force = false) {
+      if (!snapshot || !snapshot.settings) return;
+      conversationState = snapshot;
+      const settings = snapshot.settings;
+      const toggle = document.getElementById('btnConvToggle');
+      if (toggle) {
+        toggle.textContent = `Conversations: ${settings.enabled === false ? 'OFF' : 'ON'}`;
+        toggle.classList.toggle('on', settings.enabled !== false);
+      }
+      const startStop = document.getElementById('btnConvStartStop');
+      if (startStop) startStop.textContent = settings.running === false ? '▶ Start' : '⏸ Stop';
+      const shuffle = document.getElementById('btnConvShuffle');
+      if (shuffle) {
+        shuffle.textContent = `🔀 Shuffle: ${settings.shuffle === false ? 'OFF' : 'ON'}`;
+        shuffle.classList.toggle('on', settings.shuffle !== false);
+      }
+      const interval = document.getElementById('convInterval');
+      if (interval) {
+        const values = snapshot.intervals || [20, 30, 45, 60, 90];
+        if (interval.options.length !== values.length) {
+          interval.innerHTML = values.map((value) => `<option value="${value}">${value} seconds</option>`).join('');
+        }
+        interval.value = String(settings.interval || 30);
+      }
+      renderConvCategories();
+      renderConvList(force);
+      renderConvHistory();
+      renderConvStatus();
+    }
+
+    async function applyConvSettings(patch) {
+      const hint = document.getElementById('convHint');
+      const data = await sendRpc('conversation.updateSettings', patch);
+      const result = data && data.result;
+      if (result && result.conversations) renderConversations(result.conversations, true);
+      if (hint) {
+        hint.textContent = result && result.ok
+          ? 'Conversation settings saved on the server.'
+          : 'Could not save conversation settings: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+      }
+    }
+
+    function playConvClip(result) {
+      return new Promise((resolve) => {
+        const player = document.getElementById('convAudio');
+        if (!player || !result || !result.url) return resolve();
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          player.onended = null;
+          player.onerror = null;
+          resolve();
+        };
+        const timer = setTimeout(finish, 15000);
+        player.onended = finish;
+        player.onerror = finish;
+        player.src = result.url;
+        player.volume = Number.isFinite(Number(result.volume)) ? Math.max(0, Math.min(1, Number(result.volume))) : 0.9;
+        try {
+          const play = player.play();
+          if (play && typeof play.catch === 'function') play.catch(finish);
+        } catch (_) {
+          finish();
+        }
+      });
+    }
+
+    function firstConversationForTest() {
+      if (!conversationState) return null;
+      const categories = conversationState.settings.categories || {};
+      const usable = (conversationState.list || []).filter(
+        (entry) => entry.enabled !== false && categories[entry.category] !== false
+      );
+      return usable.find((entry) => entry.category === 'daily') || usable[0] || null;
+    }
+
+    async function playConversationPreview(profile, text, label) {
+      const hint = document.getElementById('convPreviewHint');
+      const token = ++convTestToken;
+      if (hint) hint.textContent = `Synthesizing ${label} through Piper…`;
+      const data = await sendRpc('voice.test', { profile, text, broadcast: false });
+      const result = data && data.result;
+      if (token !== convTestToken) return;
+      if (!result || !result.ok || !result.url) {
+        if (hint) hint.textContent = 'Voice failed: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+        return;
+      }
+      if (hint) {
+        hint.textContent = `${label} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ${Math.round((result.volume ?? 0.9) * 100)}%`;
+      }
+      await playConvClip(result);
+    }
+
+    async function testConversation() {
+      const entry = firstConversationForTest();
+      if (!entry) {
+        document.getElementById('convHint').textContent = 'No enabled conversation is available to test.';
+        return;
+      }
+      const token = ++convTestToken;
+      const clips = [{ profile: 'maleSeller', text: entry.male }];
+      clips.push({ profile: 'femaleSeller', text: entry.female });
+      if (entry.followUp) clips.push({ profile: 'maleSeller', text: entry.followUp });
+      document.getElementById('convHint').textContent = `Testing "${entry.id}" with both seller profiles…`;
+      for (const clip of clips) {
+        if (token !== convTestToken) return;
+        const data = await sendRpc('voice.test', { profile: clip.profile, text: clip.text, broadcast: false });
+        const result = data && data.result;
+        if (token !== convTestToken) return;
+        if (!result || !result.ok || !result.url) {
+          document.getElementById('convHint').textContent =
+            'Conversation test failed: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+          return;
+        }
+        document.getElementById('convPreviewHint').textContent =
+          `${convSpeakerLabel(clip.profile)} · ${result.voice} · ${Number(result.speed).toFixed(2)}× · ${Math.round((result.volume ?? 0.9) * 100)}%`;
+        await playConvClip(result);
+        if (token !== convTestToken) return;
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
+      document.getElementById('convHint').textContent = `Conversation test complete · "${entry.id}" used Male Seller then Female Seller.`;
+    }
+
+    (function wireConversations() {
+      document.getElementById('btnConvToggle')?.addEventListener('click', () => {
+        applyConvSettings({ enabled: !(conversationState && conversationState.settings.enabled !== false) });
+      });
+      document.getElementById('btnConvStartStop')?.addEventListener('click', () => {
+        const running = Boolean(conversationState && conversationState.settings.running !== false);
+        applyConvSettings({ running: !running });
+      });
+      document.getElementById('convInterval')?.addEventListener('change', (event) => {
+        applyConvSettings({ interval: Number(event.target.value) });
+      });
+      document.getElementById('btnConvShuffle')?.addEventListener('click', () => {
+        applyConvSettings({ shuffle: !(conversationState && conversationState.settings.shuffle !== false) });
+      });
+      document.getElementById('btnConvTest')?.addEventListener('click', testConversation);
+      document.getElementById('btnConvPreviewMale')?.addEventListener('click', () => {
+        const entry = firstConversationForTest();
+        playConversationPreview('maleSeller', entry ? entry.male : 'Welcome to Sunny Side Sips!', 'Male Seller');
+      });
+      document.getElementById('btnConvPreviewFemale')?.addEventListener('click', () => {
+        const entry = firstConversationForTest();
+        playConversationPreview('femaleSeller', entry ? entry.female : 'Welcome to Sunny Side Sips!', 'Female Seller');
+      });
+      document.getElementById('btnConvRestore')?.addEventListener('click', async () => {
+        if (!confirm('Restore all default conversations? Custom conversations and edits will be removed.')) return;
+        const data = await sendRpc('conversation.restoreDefaults');
+        const result = data && data.result;
+        if (result && result.conversations) renderConversations(result.conversations, true);
+      });
+      document.getElementById('btnConvClearHistory')?.addEventListener('click', async () => {
+        if (!confirm('Clear the conversation history?')) return;
+        const data = await sendRpc('conversation.clearHistory');
+        const result = data && data.result;
+        if (result && result.conversations) renderConversations(result.conversations, true);
+      });
+      document.getElementById('btnConvAdd')?.addEventListener('click', async () => {
+        const male = document.getElementById('convAddMale').value.trim();
+        const female = document.getElementById('convAddFemale').value.trim();
+        const hint = document.getElementById('convAddHint');
+        if (!male || !female) {
+          if (hint) hint.textContent = 'Both seller lines are required.';
+          return;
+        }
+        const contexts = document.getElementById('convAddContexts').value
+          .split(',')
+          .map((value) => value.trim())
+          .filter(Boolean);
+        const data = await sendRpc('conversation.addExchange', {
+          category: document.getElementById('convAddCategory').value,
+          male,
+          female,
+          followUp: document.getElementById('convAddFollow').value.trim(),
+          contexts
+        });
+        const result = data && data.result;
+        if (result && result.ok) {
+          document.getElementById('convAddMale').value = '';
+          document.getElementById('convAddFemale').value = '';
+          document.getElementById('convAddFollow').value = '';
+          document.getElementById('convAddContexts').value = '';
+          if (hint) hint.textContent = `Added ${result.id} · saved on the server.`;
+          renderConversations(result.conversations, true);
+        } else if (hint) {
+          hint.textContent = 'Could not add: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+        }
+      });
+      document.getElementById('convSearch')?.addEventListener('input', () => renderConvList(true));
+      document.getElementById('convFilter')?.addEventListener('change', () => renderConvList(true));
+      document.getElementById('convCategories')?.addEventListener('change', (event) => {
+        const id = event.target && event.target.dataset ? event.target.dataset.convCat : '';
+        if (!id) return;
+        applyConvSettings({ categories: { [id]: Boolean(event.target.checked) } });
+      });
+      document.getElementById('convList')?.addEventListener('click', async (event) => {
+        const row = event.target.closest('.conv-row');
+        if (!row) return;
+        const id = row.dataset.convId;
+        const entry = conversationState && conversationState.list.find((item) => item.id === id);
+        if (event.target.closest('[data-conv-edit]')) {
+          row.classList.add('editing');
+          return;
+        }
+        if (event.target.closest('[data-conv-cancel]')) {
+          row.classList.remove('editing');
+          return;
+        }
+        if (event.target.closest('[data-conv-delete]')) {
+          if (!confirm(`Delete conversation ${id}?`)) return;
+          const data = await sendRpc('conversation.deleteExchange', { id });
+          const result = data && data.result;
+          if (result && result.conversations) renderConversations(result.conversations, true);
+          return;
+        }
+        if (event.target.closest('[data-conv-save]')) {
+          const male = row.querySelector('[data-conv-male]').value.trim();
+          const female = row.querySelector('[data-conv-female]').value.trim();
+          if (!male || !female) {
+            alert('Both seller lines are required.');
+            return;
+          }
+          const contexts = row.querySelector('[data-conv-contexts]').value
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
+          const data = await sendRpc('conversation.updateExchange', {
+            id,
+            patch: {
+              male,
+              female,
+              followUp: row.querySelector('[data-conv-follow]').value.trim(),
+              category: row.querySelector('[data-conv-category]').value,
+              contexts
+            }
+          });
+          const result = data && data.result;
+          if (result && result.conversations) {
+            row.classList.remove('editing');
+            renderConversations(result.conversations, true);
+          } else {
+            alert('Could not save: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error'));
+          }
+        }
+      });
+      document.getElementById('convList')?.addEventListener('change', async (event) => {
+        if (!event.target.matches('[data-conv-enable]')) return;
+        const row = event.target.closest('.conv-row');
+        if (!row) return;
+        const data = await sendRpc('conversation.updateExchange', {
+          id: row.dataset.convId,
+          patch: { enabled: Boolean(event.target.checked) }
+        });
+        const result = data && data.result;
+        if (result && result.conversations) renderConversations(result.conversations, true);
+      });
+      setInterval(renderConvStatus, 1000);
+    })();
+
+    // ------------------------------------------------ live reactive seller
+    let reactiveState = null;
+
+    const REACTIVE_STATUS_LABELS = {
+      ready: 'PROVIDER READY',
+      disabled: 'LLM DISABLED',
+      missing_key: 'API KEY MISSING',
+      not_configured: 'PROVIDER URL MISSING',
+      error: 'PROVIDER ERROR'
+    };
+
+    function reactiveSetValue(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const active = document.activeElement;
+      if (active && active.closest('#reactiveSection') && active !== el && ['INPUT', 'SELECT', 'TEXTAREA'].includes(active.tagName)) return;
+      if (document.activeElement === el) return;
+      if (el.type === 'checkbox') el.checked = Boolean(value);
+      else el.value = value == null ? '' : String(value);
+    }
+
+    function renderReactive(snapshot) {
+      if (!snapshot || !snapshot.settings) return;
+      reactiveState = snapshot;
+      const settings = snapshot.settings;
+      const stats = snapshot.stats || {};
+      const provider = snapshot.provider || {};
+      renderLlmManager(snapshot.llm);
+      const toggle = document.getElementById('btnReactiveToggle');
+      if (toggle) {
+        toggle.textContent = `AI Responses: ${settings.enabled === false ? 'OFF' : 'ON'}`;
+        toggle.classList.toggle('on', settings.enabled !== false);
+      }
+      const understanding = document.getElementById('btnReactiveUnderstanding');
+      if (understanding) {
+        understanding.textContent = `Comment understanding: ${settings.understanding === false ? 'OFF' : 'ON'}`;
+        understanding.classList.toggle('on', settings.understanding !== false);
+      }
+      const orders = document.getElementById('btnReactiveOrders');
+      if (orders) {
+        orders.textContent = `Chat orders: ${settings.chatOrders === false ? 'OFF' : 'ON'}`;
+        orders.classList.toggle('on', settings.chatOrders !== false);
+      }
+      const llm = document.getElementById('btnReactiveLlm');
+      if (llm) {
+        llm.textContent = `LLM provider: ${settings.llmEnabled ? 'ON' : 'OFF'}`;
+        llm.classList.toggle('on', Boolean(settings.llmEnabled));
+      }
+      const providerEl = document.getElementById('reactiveProviderState');
+      if (providerEl) {
+        const status = provider.status || 'disabled';
+        providerEl.textContent = `${REACTIVE_STATUS_LABELS[status] || status.toUpperCase()}${provider.model ? ' · ' + provider.model : ''}`;
+        providerEl.style.background = status === 'ready' ? '#dff3e3' : status === 'disabled' ? '' : '#ffe0dd';
+      }
+      reactiveSetValue('reactiveLanguage', settings.language || 'en');
+      reactiveSetValue('reactiveDefaultSeller', settings.defaultSeller || 'alternate');
+      reactiveSetValue('reactiveViewerCooldown', settings.perViewerCooldown);
+      reactiveSetValue('reactiveGlobalCooldown', settings.globalCooldown);
+      reactiveSetValue('reactiveMaxLength', settings.maxResponseLength);
+      reactiveSetValue('reactiveConfidence', settings.confidenceThreshold);
+      reactiveSetValue('reactiveMaxPending', settings.maxPending);
+      reactiveSetValue('reactiveDedupe', settings.dedupeSeconds);
+      const activeProvider = document.getElementById('reactiveActiveProvider');
+      if (activeProvider) {
+        activeProvider.textContent = provider.name
+          ? `${provider.name} · ${provider.model || 'no model'} · ${provider.endpoint || provider.baseUrl || 'not configured'}`
+          : 'No LLM provider configured. Open LLM Provider Manager below.';
+      }
+      for (const [id, key] of [
+        ['rsReceived', 'received'],
+        ['rsUnderstood', 'understood'],
+        ['rsGenerated', 'generated'],
+        ['rsSpoken', 'spoken'],
+        ['rsIgnored', 'ignored'],
+        ['rsOrders', 'orders'],
+        ['rsFallback', 'fallbacks']
+      ]) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(Number(stats[key] || 0).toLocaleString('en-US'));
+      }
+      const providerNote = document.getElementById('reactiveProviderNote');
+      if (providerNote) {
+        const bits = [provider.name || provider.provider || 'no provider'];
+        if (provider.endpoint) bits.push(provider.endpoint);
+        else if (provider.baseUrl) bits.push(provider.baseUrl);
+        if (provider.keyConfigured) bits.push('key detected');
+        else bits.push('no API key');
+        if (provider.lastStatus) bits.push(`HTTP ${provider.lastStatus}`);
+        if (provider.lastError) bits.push(`Error: ${provider.lastError}`);
+        providerNote.textContent = bits.join(' · ');
+      }
+      const last = snapshot.lastResponse;
+      const lastEl = document.getElementById('reactiveLast');
+      if (lastEl) {
+        lastEl.innerHTML = last
+          ? `<div><strong>@${escapeHtml(last.user)}</strong> <span class="ann-cat">${escapeHtml(last.intent || '')}</span></div>
+             <div class="hint">“${escapeHtml(last.comment || '')}”</div>
+             <div>${escapeHtml(last.response || '')}</div>
+             <div class="hint">${escapeHtml(last.seller || '')} · ${escapeHtml(last.source || '')}${last.orderCreated ? ' · order created' : ''}${last.spoken ? ' · spoken' : ''}</div>`
+          : '<div class="hint">No reactive response yet.</div>';
+      }
+      const queueEl = document.getElementById('reactiveQueue');
+      const queueCount = document.getElementById('reactiveQueueCount');
+      const queue = Array.isArray(snapshot.queue) ? snapshot.queue : [];
+      if (queueCount) queueCount.textContent = `${queue.length} pending${snapshot.processing ? ' · 1 processing' : ''}`;
+      if (queueEl) {
+        const rows = [];
+        if (snapshot.processing) {
+          rows.push(`<div class="reactive-queue-row">⚙️ ${escapeHtml(snapshot.processing.user)}: ${escapeHtml(snapshot.processing.comment)} <span class="hint">${escapeHtml(snapshot.processing.intent)}</span></div>`);
+        }
+        for (const job of queue) {
+          rows.push(`<div class="reactive-queue-row">${Number(job.priority) || 0} · ${escapeHtml(job.user)}: ${escapeHtml(String(job.comment || '').slice(0, 70))} <span class="hint">${escapeHtml(job.intent || '')} · ${Math.round((job.ageMs || 0) / 1000)}s</span></div>`);
+        }
+        queueEl.innerHTML = rows.length ? rows.join('') : '<div class="hint">Queue is empty.</div>';
+      }
+    }
+
+    async function applyReactiveSettings(patch) {
+      const hint = document.getElementById('reactiveHint');
+      const data = await sendRpc('reactive.updateSettings', patch);
+      const result = data && data.result;
+      if (result && result.reactive) renderReactive(result.reactive);
+      if (hint) {
+        hint.textContent = result && result.ok
+          ? 'Reactive seller settings saved on the server.'
+          : 'Could not save reactive settings: ' + ((result && result.error) || (data && data.error && data.error.message) || 'unknown error');
+      }
+    }
+
+    function reactiveFormValues() {
+      return {
+        language: document.getElementById('reactiveLanguage').value,
+        defaultSeller: document.getElementById('reactiveDefaultSeller').value,
+        perViewerCooldown: Number(document.getElementById('reactiveViewerCooldown').value),
+        globalCooldown: Number(document.getElementById('reactiveGlobalCooldown').value),
+        maxResponseLength: Number(document.getElementById('reactiveMaxLength').value),
+        confidenceThreshold: Number(document.getElementById('reactiveConfidence').value),
+        maxPending: Number(document.getElementById('reactiveMaxPending').value),
+        dedupeSeconds: Number(document.getElementById('reactiveDedupe').value)
+      };
+    }
+
+    async function testReactiveProviderConnection() {
+      const button = document.getElementById('btnReactiveTestProvider');
+      const output = document.getElementById('reactiveProviderResult');
+      const hint = document.getElementById('reactiveHint');
+      const activeId = (llmUIState && llmUIState.activeProviderId) || (reactiveState && reactiveState.provider && reactiveState.provider.id);
+      if (!activeId) {
+        if (output) output.textContent = JSON.stringify({ ok: false, notTested: true, error: 'No provider configured.' }, null, 2);
+        if (hint) hint.textContent = 'Add a provider in LLM Provider Manager first.';
+        return;
+      }
+      if (button) button.disabled = true;
+      if (output) output.textContent = 'Sending a real structured request to the active provider…';
+      if (hint) hint.textContent = 'Testing the saved server-side provider configuration…';
+      const data = await sendRpc('llm.test', { id: activeId });
+      if (button) button.disabled = false;
+      const result = data && data.result;
+      if (!result) {
+        const error = data && data.error ? data.error : { error: 'No response' };
+        if (output) output.textContent = JSON.stringify(error, null, 2);
+        if (hint) hint.textContent = 'Provider connection test failed.';
+        return;
+      }
+      if (output) {
+        output.textContent = JSON.stringify(
+          {
+            ok: result.ok,
+            notTested: result.notTested,
+            message: result.message,
+            error: result.error,
+            httpStatus: result.httpStatus,
+            latencyMs: result.latencyMs,
+            model: result.model,
+            endpoint: result.endpoint,
+            sample: result.sample
+          },
+          null,
+          2
+        );
+      }
+      if (hint) {
+        hint.textContent = result.ok
+          ? 'Provider connection verified with a real structured request.'
+          : result.notTested
+            ? 'Provider not tested: ' + (result.error || 'missing configuration') + '.'
+            : 'Provider connection failed: ' + (result.error || 'unknown error') + '.';
+      }
+      if (result.llm) renderLlmManager(result.llm);
+      if (result.reactive) renderReactive(result.reactive);
+    }
+
+    async function testReactiveComment() {
+      const button = document.getElementById('btnReactiveTest');
+      const output = document.getElementById('reactiveTestResult');
+      const hint = document.getElementById('reactiveHint');
+      const user = document.getElementById('reactiveTestUser').value.trim() || 'Admin Test Viewer';
+      const comment = document.getElementById('reactiveTestComment').value.trim();
+      if (!comment) {
+        if (hint) hint.textContent = 'Type a sample comment first.';
+        return;
+      }
+      if (button) button.disabled = true;
+      if (output) output.textContent = 'Running comment classification, provider/fallback, validation and order pipeline…';
+      const data = await sendRpc('reactive.test', { user, comment });
+      if (button) button.disabled = false;
+      const result = data && data.result;
+      if (!result) {
+        if (output) output.textContent = JSON.stringify(data && data.error ? data.error : { error: 'No response' }, null, 2);
+        return;
+      }
+      if (output) {
+        output.textContent = JSON.stringify(
+          {
+            ok: result.ok,
+            ignored: result.ignored,
+            reason: result.reason,
+            intent: result.analysis && result.analysis.intent,
+            confidence: result.analysis && result.analysis.confidence,
+            source: result.source,
+            seller: result.seller,
+            response: result.response,
+            order: result.order,
+            fallbackReason: result.fallbackReason,
+            replyId: result.replyId
+          },
+          null,
+          2
+        );
+      }
+      if (hint) hint.textContent = result.ok ? 'Test reply sent to the live stage through the existing Piper queue.' : 'Test did not produce a response: ' + (result.reason || 'ignored') + '.';
+      if (result.reactive) renderReactive(result.reactive);
+    }
+
+    (function wireReactive() {
+      document.getElementById('btnReactiveToggle')?.addEventListener('click', () => {
+        applyReactiveSettings({ enabled: !(reactiveState && reactiveState.settings.enabled !== false) });
+      });
+      document.getElementById('btnReactiveUnderstanding')?.addEventListener('click', () => {
+        applyReactiveSettings({ understanding: !(reactiveState && reactiveState.settings.understanding !== false) });
+      });
+      document.getElementById('btnReactiveOrders')?.addEventListener('click', () => {
+        applyReactiveSettings({ chatOrders: !(reactiveState && reactiveState.settings.chatOrders !== false) });
+      });
+      document.getElementById('btnReactiveLlm')?.addEventListener('click', () => {
+        applyReactiveSettings({ llmEnabled: !(reactiveState && reactiveState.settings.llmEnabled) });
+      });
+      document.getElementById('btnReactiveSave')?.addEventListener('click', () => applyReactiveSettings(reactiveFormValues()));
+      document.getElementById('btnReactiveTestProvider')?.addEventListener('click', testReactiveProviderConnection);
+      document.getElementById('btnReactiveTest')?.addEventListener('click', testReactiveComment);
+      document.getElementById('btnReactiveResetStats')?.addEventListener('click', async () => {
+        if (!confirm('Reset live reactive seller statistics?')) return;
+        const data = await sendRpc('reactive.resetStats');
+        if (data && data.result && data.result.reactive) renderReactive(data.result.reactive);
+      });
+    })();
+
+    // ------------------------------------------------------- shop announcer
+    const announcerChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-announcer') : null;
+    const annStore = window.ShopAnnouncerStore;
+    let annSettings = annStore.loadSettings();
+    let annStatus = null;
+
+    const annCategories = window.SHOP_ANNOUNCER_CATEGORIES || [];
+
+    function categoryLabel(id) {
+      const found = annCategories.find((c) => c.id === id);
+      return found ? found.label : id;
+    }
+
+    function annTestVoice() {
+      const list = annStore.loadList().filter((a) => a.enabled !== false);
+      const item = list[0];
+      const text = item ? (annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi) : 'Welcome to Sunny Side Sips!';
+      // Once profiles are loaded the announcer speaks through profile C.
+      if (voiceProfilesState) {
+        testVoiceProfile('announcer', text);
+        return;
+      }
+      const voice = annVoicePreview();
+      sendRpc('shop.speak', {
+        text,
+        language: annSettings.language,
+        speed: annSettings.speed,
+        voice: voice || undefined,
+        broadcast: true
+      });
+    }
+
+    function annVoicePreview() {
+      if (annSettings.voice) return annSettings.voice;
+      const lang = annSettings.language === 'vi' ? 'vi' : 'en';
+      const pool = ttsVoices.filter((voice) => voice.language === lang && voice.valid !== false);
+      if (!pool.length) return '';
+      if (annSettings.voiceMode === 'random') {
+        return pool[Math.floor(Math.random() * pool.length)].id;
+      }
+      const byGender = pool.filter((voice) => voice.gender === annSettings.voiceMode);
+      const choice = (byGender.length ? byGender : pool)[0];
+      return choice ? choice.id : '';
+    }
+
+    function populateAnnVoiceOptions() {
+      const select = document.getElementById('annVoice');
+      if (!select) return;
+      const lang = annSettings.language === 'vi' ? 'vi' : 'en';
+      const current = annSettings.voice || '';
+      const list = ttsVoices.filter((voice) => voice.language === lang && voice.valid !== false);
+      select.innerHTML =
+        '<option value="">Auto (by seller gender)</option>' +
+        list
+          .map(
+            (voice) =>
+              `<option value="${escapeHtml(voice.id)}">${escapeHtml(voiceOptionLabel(voice))}</option>`
+          )
+          .join('');
+      select.value = list.some((voice) => voice.id === current) ? current : '';
+    }
+
+    function saveAnnSettings(patch) {
+      annSettings = annStore.saveSettings(patch);
+      if (announcerChannel) {
+        announcerChannel.postMessage({ type: 'refresh' });
+        announcerChannel.postMessage({ type: 'status-request' });
+      }
+      renderAnnControls();
+    }
+
+    function renderAnnControls() {
+      const intervalSelect = document.getElementById('annInterval');
+      const allowed = Array.from(intervalSelect.options).map((o) => Number(o.value));
+      if (!allowed.includes(Number(annSettings.interval))) {
+        annSettings = annStore.saveSettings({ interval: 8 });
+      }
+      intervalSelect.value = String(annSettings.interval);
+      document.getElementById('annLanguage').value = annSettings.language;
+      document.getElementById('annVoiceMode').value = annSettings.voiceMode;
+      populateAnnVoiceOptions();
+      document.getElementById('annSpeed').value = String(Math.round((annSettings.speed || 1) * 100));
+      document.getElementById('valAnnSpeed').textContent = Number(annSettings.speed || 1).toFixed(2) + '×';
+      document.getElementById('annVol').value = String(Math.round((annSettings.volume ?? 0.9) * 100));
+      document.getElementById('valAnnVol').textContent = Math.round((annSettings.volume ?? 0.9) * 100) + '%';
+
+      const enableBtn = document.getElementById('btnAnnEnable');
+      enableBtn.textContent = annSettings.enabled ? 'Enabled' : 'Disabled';
+      enableBtn.classList.toggle('on', Boolean(annSettings.enabled));
+      const runBtn = document.getElementById('btnAnnRun');
+      runBtn.textContent = annSettings.running ? '⏸ Stop' : '▶ Start';
+      runBtn.classList.toggle('on', Boolean(annSettings.running));
+      const shuffleBtn = document.getElementById('btnAnnShuffle');
+      shuffleBtn.textContent = 'Shuffle: ' + (annSettings.shuffle ? 'ON' : 'OFF');
+      shuffleBtn.classList.toggle('on', Boolean(annSettings.shuffle));
+
+      const status = document.getElementById('annStatus');
+      if (!annStatus) {
+        status.textContent = 'Waiting for the live stage…';
+      } else if (!annStatus.enabled) {
+        status.textContent = 'Announcer disabled.';
+      } else if (annStatus.paused) {
+        status.textContent = 'Paused with the shop.';
+      } else if (annStatus.speaking) {
+        status.textContent = `Speaking now: “${annStatus.currentText}”`;
+      } else {
+        const wait = Math.max(0, Math.ceil((annStatus.nextDueAt - Date.now()) / 1000));
+        status.textContent =
+          `Idle · next start in ~${wait}s` + (annStatus.next ? ` · next: “${annStatus.next.text}”` : '');
+      }
+    }
+
+    function renderAnnList() {
+      const list = annStore.loadList();
+      const filter = document.getElementById('annFilter').value;
+      const search = document.getElementById('annSearch').value.trim().toLowerCase();
+      const rows = list.filter(
+        (a) =>
+          (!filter || a.category === filter) &&
+          (!search || `${a.textEn || ''} ${a.textVi || ''}`.toLowerCase().includes(search))
+      );
+      document.getElementById('annCount').textContent =
+        `${list.filter((a) => a.enabled !== false).length}/${list.length} enabled`;
+      const container = document.getElementById('annList');
+      container.innerHTML = rows.length
+        ? rows
+            .map(
+              (a) => `
+          <div class="ann-row${a.enabled === false ? ' disabled' : ''}">
+            <label class="ann-toggle"><input type="checkbox" data-ann-toggle="${a.id}" ${a.enabled !== false ? 'checked' : ''} /></label>
+            <div class="ann-text">
+              <span class="ann-cat">${escapeHtml(categoryLabel(a.category))}</span>
+              <div>${escapeHtml(a.textEn || '')}</div>
+              <div class="ann-vi">${escapeHtml(a.textVi || '')}</div>
+            </div>
+            <button class="btn" data-ann-test="${a.id}" title="Speak this sentence">🔊</button>
+            <button class="btn" data-ann-edit="${a.id}" title="Edit">✏️</button>
+            <button class="btn danger" data-ann-del="${a.id}" title="Delete">🗑</button>
+          </div>`
+            )
+            .join('')
+        : '<div class="hint">No announcements match this filter.</div>';
+
+      container.querySelectorAll('[data-ann-toggle]').forEach((box) => {
+        box.onchange = () => {
+          annStore.updateItem(box.getAttribute('data-ann-toggle'), { enabled: box.checked });
+          renderAnnList();
+          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
+        };
+      });
+      container.querySelectorAll('[data-ann-test]').forEach((btn) => {
+        btn.onclick = () => {
+          const item = annStore.loadList().find((a) => a.id === btn.getAttribute('data-ann-test'));
+          if (!item) return;
+          const text = annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi;
+          if (voiceProfilesState) {
+            testVoiceProfile('announcer', text);
+            return;
+          }
+          sendRpc('shop.speak', {
+            text,
+            language: annSettings.language,
+            speed: annSettings.speed,
+            voice: annVoicePreview() || undefined,
+            broadcast: true
+          });
+        };
+      });
+      container.querySelectorAll('[data-ann-edit]').forEach((btn) => {
+        btn.onclick = () => {
+          const id = btn.getAttribute('data-ann-edit');
+          const item = annStore.loadList().find((a) => a.id === id);
+          if (!item) return;
+          const textEn = prompt('English sentence:', item.textEn || '');
+          if (textEn === null) return;
+          const textVi = prompt('Vietnamese sentence:', item.textVi || '');
+          if (textVi === null) return;
+          annStore.updateItem(id, { textEn: textEn.trim(), textVi: textVi.trim() });
+          renderAnnList();
+          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
+        };
+      });
+      container.querySelectorAll('[data-ann-del]').forEach((btn) => {
+        btn.onclick = () => {
+          const id = btn.getAttribute('data-ann-del');
+          if (!confirm('Delete this announcement?')) return;
+          annStore.removeItem(id);
+          renderAnnList();
+          if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
+        };
+      });
+    }
+
+    function fillAnnCategoryOptions() {
+      const filter = document.getElementById('annFilter');
+      const adder = document.getElementById('annNewCategory');
+      filter.innerHTML =
+        '<option value="">All categories</option>' +
+        annCategories.map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`).join('');
+      adder.innerHTML = annCategories
+        .map((c) => `<option value="${c.id}">${escapeHtml(c.label)}</option>`)
+        .join('');
+    }
+
+    fillAnnCategoryOptions();
+    renderAnnControls();
+    renderAnnList();
+
+    document.getElementById('btnAnnEnable').onclick = () =>
+      saveAnnSettings({ enabled: !annSettings.enabled });
+    document.getElementById('btnAnnRun').onclick = () => saveAnnSettings({ running: !annSettings.running });
+    document.getElementById('btnAnnTest').onclick = annTestVoice;
+    document.getElementById('btnAnnShuffle').onclick = () =>
+      saveAnnSettings({ shuffle: !annSettings.shuffle });
+    document.getElementById('annInterval').onchange = (e) =>
+      saveAnnSettings({ interval: Number(e.target.value) });
+    document.getElementById('annLanguage').onchange = (e) =>
+      saveAnnSettings({ language: e.target.value });
+    document.getElementById('annVoiceMode').onchange = (e) =>
+      saveAnnSettings({ voiceMode: e.target.value });
+    document.getElementById('annVoice').onchange = (e) =>
+      saveAnnSettings({ voice: e.target.value });
+    document.getElementById('annSpeed').oninput = (e) => {
+      document.getElementById('valAnnSpeed').textContent =
+        (Number(e.target.value) / 100).toFixed(2) + '×';
+    };
+    document.getElementById('annSpeed').onchange = (e) =>
+      saveAnnSettings({ speed: Number(e.target.value) / 100 });
+    document.getElementById('annVol').oninput = (e) => {
+      document.getElementById('valAnnVol').textContent = e.target.value + '%';
+    };
+    document.getElementById('annVol').onchange = (e) => {
+      const volume = Number(e.target.value) / 100;
+      saveAnnSettings({ volume });
+      sendRpc('temple.updateSettings', { ttsVolume: volume });
+    };
+    document.getElementById('annFilter').onchange = renderAnnList;
+    document.getElementById('annSearch').oninput = renderAnnList;
+    document.getElementById('btnAnnAdd').onclick = () => {
+      const textEn = document.getElementById('annNewEn').value.trim();
+      const textVi = document.getElementById('annNewVi').value.trim();
+      if (!textEn && !textVi) {
+        alert('Please type an English or Vietnamese sentence first.');
+        return;
+      }
+      annStore.addItem({
+        category: document.getElementById('annNewCategory').value,
+        language: document.getElementById('annNewLanguage').value,
+        textEn,
+        textVi
+      });
+      document.getElementById('annNewEn').value = '';
+      document.getElementById('annNewVi').value = '';
+      renderAnnList();
+      if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
+    };
+    document.getElementById('btnAnnReset').onclick = () => {
+      if (!confirm('Restore the default announcement sentences?')) return;
+      annStore.resetList();
+      renderAnnList();
+      if (announcerChannel) announcerChannel.postMessage({ type: 'refresh' });
+    };
+
+    if (announcerChannel) {
+      announcerChannel.onmessage = (event) => {
+        const data = event.data || {};
+        if (data.type === 'status' && data.status) {
+          annStatus = data.status;
+          renderAnnControls();
+        }
+      };
+      announcerChannel.postMessage({ type: 'status-request' });
+      setInterval(() => {
+        announcerChannel.postMessage({ type: 'status-request' });
+        renderAnnControls();
+      }, 2000);
+    }
+
+    // ---------------------------------------------------------- crowd diagnostics
+    let adminCrowdChannel = null;
+    let crowdLastAt = 0;
+    try {
+      adminCrowdChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-crowd') : null;
+    } catch (err) {
+      adminCrowdChannel = null;
+    }
+
+    function crowdText(id, value) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(value);
+    }
+
+    function renderCrowdDiagnostics(metrics) {
+      if (!metrics) return;
+      crowdLastAt = Date.now();
+      crowdText('crowdViewers', Number(metrics.totalViewers || 0).toLocaleString('en-US'));
+      crowdText('crowdRendered', Number(metrics.charactersRendered || 0).toLocaleString('en-US'));
+      crowdText('crowdMoving', Number(metrics.charactersMoving || 0).toLocaleString('en-US'));
+      crowdText('crowdWaiting', Number(metrics.charactersWaiting || 0).toLocaleString('en-US'));
+      crowdText('crowdSeated', Number(metrics.charactersSeated || 0).toLocaleString('en-US'));
+      crowdText('crowdStuck', Number(metrics.charactersStuck || 0).toLocaleString('en-US'));
+      crowdText('crowdUpdate', Number(metrics.averageUpdateMs || 0).toFixed(2));
+      crowdText('crowdRender', Number(metrics.averageRenderMs || 0).toFixed(2));
+      crowdText('crowdFps', Math.round(Number(metrics.fps || 0)));
+      crowdText('crowdGridCells', Number(metrics.spatialGridCells || 0).toLocaleString('en-US'));
+      crowdText('crowdChecks', Number(metrics.collisionChecksPerFrame || 0).toLocaleString('en-US'));
+      crowdText('crowdMode', `${metrics.crowdTier || '—'} · ${metrics.simulationStride || 1}x`);
+      const hint = document.getElementById('crowdHint');
+      if (hint) hint.textContent = 'Live stage connected · lower-frequency simulation is active only for background bodies.';
+      const warning = document.getElementById('crowdWarning');
+      if (warning) warning.textContent = metrics.warning || '';
+    }
+
+    if (adminCrowdChannel) {
+      adminCrowdChannel.onmessage = (event) => {
+        const data = event.data || {};
+        if (data.type === 'crowd-metrics') renderCrowdDiagnostics(data.payload);
+      };
+      setInterval(() => {
+        if (!crowdLastAt || Date.now() - crowdLastAt > 3500) {
+          const hint = document.getElementById('crowdHint');
+          if (hint) hint.textContent = 'Open the live stage in another tab to receive crowd metrics.';
+          const warning = document.getElementById('crowdWarning');
+          if (warning) warning.textContent = '';
+        }
+      }, 2000);
+    }
+
+    refreshStatus();
+    setInterval(refreshStatus, 4000);
+
+    // ---------------------------------------------------------- background music
+    let musicDragging = false;
+    let musicListBuilt = false;
+    const musicPlayer = window.ShopMusicPlayer
+      ? new window.ShopMusicPlayer({ role: 'remote', onChange: renderMusicPanel })
+      : null;
+
+    function fmtTime(sec) {
+      const total = Math.max(0, Math.round(Number(sec) || 0));
+      return Math.floor(total / 60) + ':' + String(total % 60).padStart(2, '0');
+    }
+
+    function buildMusicList() {
+      const list = document.getElementById('musicList');
+      if (!list || musicListBuilt) return;
+      const tracks = window.SHOP_MUSIC_PLAYLIST || [];
+      list.innerHTML = tracks
+        .map(
+          (track, i) =>
+            `<button class="music-item" data-track="${i}" type="button">` +
+            `<span class="music-index">${i + 1}</span>` +
+            `<span class="music-title">${escapeHtml(track.title)}</span>` +
+            `<span class="music-state"></span></button>`
+        )
+        .join('');
+      list.querySelectorAll('[data-track]').forEach((btn) => {
+        btn.onclick = () => musicPlayer && musicPlayer.select(Number(btn.dataset.track));
+      });
+      musicListBuilt = true;
+    }
+
+    function renderMusicPanel(snap) {
+      if (!snap) return;
+      buildMusicList();
+      const now = document.getElementById('musicNow');
+      if (now) now.textContent = snap.title || '—';
+      const hint = document.getElementById('musicHint');
+      if (hint) {
+        if (snap.blocked) hint.textContent = 'Autoplay blocked by the browser — press Play, or click the stage once.';
+        else if (snap.remoteLinked) hint.textContent = `${snap.playing ? 'Playing' : 'Paused'} · synced with the live stage`;
+        else hint.textContent = `${snap.playing ? 'Playing' : 'Paused'} · playing in this panel`;
+      }
+      const slider = document.getElementById('sliderMusicVol');
+      const label = document.getElementById('valMusicVol');
+      const pct = Math.round((Number(snap.volume) || 0) * 100);
+      if (slider && !musicDragging) slider.value = String(pct);
+      if (label) label.textContent = pct + '%';
+      const time = Number(snap.time) || 0;
+      const duration = Number(snap.duration) || 0;
+      const timeEl = document.getElementById('musicTime');
+      if (timeEl) timeEl.textContent = fmtTime(time) + ' / ' + fmtTime(duration);
+      const bar = document.getElementById('musicProgress');
+      if (bar) bar.style.width = duration ? Math.min(100, (time / duration) * 100).toFixed(1) + '%' : '0%';
+      document.querySelectorAll('.music-item').forEach((el) => {
+        const active = Number(el.dataset.track) === snap.index;
+        el.classList.toggle('active', active);
+        const state = el.querySelector('.music-state');
+        if (state) state.textContent = active ? (snap.playing ? '▶ playing' : '⏸ paused') : '';
+      });
+      const playBtn = document.getElementById('btnMusicPlay');
+      if (playBtn) playBtn.classList.toggle('on', Boolean(snap.playing));
+    }
+
+    const musicSlider = document.getElementById('sliderMusicVol');
+    if (musicSlider) {
+      musicSlider.addEventListener('pointerdown', () => {
+        musicDragging = true;
+      });
+      musicSlider.addEventListener('input', (e) => {
+        const pct = Number(e.target.value);
+        document.getElementById('valMusicVol').textContent = pct + '%';
+        if (musicPlayer) musicPlayer.setVolume(pct / 100);
+      });
+      musicSlider.addEventListener('change', (e) => {
+        musicDragging = false;
+        sendRpc('temple.updateSettings', { musicVolume: Number(e.target.value) / 100 });
+      });
+    }
+    document.getElementById('btnMusicPlay')?.addEventListener('click', () => musicPlayer && musicPlayer.play());
+    document.getElementById('btnMusicPause')?.addEventListener('click', () => musicPlayer && musicPlayer.pause());
+    document.getElementById('btnMusicNext')?.addEventListener('click', () => musicPlayer && musicPlayer.next());
+    document.getElementById('btnMusicPrev')?.addEventListener('click', () => musicPlayer && musicPlayer.previous());
+
+    if (musicPlayer) {
+      musicPlayer.initSync();
+      renderMusicPanel(musicPlayer.snapshot());
+    }
+  </script>
+  <script>
+    (function () {
+      let state = null;
+      let controlsLoaded = false;
+      let enabled = true;
+      const $ = (id) => document.getElementById(id);
+      const typeNames = ['MEMBER', 'LIKE', 'SHARE', 'FOLLOW', 'CHAT', 'GIFT'];
+
+      async function eventRpc(method, params = {}) {
+        const res = await fetch('/rpc', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message || 'RPC error');
+        return data.result;
+      }
+
+      function fmtCount(value) {
+        const n = Number(value) || 0;
+        return n.toLocaleString('en-US');
+      }
+
+      function fmtAgo(ts) {
+        if (!ts) return 'No live events yet.';
+        const seconds = Math.max(0, Math.floor((Date.now() - Number(ts)) / 1000));
+        return seconds < 2 ? 'Last event just now' : `Last event ${seconds}s ago`;
+      }
+
+      function renderEvents(snapshot, tiktok) {
+        if (!snapshot) return;
+        state = snapshot;
+        const connected = tiktok && tiktok.connected;
+        const label = connected ? `CONNECTED @${tiktok.username || ''}` : (tiktok && (tiktok.connecting || tiktok.reconnecting) ? 'CONNECTING…' : 'DISCONNECTED');
+        const ws = $('eventWsState');
+        if (ws) { ws.textContent = label; ws.className = 'pill ' + (connected ? 'connected' : ''); }
+        $('eventReceived').textContent = fmtCount(snapshot.received);
+        $('eventProcessed').textContent = fmtCount(snapshot.processed);
+        $('eventDropped').textContent = fmtCount(snapshot.dropped);
+        $('eventPending').textContent = fmtCount(snapshot.pending);
+        $('eventTotalLikes').textContent = fmtCount(snapshot.totalLikes);
+        $('eventBatchLikes').textContent = fmtCount(snapshot.batchLikes);
+        $('eventReactions').textContent = fmtCount(snapshot.likeReactions);
+        $('eventRate').textContent = `${Number(snapshot.ratePerSecond || 0).toFixed(2)} events/sec`;
+        $('eventLastEvent').textContent = fmtAgo(snapshot.lastEventAt);
+        $('eventBatchState').textContent = snapshot.batchEvents ? `${snapshot.batchLikes} / ${snapshot.likeBatching.windowSeconds}s` : 'Idle';
+        const rows = typeNames.map((type) => {
+          const s = (snapshot.perType && snapshot.perType[type]) || {};
+          return `<tr><td>${type}</td><td>${fmtCount(s.received)}</td><td>${fmtCount(s.processed)}</td><td>${fmtCount(s.dropped)}</td><td>${fmtCount(s.duplicates)}</td><td>${fmtCount(snapshot.pendingByType && snapshot.pendingByType[type])}</td></tr>`;
+        });
+        $('eventTypeRows').innerHTML = rows.join('');
+        const batching = snapshot.likeBatching || {};
+        enabled = batching.enabled !== false;
+        const toggle = $('btnLikeBatchToggle');
+        if (toggle) {
+          toggle.textContent = `Like batching: ${enabled ? 'ON' : 'OFF'}`;
+          toggle.classList.toggle('on', enabled);
+        }
+        if (!controlsLoaded || document.activeElement === document.body) {
+          $('likeBatchWindow').value = String(batching.windowSeconds || 5);
+          $('likeBatchMin').value = String(batching.minLikes || 10);
+          $('likeBatchCooldown').value = String(batching.cooldownSeconds ?? 20);
+          controlsLoaded = true;
+        }
+        $('eventEngineHint').textContent = snapshot.dropped
+          ? `Bounded queues active · ${fmtCount(snapshot.dropped)} lower-priority event(s) dropped under overload. Gift/VIP delivery remains prioritized.`
+          : 'Bounded queues active. Gift, follow and member events keep priority. Like reactions are aggregated and never interrupt speech already playing.';
+      }
+
+      async function refreshEvents() {
+        try {
+          const res = await fetch('/api/state');
+          const st = await res.json();
+          renderEvents(st.liveEvents, st.tiktok);
+        } catch (_) {
+          const ws = $('eventWsState');
+          if (ws) { ws.textContent = 'SERVER OFFLINE'; ws.className = 'pill'; }
+        }
+      }
+
+      async function saveSettings() {
+        const data = await eventRpc('events.updateLikeSettings', {
+          enabled,
+          windowSeconds: Number($('likeBatchWindow').value),
+          minLikes: Number($('likeBatchMin').value),
+          cooldownSeconds: Number($('likeBatchCooldown').value)
+        });
+        if (data && data.liveEvents) renderEvents(data.liveEvents);
+      }
+
+      $('btnLikeBatchToggle')?.addEventListener('click', async () => {
+        enabled = !enabled;
+        await saveSettings();
+      });
+      ['likeBatchWindow', 'likeBatchMin', 'likeBatchCooldown'].forEach((id) => {
+        $(id)?.addEventListener('change', () => saveSettings().catch((err) => { $('eventEngineHint').textContent = err.message; }));
+      });
+      $('btnLikeBatchTest')?.addEventListener('click', async () => {
+        const count = Math.max(50, Number($('likeBatchMin').value) || 10);
+        try {
+          const data = await eventRpc('events.testLikeBatch', { count });
+          if (data && data.liveEvents) renderEvents(data.liveEvents);
+          $('eventEngineHint').textContent = `Test batch sent: ${count} likes, ${data && data.event && data.event.reaction ? 'one spoken reaction' : 'visual batch only (below threshold/cooldown)'}.`;
+        } catch (err) { $('eventEngineHint').textContent = err.message; }
+      });
+      $('btnEventReset')?.addEventListener('click', async () => {
+        try {
+          const data = await eventRpc('events.resetStats');
+          if (data && data.liveEvents) renderEvents(data.liveEvents);
+        } catch (err) { $('eventEngineHint').textContent = err.message; }
+      });
+
+      setInterval(refreshEvents, 1500);
+      refreshEvents();
+    })();
+  </script>
+</body>
+</html>
