@@ -3422,10 +3422,15 @@
   <script>
     (function () {
       const $ = (id) => document.getElementById(id);
-      // One fixed test viewer: a second TEST USER JOIN reuses the same record.
-      const TEST_UNIQUE_ID = 'test.viewer.01';
+      // A test viewer is identified by its username, so repeated joins reuse one
+      // viewer record and the live per-viewer cooldown applies to that name.
+      function uniqueIdFor(user) {
+        const slug = String(user || 'TEST_VIEWER_01').trim().toLowerCase().replace(/[^a-z0-9]+/g, '.');
+        return 'testuser.' + (slug || 'test.viewer');
+      }
       const view = {
         user: 'TEST_VIEWER_01',
+        uniqueId: uniqueIdFor('TEST_VIEWER_01'),
         comment: '',
         topic: '',
         position: 0,
@@ -3495,7 +3500,9 @@
       function scheduleCompletion(ms) {
         clearTimeout(view.timer);
         view.timer = setTimeout(() => {
-          if (view.status !== 'READING') return;
+          // The reading may have arrived before the RPC reply set QUEUED.
+          if (!view.readingId) return;
+          if (view.status !== 'READING' && view.status !== 'QUEUED') return;
           setState('COMPLETED');
           paintResult();
         }, ms);
@@ -3511,7 +3518,7 @@
         if (!reading) return;
         const uniqueId = String(reading.uniqueId || '').toLowerCase();
         const name = String(reading.user || '').toLowerCase();
-        if (uniqueId !== TEST_UNIQUE_ID && name !== String(view.user || '').toLowerCase()) return;
+        if (uniqueId !== String(view.uniqueId || '').toLowerCase() && name !== String(view.user || '').toLowerCase()) return;
         view.readingId = reading.id || '';
         if (reading.topicLabel) view.topic = reading.topicLabel;
         view.cards = (reading.cards || []).map((card) =>
@@ -3563,7 +3570,7 @@
         button.disabled = true;
         hint.textContent = 'Sending the viewer-join event…';
         try {
-          const result = await rpc('viewers.testJoin', { user, uniqueId: TEST_UNIQUE_ID });
+          const result = await rpc('viewers.testJoin', { user, uniqueId: uniqueIdFor(user) });
           hint.textContent = result.duplicate
             ? '✔ ' + result.message + ' — no duplicate viewer created.'
             : '✔ ' + result.message + ' — ' + (Number(result.viewers) || 1) + ' viewer(s) on stage.';
@@ -3584,6 +3591,7 @@
           return;
         }
         view.user = user;
+        view.uniqueId = uniqueIdFor(user);
         view.comment = comment;
         view.topic = '';
         view.position = 0;
@@ -3596,17 +3604,19 @@
         button.disabled = true;
         hint.textContent = 'Matching the comment and adding the test user to the tarot queue…';
         try {
-          const result = await rpc('tarot.simulateComment', { comment, user, uniqueId: TEST_UNIQUE_ID });
+          const result = await rpc('tarot.simulateComment', { comment, user, uniqueId: view.uniqueId });
           const topic = result.topic;
           view.topic = topic
             ? topic.label + (topic.matched ? ' · matched "' + topic.keyword + '"' : ' · fallback topic')
             : 'no topic matched';
           view.position = Number(result.position) || 0;
           if (result.handled && result.accepted) {
-            setState('QUEUED');
+            // The reading event can arrive before this reply; never step the
+            // status back from READING to QUEUED.
+            if (!view.readingId) setState('QUEUED');
             hint.textContent = '✔ Queued at #' + view.position + ' as "' + topic.label + '". The stage draws and speaks next.';
           } else if (result.duplicate) {
-            setState('QUEUED');
+            if (!view.readingId) setState('QUEUED');
             hint.textContent = 'Already in the line at #' + view.position + ' — the queue refuses a second entry for the same viewer.';
           } else if (result.reason === 'global_cooldown' || result.reason === 'viewer_cooldown') {
             setState('WAITING');

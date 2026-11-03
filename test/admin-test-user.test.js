@@ -70,6 +70,15 @@ test('the topic chips are loaded from the server, never a second list', () => {
   assert.equal(/Love Reading|Crush Reading|Future Partner|Wealth Reading/.test(host), false);
 });
 
+test('a reading that arrives before the RPC reply is never stepped back', () => {
+  const html = panel();
+  assert.match(html, /if \(!view\.readingId\) setState\('QUEUED'\)/);
+  assert.match(html, /view\.status !== 'READING' && view\.status !== 'QUEUED'/);
+  // The test viewer is keyed by username so joins dedupe and cooldowns apply.
+  assert.match(html, /function uniqueIdFor\(/);
+  assert.match(html, /uniqueIdFor\(user\)/);
+});
+
 test('the panel does not build another engine, queue or player', () => {
   const html = panel();
   assert.doesNotMatch(html, /new MysticConversationEngine/);
