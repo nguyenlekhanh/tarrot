@@ -2382,7 +2382,7 @@
           2
         );
       }
-      if (hint) hint.textContent = result.ok ? 'Test reply sent to the live stage through the existing Piper queue.' : 'Test did not produce a response: ' + (result.reason || 'ignored') + '.';
+      if (hint) hint.textContent = result.ok ? 'Test reply sent to the live stage voice queue (' + (result.source === 'llm' ? 'AI' : 'local') + ' wording).' : 'Test did not produce a response: ' + (result.reason || 'ignored') + '.';
       if (result.reactive) renderReactive(result.reactive);
     }
 
