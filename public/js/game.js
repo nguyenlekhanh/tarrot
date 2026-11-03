@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — 2D cartoon drink shop simulation (1080 x 1920)
+ * Mystic Witch Live — 2D cartoon drink shop simulation (1080 x 1920)
  *
  * - Uses only the supplied JPG art in /assets (background, customers, drinks, seller)
  * - White studio backgrounds are flood-filled away from the image border, so enclosed

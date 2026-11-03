@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — seller conversation scheduler (stage only).
+ * Mystic Witch Live — seller conversation scheduler (stage only).
  *
  * Two sellers, two real Piper profiles, one shared speech queue:
  * - Schedules one line at a time, never an entire conversation.

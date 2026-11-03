@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sunny Side Sips — Stream Control Panel</title>
+  <title>Mystic Witch Live — Stream Control Panel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
@@ -258,13 +258,13 @@
   <div class="container">
     <header>
       <div>
-        <div class="title">🥤 SUNNY SIDE SIPS — STREAM CONTROL PANEL</div>
+        <div class="title">🔮 MYSTIC WITCH LIVE — STREAM CONTROL PANEL</div>
         <div class="subtitle">Bun.js · Express · WebSocket · JSON-RPC 2.0 · TikTok Live</div>
         <div class="status-bar" id="statusBanner">Loading shop state…</div>
       </div>
       <div class="links">
         <a class="btn" href="/?obs=1" target="_blank">📺 OBS 9:16 Clean View</a>
-        <a class="btn gold" href="/" target="_blank">🥤 Open Live Screen</a>
+        <a class="btn gold" href="/" target="_blank">🔮 Open Live Screen</a>
       </div>
     </header>
 
@@ -394,7 +394,7 @@
           <button class="btn" data-act="like">❤️ Like rush</button>
           <button class="btn" data-act="comment">💬 Comment order</button>
           <button class="btn" data-act="gift">🎁 Gift party tray</button>
-          <button class="btn gold" data-act="mystery">🥤 Mystery sip</button>
+          <button class="btn gold" data-act="mystery">🔮 Mystery sip</button>
           <button class="btn" data-act="free">🧊 Free sample</button>
         </div>
         <div class="hint">Every action also spawns the matching customer and updates the live stage.</div>
@@ -447,7 +447,7 @@
           <input type="range" id="sliderVoiceVol" min="0" max="100" step="5" value="90" />
         </div>
         <div class="row">
-          <input type="text" id="ttsText" value="Welcome to Sunny Side Sips! Fresh lemonade, ice cold cola and berry smoothies all day long." />
+          <input type="text" id="ttsText" value="Welcome to Mystic Witch Live! Fresh lemonade, ice cold cola and berry smoothies all day long." />
           <button class="btn gold" id="btnSpeak">Test voice</button>
         </div>
         <audio id="audioPreview" controls style="width: 100%; height: 38px;"></audio>
@@ -463,7 +463,7 @@
           </div>
           <div style="flex: 2 1 320px">
             <div class="label-line"><span>Custom English text</span></div>
-            <input type="text" id="auditionText" value="Welcome to Sunny Side Sips! Fresh drinks, warm smiles, and the sunny side of your day." />
+            <input type="text" id="auditionText" value="Welcome to Mystic Witch Live! Fresh drinks, warm smiles, and the sunny side of your day." />
           </div>
         </div>
         <div class="row">
@@ -480,7 +480,7 @@
         <div class="row">
           <div style="flex: 2 1 320px">
             <div class="label-line"><span>Voice preview text</span></div>
-            <input type="text" id="vpPreviewText" value="Welcome to Sunny Side Sips! Fresh drinks, sunny vibes, all day long." />
+            <input type="text" id="vpPreviewText" value="Welcome to Mystic Witch Live! Fresh drinks, sunny vibes, all day long." />
           </div>
           <button class="btn" id="btnVoiceProfilesRefresh" style="align-self: flex-end">🔄 Refresh engine voices</button>
           <button class="btn danger" id="btnVoiceProfilesReset" style="align-self: flex-end">↺ Restore Default Settings</button>
@@ -1285,7 +1285,7 @@
 
     async function runAudition(sequence, label) {
       const hint = document.getElementById('auditionHint');
-      const text = document.getElementById('auditionText').value.trim() || 'Welcome to Sunny Side Sips!';
+      const text = document.getElementById('auditionText').value.trim() || 'Welcome to Mystic Witch Live!';
       for (const clip of sequence) {
         const ok = await auditionClip(clip.engine, clip.voice, text, clip.label || label);
         if (!ok) return;
@@ -1307,7 +1307,7 @@
       if (engine === 'piper') document.getElementById('ttsLanguage').value = voice.language;
       renderVoiceDetail();
       renderVoiceList();
-      const text = document.getElementById('ttsText').value.trim() || 'Welcome to Sunny Side Sips!';
+      const text = document.getElementById('ttsText').value.trim() || 'Welcome to Mystic Witch Live!';
       const speed = Number(document.getElementById('sliderSpeed').value) / 100;
       hint.textContent = `Synthesizing ${voice.name} with ${engine === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
       voiceHintUntil = Date.now() + 20000;
@@ -1887,7 +1887,7 @@
       const preview = document.getElementById('vpPreviewText');
       const text =
         String(textOverride || (preview && preview.value) || '').trim() ||
-        'Welcome to Sunny Side Sips!';
+        'Welcome to Mystic Witch Live!';
       if (hint) {
         hint.dataset.locked = '1';
         hint.textContent = `Synthesizing through ${voiceProfilesState.profiles[id].resolvedEngine === 'kokoro' ? 'Kokoro' : 'Piper'}…`;
@@ -2341,11 +2341,11 @@
       document.getElementById('btnConvTest')?.addEventListener('click', testConversation);
       document.getElementById('btnConvPreviewMale')?.addEventListener('click', () => {
         const entry = firstConversationForTest();
-        playConversationPreview('maleSeller', entry ? entry.male : 'Welcome to Sunny Side Sips!', 'Male Seller');
+        playConversationPreview('maleSeller', entry ? entry.male : 'Welcome to Mystic Witch Live!', 'Male Seller');
       });
       document.getElementById('btnConvPreviewFemale')?.addEventListener('click', () => {
         const entry = firstConversationForTest();
-        playConversationPreview('femaleSeller', entry ? entry.female : 'Welcome to Sunny Side Sips!', 'Female Seller');
+        playConversationPreview('femaleSeller', entry ? entry.female : 'Welcome to Mystic Witch Live!', 'Female Seller');
       });
       document.getElementById('btnConvRestore')?.addEventListener('click', async () => {
         if (!confirm('Restore all default conversations? Custom conversations and edits will be removed.')) return;
@@ -2719,7 +2719,7 @@
     })();
 
     // ------------------------------------------------------- shop announcer
-    const announcerChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-announcer') : null;
+    const announcerChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mystic-witch-announcer') : null;
     const annStore = window.ShopAnnouncerStore;
     let annSettings = annStore.loadSettings();
     let annStatus = null;
@@ -2734,7 +2734,7 @@
     function annTestVoice() {
       const list = annStore.loadList().filter((a) => a.enabled !== false);
       const item = list[0];
-      const text = item ? (annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi) : 'Welcome to Sunny Side Sips!';
+      const text = item ? (annSettings.language === 'vi' ? item.textVi || item.textEn : item.textEn || item.textVi) : 'Welcome to Mystic Witch Live!';
       // Once profiles are loaded the announcer speaks through profile C.
       if (voiceProfilesState) {
         testVoiceProfile('announcer', text);
@@ -3000,7 +3000,7 @@
     let adminCrowdChannel = null;
     let crowdLastAt = 0;
     try {
-      adminCrowdChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-crowd') : null;
+      adminCrowdChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mystic-witch-crowd') : null;
     } catch (err) {
       adminCrowdChannel = null;
     }

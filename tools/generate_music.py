@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sunny Side Sips — background playlist generator.
+Mystic Witch Live — background playlist generator.
 
 Builds the eight instrumental tracks that ship in public/assets/music with a
 small additive-synthesis engine (numpy + the Python standard library) and
@@ -165,8 +165,8 @@ def write_mp3(samples, slug, title):
             'ffmpeg', '-y', '-loglevel', 'error', '-i', wav_path,
             '-codec:a', 'libmp3lame', '-b:a', '128k', '-ar', str(SR),
             '-metadata', 'title=' + title,
-            '-metadata', 'artist=Sunny Side Sips',
-            '-metadata', 'album=Sunny Side Sips — Background Playlist',
+            '-metadata', 'artist=Mystic Witch Live',
+            '-metadata', 'album=Mystic Witch Live — Background Playlist',
             '-metadata', 'comment=Original royalty-free instrumental generated locally',
             mp3_path,
         ],

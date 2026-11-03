@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — live reactive seller stage client.
+ * Mystic Witch Live — live reactive seller stage client.
  *
  * The server owns comment understanding, rate limits, LLM calls, validation and
  * order creation. This module only:

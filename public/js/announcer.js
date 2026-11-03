@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — automatic shop announcer
+ * Mystic Witch Live — automatic shop announcer
  *
  * - Editable English / Vietnamese announcement catalog (localStorage)
  * - Context-aware scheduler that speaks through the existing Piper TTS queue
@@ -32,11 +32,11 @@
 
   const DEFAULTS = [
     // A. Welcome & Greeting
-    { id: 'welcome_1', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Welcome to Sunny Side Sips! Fresh drinks, sunny vibes, all day long.', textVi: 'Chào mừng đến với Sunny Side Sips! Đồ uống tươi mát, không khí rộn ràng cả ngày.' },
+    { id: 'welcome_1', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Welcome to Mystic Witch Live! Fresh drinks, sunny vibes, all day long.', textVi: 'Chào mừng đến với Mystic Witch Live! Đồ uống tươi mát, không khí rộn ràng cả ngày.' },
     { id: 'welcome_2', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Hey everyone, welcome in! The shop is open and the ice is cold.', textVi: 'Xin chào mọi người, mời vào nhé! Tiệm đang mở và đá thì thật lạnh.' },
     { id: 'welcome_3', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: "So glad you're here! Grab a drink and stay for the sunshine.", textVi: 'Rất vui vì bạn đã ghé! Chọn một ly nước và ở lại cùng nắng ấm nhé.' },
     { id: 'welcome_4', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: "Welcome back to the shop, friends! Let's make today a sweet one.", textVi: 'Chào mừng các bạn quay lại tiệm! Hôm nay mình cùng ngọt ngào nhé.' },
-    { id: 'welcome_5', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Step right up to Sunny Side Sips, your favorite little drink stop.', textVi: 'Mời bạn ghé Sunny Side Sips, điểm dừng chân đồ uống yêu thích.' },
+    { id: 'welcome_5', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Step right up to Mystic Witch Live, your favorite little drink stop.', textVi: 'Mời bạn ghé Mystic Witch Live, điểm dừng chân đồ uống yêu thích.' },
     { id: 'welcome_6', category: 'welcome', language: 'both', enabled: true, voice: '', textEn: 'Welcome in, {viewer}! Great to see you at the counter.', textVi: 'Chào mừng {viewer} đã ghé tiệm! Rất vui được gặp bạn.' },
 
     // B. Drink Promotion
@@ -59,7 +59,7 @@
     { id: 'atmosphere_2', category: 'atmosphere', language: 'both', enabled: true, voice: '', textEn: 'The blender is humming and the ice is sparkling. Come say hi!', textVi: 'Máy xay đang chạy và đá thì lấp lánh. Ghé chào tiệm nhé!' },
     { id: 'atmosphere_3', category: 'atmosphere', language: 'both', enabled: true, voice: '', textEn: 'Another hot day, another round of ice-cold drinks coming up.', textVi: 'Ngày nóng nữa lại đến, thêm một vòng đồ uống mát lạnh sắp ra lò.' },
     { id: 'atmosphere_4', category: 'atmosphere', language: 'both', enabled: true, voice: '', textEn: 'This is your sunny corner of the internet. Stay a while!', textVi: 'Đây là góc nắng nhỏ của bạn trên mạng. Ở lại một chút nhé!' },
-    { id: 'atmosphere_5', category: 'atmosphere', language: 'both', enabled: true, voice: '', textEn: 'Fresh cups, fresh smiles, all day at Sunny Side Sips.', textVi: 'Ly mới, nụ cười mới, cả ngày tại Sunny Side Sips.' },
+    { id: 'atmosphere_5', category: 'atmosphere', language: 'both', enabled: true, voice: '', textEn: 'Fresh cups, fresh smiles, all day at Mystic Witch Live.', textVi: 'Ly mới, nụ cười mới, cả ngày tại Mystic Witch Live.' },
 
     // E. Supporter Appreciation
     { id: 'appreciation_1', category: 'appreciation', language: 'both', enabled: true, voice: '', textEn: 'Big thanks to everyone supporting the shop today!', textVi: 'Cảm ơn rất nhiều đến mọi người đã ủng hộ tiệm hôm nay!' },
@@ -220,7 +220,7 @@
       this.conversationActive = false;
       this.timer = null;
       this.lastBroadcastAt = 0;
-      this.channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-announcer') : null;
+      this.channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mystic-witch-announcer') : null;
       if (this.channel) {
         this.channel.onmessage = (event) => this.handleMessage(event.data);
       }

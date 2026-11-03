@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Kokoro-82M TTS worker for Sunny Side Sips.
+Kokoro-82M TTS worker for Mystic Witch Live.
 
 - Runs in its own Python virtual environment (.venv-kokoro by default).
 - Loads the Kokoro model once and keeps it resident for the server lifetime.

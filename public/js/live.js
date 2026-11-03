@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — live UI controller
+ * Mystic Witch Live — live UI controller
  * Keeps the original JSON-RPC 2.0 + WebSocket wiring and feeds TikTok Live
  * events into the drink shop simulation.
  */
@@ -150,7 +150,7 @@
   // Diagnostics are sent to the Admin tab without touching the RPC protocol.
   let crowdChannel = null;
   try {
-    crowdChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('sunny-side-crowd') : null;
+    crowdChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('mystic-witch-crowd') : null;
   } catch (err) {
     crowdChannel = null;
   }
@@ -852,7 +852,7 @@
       } else if (msg.method === 'tts.play') {
         if (msg.params && msg.params.url) {
           if (conversations) conversations.notifyPriority('viewer');
-          audio.enqueueTts(msg.params.text || 'Welcome to Sunny Side Sips!', {
+          audio.enqueueTts(msg.params.text || 'Welcome to Mystic Witch Live!', {
             engine: msg.params.engine,
             voice: msg.params.voice,
             piperVoice: msg.params.piperVoice,

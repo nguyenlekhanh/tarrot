@@ -1,4 +1,9 @@
-# 🥤 Sunny Side Sips — American Drink Shop TikTok Live (9:16)
+# 🔮 MYSTIC WITCH LIVE — TikTok Live Tarot Stage (9:16)
+
+> **Migration in progress.** This is the original drink-shop application rebranded as
+> **MYSTIC WITCH LIVE**. Phase 1 changed branding and metadata only: the TikTok
+> connector, event engine and gameplay below are unchanged and still the drink shop.
+> The tarot stage, 78-card deck and ComfyUI visuals arrive in later phases.
 
 An interactive **TikTok Live drink shop simulation** in a vertical **9:16 (1080×1920)** frame, ready for **OBS Studio / TikTok Live Studio**. It runs on **Bun.js** with the original **Express + WebSocket + JSON-RPC 2.0** stack and the **tiktok-live-connector** integration, now driving a cute 2D cartoon drink stand instead of a temple scene.
 
@@ -288,4 +293,4 @@ All eight tracks are **original instrumentals generated locally** by `tools/gene
 
 Playback starts automatically when the shop loads. Browsers that block autoplay retry on the first pointer/key gesture. The player advances when a track ends, wraps from the last track back to the first, preloads the next file, skips files that fail to load (falling back to the synthesized ambience if none play), and uses a single `Audio` element so two tracks can never overlap. Refreshing game state or customers arriving/leaving never restarts the music.
 
-The admin panel's **🎵 Background Music** card shows the current track, Play, Pause, Previous, Next, the volume slider, a live progress bar and the full playlist with the playing track highlighted. The card talks to the stage player over a `BroadcastChannel` (`sunny-side-music`), so its buttons control the OBS/stage audio; if no stage tab is open it plays inside the panel instead. The Next button stops the current track immediately and starts the next one.
+The admin panel's **🎵 Background Music** card shows the current track, Play, Pause, Previous, Next, the volume slider, a live progress bar and the full playlist with the playing track highlighted. The card talks to the stage player over a `BroadcastChannel` (`mystic-witch-music`), so its buttons control the OBS/stage audio; if no stage tab is open it plays inside the panel instead. The Next button stops the current track immediately and starts the next one.

@@ -1,5 +1,5 @@
 /**
- * Sunny Side Sips — default seller conversation catalog.
+ * Mystic Witch Live — default seller conversation catalog.
  *
  * Local, deterministic dialogue only: no cloud AI, no external requests.
  * The server seeds these into game-state.json on first run; the Admin panel can

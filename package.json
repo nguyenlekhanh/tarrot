@@ -1,7 +1,7 @@
 {
-  "name": "tiktok-live-drink-shop-rpc",
+  "name": "mystic-witch-live",
   "version": "1.0.0",
-  "description": "Sunny Side Sips — TikTok Live interactive American drink shop (Bun.js + WebSocket JSON-RPC 2.0)",
+  "description": "MYSTIC WITCH LIVE — photorealistic gothic tarot-reading TikTok Live stage (Bun.js + WebSocket JSON-RPC 2.0)",
   "main": "server.js",
   "scripts": {
     "start": "bun run server.js",

@@ -1,5 +1,5 @@
 /**
- * ShopMusicPlayer — Sunny Side Sips background playlist.
+ * ShopMusicPlayer — Mystic Witch Live background playlist.
  *
  * - Eight original, locally generated instrumental tracks (see tools/generate_music.py)
  * - One HTMLAudioElement per player, so tracks never overlap
@@ -345,7 +345,7 @@
     initSync() {
       if (typeof BroadcastChannel !== 'function') return;
       try {
-        this.bc = new BroadcastChannel('sunny-side-music');
+        this.bc = new BroadcastChannel('mystic-witch-music');
       } catch (_) {
         return;
       }

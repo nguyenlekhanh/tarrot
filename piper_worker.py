@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Piper TTS worker for Sunny Side Sips.
+Piper TTS worker for Mystic Witch Live.
 
 - Loads local Piper voices from config/piper/en and config/piper/vn only.
 - Never downloads models. Never touches the network.

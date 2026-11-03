@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Sunny Side Sips — high-volume TikTok event engine.
+ * Mystic Witch Live — high-volume TikTok event engine.
  *
  * This module is deliberately independent of Express, the shop state and the
  * browser. It gives the server:

@@ -32,7 +32,7 @@ const STATE_FILE = path.join(DATA_DIR, 'game-state.json');
 
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
 
-const SHOP_NAME = 'SUNNY SIDE SIPS';
+const SHOP_NAME = 'MYSTIC WITCH LIVE';
 
 // ============================================================================
 // 1. DRINK MENU (assets live in public/assets/drinks)
@@ -522,7 +522,7 @@ function reactiveFallbackReply(job, analysis, sellerId, flags = {}) {
   const duplicate = flags.duplicateOrder === true;
   const base = vi
     ? {
-        hello: `Chào ${name}! Chào mừng đến với Sunny Side Sips.`,
+        hello: `Chào ${name}! Chào mừng đến với Mystic Witch Live.`,
         order: `Chắc chắn rồi! ${drinkPhrase || 'Một ly nước'} cho ${name}, làm ngay ạ.`,
         clarify: `Mình làm được ngay! Bạn muốn uống gì — ${DRINK_MENU.map((item) => item.name).join(', ')}?`,
         menu: reactiveMenuSentence('vi'),
@@ -618,7 +618,7 @@ function buildReactivePrompt(job, analysis) {
     .slice(0, 4)
     .map((reply) => `${reply.seller === 'femaleSeller' ? 'Female Seller' : 'Male Seller'} to @${reply.user}: ${reply.text}`);
   const system = [
-    'You are writing one short, natural spoken reply for the two sellers at Sunny Side Sips, a live drink shop.',
+    'You are writing one short, natural spoken reply for the two sellers at Mystic Witch Live, a live drink shop.',
     'Return ONLY a JSON object with exactly these keys: intent, response, seller, drink, confidence.',
     'Allowed intent values: order, price_question, drink_question, shop_question, seller_interaction, general, unknown.',
     'Allowed seller values: maleSeller, femaleSeller.',
@@ -740,7 +740,7 @@ async function callReactiveLlm(job, analysis, settings, options = {}) {
   if (key) headers.Authorization = `Bearer ${key}`;
   const messages = options.connectionTest
     ? [
-        { role: 'system', content: 'Return ONLY a JSON object with keys intent, response, seller, drink, confidence. Use intent general, seller femaleSeller, drink null, confidence 0.9, and make response exactly one sentence: "Hello from Sunny Side Sips!"' },
+        { role: 'system', content: 'Return ONLY a JSON object with keys intent, response, seller, drink, confidence. Use intent general, seller femaleSeller, drink null, confidence 0.9, and make response exactly one sentence: "Hello from Mystic Witch Live!"' },
         { role: 'user', content: 'Return the valid JSON connection-test greeting now.' }
       ]
     : buildReactivePrompt(job, analysis);
@@ -6025,7 +6025,7 @@ if (!piperTts.listVoices().some((voice) => voice.id === state.settings.ttsVoice)
 
 server.listen(PORT, () => {
   console.log('============================================================');
-  console.log(`🥤 ${SHOP_NAME} — TikTok Live Drink Shop is running`);
+  console.log(`🔮 ${SHOP_NAME} — TikTok Live Drink Shop is running`);
   console.log(`📺 Live screen (9:16 OBS) : http://localhost:${PORT}`);
   console.log(`🎛️ Admin control panel    : http://localhost:${PORT}/admin`);
   console.log(`🔌 JSON-RPC 2.0           : http://localhost:${PORT}/rpc`);
