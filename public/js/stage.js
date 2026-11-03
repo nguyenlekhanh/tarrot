@@ -156,16 +156,44 @@
   }
 
   // ---------------------------------------------------------------- audio
+  // Clips are queued, not interrupted: a reading must never be cut off by the
+  // next tts.play message, and a burst of gift readings must not overlap.
+  const ttsQueue = [];
   let currentClip = null;
+  let ttsPlaying = false;
+
+  function pumpTts() {
+    if (ttsPlaying || !ttsQueue.length) return;
+    const clip = ttsQueue.shift();
+    ttsPlaying = true;
+    let audio;
+    try {
+      audio = new Audio(clip.url);
+    } catch (_) {
+      ttsPlaying = false;
+      return pumpTts();
+    }
+    audio.volume = clip.volume;
+    const finish = () => {
+      if (currentClip === audio) currentClip = null;
+      audio.onended = null;
+      audio.onerror = null;
+      ttsPlaying = false;
+      pumpTts();
+    };
+    audio.onended = finish;
+    audio.onerror = finish;
+    currentClip = audio;
+    const started = audio.play();
+    if (started && typeof started.catch === 'function') started.catch(finish);
+  }
+
   function playTts(url, volume) {
     if (!url) return;
-    try {
-      if (currentClip) { currentClip.pause(); currentClip = null; }
-      const audio = new Audio(url);
-      audio.volume = Math.max(0, Math.min(1, Number(volume) || 0.9));
-      audio.play().catch(() => {});
-      currentClip = audio;
-    } catch (_) {}
+    const level = Number(volume);
+    if (ttsQueue.length >= 8) ttsQueue.shift();
+    ttsQueue.push({ url, volume: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0.9 });
+    pumpTts();
   }
 
   // ---------------------------------------------------------------- readings
@@ -307,8 +335,11 @@
       }
       if (!msg.method) return;
 
-      if (msg.method === 'temple.state' || msg.method === 'tarot.state') {
-        applyState(msg.params && msg.params.tarot && !msg.params.shop ? { tarot: msg.params.tarot } : msg.params);
+      if (msg.method === 'temple.state') {
+        applyState(msg.params);
+      } else if (msg.method === 'tarot.state') {
+        // The broadcast snapshot is the settings object itself, with no wrapper.
+        applyState({ tarot: msg.params });
       } else if (msg.method === 'tarot.reading') {
         showReading(msg.params && msg.params.reading);
         if (msg.params && msg.params.tarot) applyState({ tarot: msg.params.tarot });
