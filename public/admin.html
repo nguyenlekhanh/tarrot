@@ -634,6 +634,7 @@
           </div>
           <button class="btn gold" id="btnLlmSaveSettings" style="align-self:flex-end">💾 Save manager</button>
           <button class="btn" id="btnLlmAdd" style="align-self:flex-end">➕ Add Provider</button>
+          <button class="btn" id="btnLlmOllamaPreset" style="align-self:flex-end" title="Fill the editor with the LAN Ollama defaults">🦙 Ollama preset</button>
           <button class="btn" id="btnLlmTestChain" style="align-self:flex-end">🧪 Test Primary + Fallbacks</button>
         </div>
         <div class="hint" id="llmManagerHint">Providers are tried in order. Authentication and invalid-model failures stop immediately; temporary failures may continue to the next configured provider.</div>
@@ -3207,9 +3208,11 @@
           : 'No AI request yet';
         $('ltAiError').textContent = ai.reason
           ? 'Last error: ' + ai.reason
-          : provider.lastError
-            ? 'Provider error: ' + provider.lastError
-            : 'No AI errors recorded.';
+          : ai.ok
+            ? 'Last AI request succeeded with ' + (ai.provider || 'the provider') + '.'
+            : provider.lastError
+              ? 'Provider error: ' + provider.lastError
+              : 'No AI errors recorded.';
       }
 
       function apply(next) {

@@ -302,6 +302,32 @@ test('AI sections keep the canonical topic labels and order', () => {
   assert.ok(merged.sections.every((section) => section.text.includes('one honest conversation')));
 });
 
+test('AI sections written as headings with the prose underneath are accepted', () => {
+  const cards = [card('The Star', false, 'Past'), card('Two of Cups', false, 'Present'), card('The Chariot', true, 'Future')];
+  const base = buildReadingResult(reading(cards, { theme: 'career', topicId: 'career_reading', topicLabel: 'Career Reading' }));
+  const labels = base.sections.map((section) => section.label);
+  const block = labels
+    .map((label) => `${label}:\nThe Star upright in the past and the Chariot reversed ahead ask for one honest conversation this week.`)
+    .join('\n');
+  const merged = applyAiInterpretation(base, block, { provider: 'Ollama', labels });
+  assert.equal(merged.source, 'ai');
+  assert.equal(merged.provider, 'Ollama');
+  assert.deepEqual(merged.sections.map((section) => section.label), labels);
+  assert.ok(merged.sections.every((section) => section.text.includes('one honest conversation')));
+});
+
+test('bold labels from a local model are normalised instead of rejected', () => {
+  const cards = [card('The Star', false, 'Past'), card('Two of Cups', false, 'Present'), card('The Chariot', true, 'Future')];
+  const base = buildReadingResult(reading(cards, { theme: 'family', topicId: 'family_reading', topicLabel: 'Family Reading' }));
+  const labels = base.sections.map((section) => section.label);
+  const bold = labels
+    .map((label) => `**${label}:** The Star upright in the past and the Chariot reversed ahead ask for one honest conversation this week.`)
+    .join('\n');
+  const merged = applyAiInterpretation(base, bold, { provider: 'Ollama', labels });
+  assert.equal(merged.source, 'ai');
+  assert.deepEqual(merged.sections.map((section) => section.label), labels);
+});
+
 test('tarot AI uses the provider manager directly and reports what happened', () => {
   const server = read('server.js');
   const start = server.indexOf('async function tarotAiNarration');

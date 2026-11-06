@@ -758,16 +758,22 @@ async function callReactiveLlm(job, analysis, settings, options = {}) {
         { role: 'user', content: 'Return the valid JSON connection-test greeting now.' }
       ]
     : buildReactivePrompt(job, analysis);
-  const body = {
-    model: provider.model,
+  // The provider manager owns the wire format: Ollama's native API takes
+  // options.num_predict/format instead of max_tokens/response_format.
+  // Reasoning is a per-provider setting; OpenRouter keeps its verified off
+  // setting and other providers use their documented default.
+  if (options.strict) {
+    messages.unshift({
+      role: 'system',
+      content: 'Return ONLY one valid JSON object with exactly the keys intent, response, seller, drink, confidence. seller must be "femaleSeller" or "maleSeller". response must be one short English sentence. confidence must be a number between 0 and 1. No markdown, no commentary.'
+    });
+  }
+  const body = llmProviders.buildChatBody(providerConfig, {
     messages,
-    temperature: 0.7,
-    max_tokens: providerConfig.maxTokens || (options.connectionTest ? 600 : Math.max(600, Math.ceil(settings.maxResponseLength / 3) + 120))
-  };
-  if (providerConfig.jsonMode) body.response_format = { type: 'json_object' };
-  // Reasoning is a per-provider setting. OpenRouter keeps its verified off
-  // setting; other providers use their documented default unless configured.
-  if (providerConfig.reasoningMode === 'off') body.reasoning = { enabled: false };
+    temperature: options.strict ? 0.3 : 0.7,
+    json: providerConfig.jsonMode,
+    maxTokens: providerConfig.maxTokens || (options.connectionTest ? 600 : Math.max(600, Math.ceil(settings.maxResponseLength / 3) + 120))
+  });
   let res;
   try {
     res = await fetch(provider.endpoint, {
@@ -815,18 +821,15 @@ async function callReactiveLlm(job, analysis, settings, options = {}) {
     reactiveProviderLastError = message;
     throw llmRequestError(message, { retryable: true, httpStatus: res.status, providerId: provider.id });
   }
-  const choice = data && Array.isArray(data.choices) ? data.choices[0] : null;
-  const message = choice && choice.message ? choice.message : data && data.message ? data.message : {};
-  const content = llmContentText(message.content);
+  const parsedMessage = llmProviders.chatMessage(providerConfig, data);
+  const content = llmContentText(parsedMessage.content);
   // Some reasoning gateways put the final JSON in reasoning_content while
   // leaving content empty. Try it only as a final-answer candidate; raw hidden
   // reasoning is never spoken or returned.
-  const reasoning = llmContentText(
-    message.reasoning_content || message.reasoning || (choice && choice.reasoning_content) || data.reasoning_content
-  );
+  const reasoning = llmContentText(parsedMessage.reasoning);
   const candidates = [...new Set([content, reasoning].filter((value) => String(value || '').trim()))];
   if (!candidates.length) {
-    const finish = choice ? choice.finish_reason : '';
+    const finish = (data && (data.done_reason || (Array.isArray(data.choices) && data.choices[0] && data.choices[0].finish_reason))) || '';
     const messageText = `${provider.name} returned no completion message${finish ? ` (finish reason: ${finish})` : ''}`;
     reactiveProviderLastError = messageText;
     throw llmRequestError(messageText, { retryable: true, httpStatus: res.status, providerId: provider.id });
@@ -901,8 +904,13 @@ async function generateReactivePlan(job, analysis, flags = {}) {
       attempts += 1;
       const started = Date.now();
       try {
-        const payload = await callReactiveLlm(job, analysis, settings, { providerId: providerConfig.id });
+        let payload = await callReactiveLlm(job, analysis, settings, { providerId: providerConfig.id });
         suggestion = validateLlmReply(payload, analysis, settings);
+        if (!suggestion) {
+          // One stricter retry: small local models wobble on the JSON contract.
+          payload = await callReactiveLlm(job, analysis, settings, { providerId: providerConfig.id, strict: true });
+          suggestion = validateLlmReply(payload, analysis, settings);
+        }
         if (!suggestion) {
           throw llmRequestError(`${provider.name} response failed validation`, {
             retryable: true,
@@ -1403,48 +1411,9 @@ async function fetchLlmModels(id) {
     return { ok: false, notTested: true, error: `${provider.name} API key is not configured. Marked Not Tested.`, provider: publicProvider };
   }
   const keyInfo = llmProviders.keyFor(provider);
-  const headers = { ...(provider.headers || {}), Accept: 'application/json' };
-  if (keyInfo.key) headers.Authorization = `Bearer ${keyInfo.key}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), Math.min(provider.timeoutMs || 15000, 15000));
-  const started = Date.now();
-  try {
-    const res = await fetch(llmProviders.modelsEndpoint(provider), { method: 'GET', headers, signal: controller.signal });
-    const raw = await res.text();
-    if (!res.ok) {
-      let detail = '';
-      try {
-        const data = JSON.parse(raw);
-        detail = data && data.error && data.error.message ? String(data.error.message) : '';
-      } catch (_) {}
-      const message = reactiveProviderHttpMessage(publicProvider, res.status, detail ? `(${redactLlmText(detail, keyInfo.key).slice(0, 160)})` : '');
-      return { ok: false, httpStatus: res.status, latencyMs: Date.now() - started, error: message, provider: publicProvider };
-    }
-    const data = JSON.parse(raw);
-    const source = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : Array.isArray(data.models) ? data.models : [];
-    const models = source
-      .map((model) => typeof model === 'string' ? model : model && (model.id || model.name))
-      .filter(Boolean)
-      .map((model) => String(model).slice(0, 120))
-      .slice(0, 200);
-    return {
-      ok: true,
-      httpStatus: res.status,
-      latencyMs: Date.now() - started,
-      models,
-      count: models.length,
-      currentModelAvailable: models.includes(provider.model),
-      timeout: false,
-      provider: llmProviders.publicProvider(provider)
-    };
-  } catch (err) {
-    const message = err && err.name === 'AbortError'
-      ? `${provider.name} model list timed out`
-      : `${provider.name} is unreachable for model listing`;
-    return { ok: false, error: message, timeout: Boolean(err && err.name === 'AbortError'), provider: publicProvider };
-  } finally {
-    clearTimeout(timeout);
-  }
+  const result = await llmProviders.listModels(provider, { timeoutMs: provider.timeoutMs || 15000 });
+  if (!result.ok && result.error) result.error = redactLlmText(result.error, keyInfo.key);
+  return { ...result, provider: llmProviders.publicProvider(provider) };
 }
 
 function llmManagerResult(result = {}) {
@@ -6346,6 +6315,9 @@ async function tarotAiNarration(reading, result) {
     'Drawn cards (position, card, orientation, meaning):',
     cardLines
   ].join('\n');
+  // Small local models drop the labels unless the exact line format is stated
+  // as a hard requirement with an example.
+  const formatRule = `\n\nOutput format is mandatory: exactly ${sectionLabels.length} lines, one per section, in this order. Each line starts with the label, a colon, then one or two sentences. No preamble, no summary, no markdown. Example: ${sectionLabels[0] || 'Section'}: one or two sentences about the drawn cards.`;
   const systemPrompt =
     'You are the Mystic Witch, an ancient tarot reader on a live stream. ' +
     'Write exactly one line for EACH section label the user lists, in this exact format: "Section Label: one or two sentences". ' +
@@ -6365,7 +6337,7 @@ async function tarotAiNarration(reading, result) {
     }
     const key = llmProviders.keyFor(providerConfig).key;
     // Six prose sections need more than the seller's short-reply budget.
-    const timeoutMs = Math.min(30000, Math.max(15000, Number(providerConfig.timeoutMs) || 0));
+    const timeoutMs = Math.min(60000, Math.max(15000, Number(providerConfig.timeoutMs) || 0));
     const started = Date.now();
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -6377,15 +6349,14 @@ async function tarotAiNarration(reading, result) {
           'Content-Type': 'application/json',
           ...(key ? { Authorization: `Bearer ${key}` } : {})
         },
-        body: JSON.stringify({
-          model: providerConfig.model,
+        body: JSON.stringify(llmProviders.buildChatBody(providerConfig, {
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt }
+            { role: 'user', content: prompt + formatRule }
           ],
           temperature: 0.9,
-          max_tokens: Math.min(2400, Math.max(900, Number(providerConfig.maxTokens) || 1200))
-        }),
+          maxTokens: Math.min(2400, Math.max(900, Number(providerConfig.maxTokens) || 1200))
+        })),
         signal: controller.signal
       });
       const raw = await response.text();
@@ -6407,9 +6378,8 @@ async function tarotAiNarration(reading, result) {
         continue;
       }
       const data = JSON.parse(raw);
-      const text = data && data.choices && data.choices[0] && data.choices[0].message
-        ? String(data.choices[0].message.content || '').trim()
-        : '';
+      // Handles Ollama native ({message:{content}}) and OpenAI ({choices:[…]}).
+      const text = String(llmProviders.chatMessage(providerConfig, data).content || '').trim();
       if (!text) {
         failures.push(`${providerConfig.name} returned an empty answer`);
         llmProviders.recordAttempt(providerConfig.id, {
@@ -6479,6 +6449,93 @@ async function tarotAiNarration(reading, result) {
       clearTimeout(timer);
     }
   }
+  // Small local models occasionally name a card that was not drawn. Give the
+  // first usable provider ONE explicit repair attempt (with the exact drawn
+  // list) before the built-in library takes over. Never loop the whole chain.
+  const repairable = failures.length > 0 && /unknown_card|missing_sections|orientation_conflict/.test(failures[failures.length - 1]);
+  const retryProvider = candidates.find((provider) => llmProviders.isConfigured(provider));
+  if (repairable && retryProvider) {
+    const drawnList = cards
+      .map((card) => `${card.name} ${card.reversed ? '(reversed)' : '(upright)'} in ${card.position}`)
+      .join('; ');
+    const repairNote = `\n\nYour previous answer was rejected: ${failures[failures.length - 1]}. Use ONLY these drawn cards: ${drawnList}. Never name any other card, never change a card name, and never say reversed for an upright card. Reply with exactly ${sectionLabels.length} lines in the required format.`;
+    const retryKey = llmProviders.keyFor(retryProvider).key;
+    const retryTimeoutMs = Math.min(60000, Math.max(15000, Number(retryProvider.timeoutMs) || 0));
+    const retryStarted = Date.now();
+    const retryController = new AbortController();
+    const retryTimer = setTimeout(() => retryController.abort(), retryTimeoutMs);
+    try {
+      const retryResponse = await fetch(llmProviders.endpoint(retryProvider), {
+        method: 'POST',
+        headers: {
+          ...(retryProvider.headers || {}),
+          'Content-Type': 'application/json',
+          ...(retryKey ? { Authorization: `Bearer ${retryKey}` } : {})
+        },
+        body: JSON.stringify(llmProviders.buildChatBody(retryProvider, {
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: prompt + formatRule + repairNote }
+          ],
+          temperature: 0.5,
+          maxTokens: Math.min(2400, Math.max(900, Number(retryProvider.maxTokens) || 1200))
+        })),
+        signal: retryController.signal
+      });
+      const retryRaw = await retryResponse.text();
+      const retryData = JSON.parse(retryRaw);
+      const retryText = retryResponse.ok
+        ? String(llmProviders.chatMessage(retryProvider, retryData).content || '').trim()
+        : '';
+      if (retryText) {
+        const repaired = applyAiInterpretation(result, retryText, {
+          provider: retryProvider.name,
+          labels: sectionLabels
+        });
+        if (repaired && repaired.source === 'ai') {
+          const status = recordTarotAiStatus({
+            ok: true,
+            enabled: true,
+            source: 'ai',
+            provider: retryProvider.name,
+            providerId: retryProvider.id,
+            model: retryProvider.model,
+            httpStatus: retryResponse.status,
+            latencyMs: Date.now() - retryStarted,
+            sections: repaired.sections.length,
+            reason: ''
+          });
+          llmProviders.recordAttempt(retryProvider.id, {
+            ok: true,
+            httpStatus: retryResponse.status,
+            latencyMs: status.latencyMs,
+            model: retryProvider.model
+          });
+          return {
+            ok: true,
+            text: repaired.oracleMessage,
+            provider: repaired.provider,
+            result: repaired,
+            model: retryProvider.model,
+            httpStatus: retryResponse.status,
+            latencyMs: status.latencyMs
+          };
+        }
+        llmProviders.recordAttempt(retryProvider.id, {
+          ok: false,
+          httpStatus: retryResponse.status,
+          latencyMs: Date.now() - retryStarted,
+          error: `retry: ${(repaired && repaired.aiError) || 'invalid_ai_text'}`,
+          model: retryProvider.model
+        });
+      }
+    } catch (_) {
+      // Best effort only: the built-in library already covers this failure.
+    } finally {
+      clearTimeout(retryTimer);
+    }
+  }
+
   const primary = candidates[0] || {};
   const reason = sanitizeAiReason(failures.join(' | ')) || 'llm_unavailable';
   recordTarotAiStatus({

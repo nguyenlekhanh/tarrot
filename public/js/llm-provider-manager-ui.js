@@ -310,6 +310,39 @@ async function llmFetchEditorModels() {
   }
 }
 
+// Local Ollama needs no key and speaks OpenAI-compatible chat at /v1. The
+// preset only fills the form; nothing is saved until Save Provider is pressed.
+function llmApplyOllamaPreset() {
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = String(value);
+  };
+  set('llmFormId', '');
+  set('llmFormName', 'Ollama');
+  set('llmFormBase', 'http://10.0.0.142:11434');
+  set('llmFormPath', '/chat/completions');
+  set('llmFormModel', 'llama3.2:latest');
+  set('llmFormTimeout', 45000);
+  set('llmFormMaxTokens', 1800);
+  set('llmFormReasoning', 'auto');
+  set('llmFormHeaders', '');
+  const check = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = Boolean(value);
+  };
+  check('llmFormJson', true);
+  check('llmFormRequiresKey', false);
+  check('llmFormEnabled', true);
+  const editor = document.getElementById('llmProviderEditor');
+  if (editor) editor.open = true;
+  const title = document.getElementById('llmEditorTitle');
+  if (title) title.textContent = '🦙 Ollama (local) — new provider';
+  const models = document.getElementById('llmModelOptions');
+  if (models) { models.hidden = true; models.innerHTML = ''; }
+  llmSetEditorMessage('Ollama preset filled. Save Provider, then Fetch Models to load the installed models from /api/tags.', false);
+  if (editor) editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 (function wireLlmManager() {
   const grid = document.getElementById('llmProviderGrid');
   if (grid) {
@@ -321,6 +354,7 @@ async function llmFetchEditorModels() {
     });
   }
   document.getElementById('btnLlmAdd')?.addEventListener('click', () => llmOpenEditor(''));
+  document.getElementById('btnLlmOllamaPreset')?.addEventListener('click', llmApplyOllamaPreset);
   document.getElementById('btnOpenLlmManager')?.addEventListener('click', () => {
     document.getElementById('llmManagerSection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

@@ -1127,22 +1127,59 @@ function validateAiText(text, reading) {
  * still accepted as a single Oracle's Message section, so a terse model degrades
  * gracefully instead of losing its answer.
  */
-function parseAiSections(text) {
-  const lines = String(text || '')
+// Local models often wrap labels in **bold**, prefix them with # or -, or put
+// the label on its own line with the prose underneath. Formatting is normalised
+// away before validation; cards, orientation and section labels stay strict.
+function normalizeAiFormatting(text) {
+  return String(text || '')
+    .split('\n')
+    .map((line) => line
+      .replace(/^\s*#{1,6}\s*/, '')
+      .replace(/^\s*[-•*]\s+/, '')
+      .replace(/\*\*/g, '')
+      .replace(/__/g, '')
+      .trimEnd())
+    .join('\n')
+    .trim();
+}
+
+function parseAiSections(text, expectedLabels = []) {
+  const labelKey = (value) => String(value || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+  const expected = new Map();
+  for (const label of Array.isArray(expectedLabels) ? expectedLabels : []) {
+    if (label) expected.set(labelKey(label), String(label));
+  }
+  const lines = normalizeAiFormatting(text)
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean);
   const sections = [];
+  let current = null;
+  const flush = () => {
+    if (current && current.label.length >= 3 && current.text.length >= 20) sections.push(current);
+    current = null;
+  };
   for (const line of lines) {
-    const match = line.match(/^([A-Z][A-Za-z' ]{2,40}):\s*(.+)$/);
-    if (!match) continue;
-    const label = clean(match[1], 40);
-    const body = clean(match[2], MAX_SECTION_CHARS);
-    if (label.length < 3 || body.length < 20) continue;
-    sections.push({ key: label.toLowerCase().replace(/[^a-z]+/g, '-'), label, text: body, cards: [] });
+    const match = line.match(/^([A-Z][A-Za-z' ]{2,40}):\s*(.*)$/);
+    // With expected labels, only a known label starts a section, so a stray
+    // "Here is what I see: …" sentence is not mistaken for a heading.
+    const isHeading = Boolean(match) && (!expected.size || expected.has(labelKey(match[1])));
+    if (isHeading) {
+      flush();
+      const label = clean(match[1], 40);
+      current = {
+        key: label.toLowerCase().replace(/[^a-z]+/g, '-'),
+        label,
+        text: clean(match[2], MAX_SECTION_CHARS),
+        cards: []
+      };
+      continue;
+    }
+    if (current) current.text = clean(`${current.text} ${line}`, MAX_SECTION_CHARS);
   }
+  flush();
   if (sections.length >= 3) return sections;
-  const whole = clean(text, 1600);
+  const whole = clean(normalizeAiFormatting(text), 1600);
   return whole ? [{ key: 'message', label: "Oracle's Message", text: whole, cards: [] }] : [];
 }
 
@@ -1154,11 +1191,13 @@ function parseAiSections(text) {
  */
 function applyAiInterpretation(result, aiText, options = {}) {
   if (!result) return null;
-  const checked = validateAiText(aiText, {
+  // Models may bold labels or put prose under a heading. Normalise that first,
+  // then keep the strict checks (length, invented cards, orientation) intact.
+  const checked = validateAiText(normalizeAiFormatting(aiText), {
     cards: result.cards.map((card) => ({ name: card.name, reversed: card.reversed }))
   });
   if (!checked.ok) return { ...result, aiError: checked.reason };
-  const parsed = parseAiSections(checked.text);
+  const parsed = parseAiSections(checked.text, Array.isArray(options.labels) ? options.labels : []);
   if (!parsed.length) return { ...result, aiError: 'empty_sections' };
   const expected = Array.isArray(options.labels) ? options.labels.filter(Boolean) : [];
   let sections = parsed;

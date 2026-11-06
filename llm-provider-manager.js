@@ -37,6 +37,23 @@ function safeUrl(value) {
   }
 }
 
+// Ollama runs on the machine itself or on the LAN, so a key is not part of the
+// normal setup. Private hosts are treated the same way; a key is still used if
+// one is configured, it is simply not required to consider the provider ready.
+const LOCAL_HOST_RE = /^https?:\/\/(127\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost|\[::1\]|0\.0\.0\.0|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|[a-z0-9-]+\.local)(?::\d+)?(?:\/|$)/i;
+
+function isLocalHostUrl(value) {
+  return LOCAL_HOST_RE.test(String(value || ''));
+}
+
+// A provider pointed at Ollama's native API (/api/chat, /api/tags) speaks a
+// different request and response shape than the OpenAI-compatible endpoints.
+function isOllamaNative(provider) {
+  if (!provider) return false;
+  const endpoint = String(provider.endpointPath || '');
+  return endpoint.startsWith('/api/') || provider.id === 'ollama' && endpoint === '';
+}
+
 function endpointPath(value) {
   let raw = String(value == null ? DEFAULT_ENDPOINT_PATH : value).trim();
   if (!raw) raw = DEFAULT_ENDPOINT_PATH;
@@ -291,17 +308,23 @@ class LlmProviderManager {
     const baseAndPath = splitBaseAndPath(raw.baseUrl, raw.endpointPath);
     const pathValue = baseAndPath.endpointPath;
     if (!pathValue) return null;
-    const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)(?::|\/|$)/i.test(baseAndPath.baseUrl);
+    let baseUrl = baseAndPath.baseUrl;
+    if (id === 'ollama') {
+      // Native /api/* endpoints live at the root; OpenAI-compatible chat needs /v1.
+      if (pathValue.startsWith('/api/')) baseUrl = baseUrl.replace(/\/v1$/i, '');
+      else if (pathValue === '/chat/completions' && !/\/v1$/i.test(baseUrl)) baseUrl = `${baseUrl}/v1`;
+    }
+    const isLocal = id === 'ollama' || isLocalHostUrl(baseUrl);
     return {
       id,
       name: cleanName(raw.name, id),
-      baseUrl: baseAndPath.baseUrl,
+      baseUrl,
       endpointPath: pathValue,
       model: cleanModel(raw.model),
       enabled: raw.enabled !== false,
-      requiresKey: raw.requiresKey !== false && id !== 'ollama' && !isLocal ? true : raw.requiresKey === true,
-      timeoutMs: integer(raw.timeoutMs, id === 'tokenrouter' ? 15000 : 8000, 3000, 60000),
-      maxTokens: integer(raw.maxTokens, id === 'tokenrouter' ? 1200 : 600, 128, 8000),
+      requiresKey: isLocal ? false : raw.requiresKey !== false,
+      timeoutMs: integer(raw.timeoutMs, id === 'ollama' ? 45000 : id === 'tokenrouter' ? 15000 : 8000, 3000, 120000),
+      maxTokens: integer(raw.maxTokens, id === 'ollama' ? 1800 : id === 'tokenrouter' ? 1200 : 600, 128, 8000),
       jsonMode: raw.jsonMode !== false,
       reasoningMode: REASONING_MODES.includes(raw.reasoningMode) ? raw.reasoningMode : (id === 'openrouter' ? 'off' : 'auto'),
       headers: safeHeaders(raw.headers),
@@ -407,7 +430,107 @@ class LlmProviderManager {
 
   modelsEndpoint(provider) {
     if (!provider || !provider.baseUrl) return '';
+    if (isOllamaNative(provider)) return `${provider.baseUrl}/api/tags`;
     return `${provider.baseUrl}/models`;
+  }
+
+  // Builds the exact body the provider expects: Ollama's native API uses
+  // options.num_predict/format, everything else uses the OpenAI shape.
+  buildChatBody(provider, { messages, maxTokens = 600, temperature = 0.7, json = false } = {}) {
+    const limit = integer(maxTokens, 600, 1, 8000);
+    if (isOllamaNative(provider)) {
+      const body = {
+        model: provider.model,
+        messages: Array.isArray(messages) ? messages : [],
+        stream: false,
+        options: { num_predict: limit, temperature: Number(temperature) }
+      };
+      if (json) body.format = 'json';
+      return body;
+    }
+    const body = {
+      model: provider.model,
+      messages: Array.isArray(messages) ? messages : [],
+      temperature: Number(temperature),
+      max_tokens: limit
+    };
+    if (json) body.response_format = { type: 'json_object' };
+    if (provider.reasoningMode === 'off') body.reasoning = { enabled: false };
+    return body;
+  }
+
+  // Reads the assistant text (and hidden reasoning, when a gateway sends it)
+  // from either response shape, without letting reasoning leak as an answer.
+  chatMessage(provider, data) {
+    if (!data || typeof data !== 'object') return { content: '', reasoning: '' };
+    if (isOllamaNative(provider)) {
+      const message = data.message && typeof data.message === 'object' ? data.message : {};
+      return { content: message.content || '', reasoning: message.reasoning || data.reasoning || '' };
+    }
+    const choice = Array.isArray(data.choices) ? data.choices[0] : null;
+    const message = choice && choice.message ? choice.message : data.message && typeof data.message === 'object' ? data.message : {};
+    return {
+      content: message.content || '',
+      reasoning: message.reasoning_content || message.reasoning || (choice && choice.reasoning_content) || data.reasoning_content || ''
+    };
+  }
+
+  // Model discovery for both API families: /v1/models for OpenAI-compatible
+  // servers and /api/tags for Ollama's native API.
+  async listModels(provider, { timeoutMs = 15000 } = {}) {
+    if (!provider || !provider.baseUrl) return { ok: false, error: 'Provider base URL is missing.' };
+    const keyInfo = this.keyFor(provider);
+    if (provider.requiresKey && !keyInfo.key) {
+      return { ok: false, notTested: true, error: `${provider.name} API key is not configured. Marked Not Tested.` };
+    }
+    const headers = { ...(provider.headers || {}), Accept: 'application/json' };
+    if (keyInfo.key) headers.Authorization = `Bearer ${keyInfo.key}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), Math.min(Number(timeoutMs) || 15000, 15000));
+    const started = Date.now();
+    try {
+      const res = await fetch(this.modelsEndpoint(provider), { method: 'GET', headers, signal: controller.signal });
+      const raw = await res.text();
+      if (!res.ok) {
+        let detail = '';
+        try {
+          const data = JSON.parse(raw);
+          detail = data && data.error ? String(data.error.message || data.error) : '';
+        } catch (_) {}
+        return {
+          ok: false,
+          httpStatus: res.status,
+          latencyMs: Date.now() - started,
+          error: `${provider.name} model list failed: HTTP ${res.status}${detail ? ` (${detail.slice(0, 160)})` : ''}`
+        };
+      }
+      const data = JSON.parse(raw);
+      const source = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : Array.isArray(data.models) ? data.models : [];
+      const models = source
+        .map((model) => (typeof model === 'string' ? model : model && (model.id || model.name)))
+        .filter(Boolean)
+        .map((model) => String(model).slice(0, 120))
+        .slice(0, 200);
+      return {
+        ok: true,
+        httpStatus: res.status,
+        latencyMs: Date.now() - started,
+        models,
+        count: models.length,
+        currentModelAvailable: models.includes(provider.model),
+        timeout: false
+      };
+    } catch (err) {
+      const timedOut = Boolean(err && err.name === 'AbortError');
+      return {
+        ok: false,
+        timeout: timedOut,
+        latencyMs: Date.now() - started,
+        error: timedOut ? `${provider.name} model list timed out` : `${provider.name} is unreachable for model listing`
+      };
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   _healthEntry(id) {
@@ -519,7 +642,9 @@ class LlmProviderManager {
       keyConfigured: Boolean(key.key),
       keySource: key.source,
       keyEnv: key.envName || '',
-      keyMask: key.key ? '•••••••• configured' : provider.requiresKey ? 'Missing' : 'Not required',
+      // A keyless provider (local Ollama, LAN host) must never look like it
+      // needs a key just because an old key happens to be stored.
+      keyMask: provider.requiresKey === false ? 'Not required' : key.key ? '•••••••• configured' : 'Missing',
       health: health.status,
       ...health,
       createdAt: provider.createdAt,
@@ -715,5 +840,7 @@ module.exports = {
   TOKENROUTER_BASE_URL,
   TOKENROUTER_MODEL,
   safeHeaders,
-  endpointPath
+  endpointPath,
+  isLocalHostUrl,
+  isOllamaNative
 };
