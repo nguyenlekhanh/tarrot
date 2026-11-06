@@ -55,6 +55,10 @@ html, body {
   box-shadow: 0 0 120px rgba(0, 0, 0, 0.9);
 }
 
+#destinyColumns {
+  font-size:  15px;
+}
+
 /* ---------------- chamber ---------------- */
 .chamber {
   position: absolute;

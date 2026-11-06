@@ -1,192 +1,14 @@
 {
-  "customersServed": 46,
-  "drinksSold": 46,
-  "totalTips": 513.25,
-  "likes": 385,
-  "follows": 11,
-  "comments": 24,
-  "gifts": 6,
-  "totalCoins": 150,
-  "recentGifts": [
-    {
-      "id": "gift_1793682957120_5768",
-      "user": "Test Viewer",
-      "uniqueId": "Test Viewer",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Mystic Rose",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T05:15:57.120Z"
-    },
-    {
-      "id": "gift_1793682954624_e2yp",
-      "user": "Test Viewer",
-      "uniqueId": "Test Viewer",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Mystic Rose",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T05:15:54.624Z"
-    },
-    {
-      "id": "gift_1793682899373_c2v4",
-      "user": "Mia Carter",
-      "uniqueId": "Mia Carter",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Grand Ceremony",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T05:14:59.373Z"
-    },
-    {
-      "id": "gift_1793682862139_6skw",
-      "user": "Mia Carter",
-      "uniqueId": "Mia Carter",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Grand Ceremony",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T05:14:22.139Z"
-    },
-    {
-      "id": "gift_1793682790807_vxbs",
-      "user": "Mia Carter",
-      "uniqueId": "Mia Carter",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Grand Ceremony",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T05:13:10.807Z"
-    },
-    {
-      "id": "gift_1793680275242_xh0t",
-      "user": "Gift Probe",
-      "uniqueId": "Gift Probe",
-      "avatar": "",
-      "giftId": "coin_25",
-      "giftName": "Grand Ceremony",
-      "giftIcon": "/assets/gift_icon/grandCeremony.webp",
-      "giftCoins": 25,
-      "coins": 25,
-      "units": 1,
-      "drinkId": "lemonade",
-      "drinkName": "Fresh Lemonade",
-      "drinkImage": "/assets/drinks/Lemonade.jpg",
-      "at": "2026-11-03T04:31:15.242Z"
-    }
-  ],
-  "supporters": {
-    "Mia Carter": {
-      "name": "Mia Carter",
-      "uniqueId": "Mia Carter",
-      "avatar": "",
-      "tips": 337.5,
-      "coins": 75,
-      "drinks": 37,
-      "gifts": 3,
-      "lastNote": "Chat order: Fresh Lemonade"
-    },
-    "admin.like.batch.test": {
-      "name": "Like Batch Test",
-      "uniqueId": "admin.like.batch.test",
-      "avatar": "",
-      "tips": 80,
-      "coins": 0,
-      "drinks": 0,
-      "gifts": 0,
-      "lastNote": "Sent some love to the shop"
-    },
-    "Guest": {
-      "name": "Guest",
-      "uniqueId": "Guest",
-      "avatar": "",
-      "tips": 24,
-      "coins": 0,
-      "drinks": 2,
-      "gifts": 0,
-      "lastNote": "Followed the shop"
-    },
-    "Probe Follower": {
-      "name": "Probe Follower",
-      "uniqueId": "Probe Follower",
-      "avatar": "",
-      "tips": 12,
-      "coins": 0,
-      "drinks": 1,
-      "gifts": 0,
-      "lastNote": "Followed the shop"
-    },
-    "Gift Probe": {
-      "name": "Gift Probe",
-      "uniqueId": "Gift Probe",
-      "avatar": "",
-      "tips": 7.5,
-      "coins": 25,
-      "drinks": 1,
-      "gifts": 1,
-      "lastNote": "25 coins"
-    },
-    "Stage Banner Probe": {
-      "name": "Stage Banner Probe",
-      "uniqueId": "Stage Banner Probe",
-      "avatar": "",
-      "tips": 12,
-      "coins": 0,
-      "drinks": 1,
-      "gifts": 0,
-      "lastNote": "Followed the shop"
-    },
-    "A New Soul": {
-      "name": "A New Soul",
-      "uniqueId": "A New Soul",
-      "avatar": "",
-      "tips": 24,
-      "coins": 0,
-      "drinks": 2,
-      "gifts": 0,
-      "lastNote": "Followed the shop"
-    },
-    "Test Viewer": {
-      "name": "Test Viewer",
-      "uniqueId": "Test Viewer",
-      "avatar": "",
-      "tips": 16.25,
-      "coins": 50,
-      "drinks": 2,
-      "gifts": 2,
-      "lastNote": "25 coins"
-    }
-  },
+  "customersServed": 0,
+  "drinksSold": 0,
+  "totalTips": 0,
+  "likes": 0,
+  "follows": 0,
+  "comments": 0,
+  "gifts": 0,
+  "totalCoins": 0,
+  "recentGifts": [],
+  "supporters": {},
   "likeBatching": {
     "enabled": true,
     "windowSeconds": 5,
@@ -893,6 +715,398 @@
     ],
     "history": [
       {
+        "runId": "run_1793947685134_w8g3",
+        "conversationId": "reading_5",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:48:05.134Z",
+        "endedAt": "2026-11-06T06:48:05.134Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Send your question, and I will let the cards answer in their own slow language."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793947628980_25zp",
+        "conversationId": "welcome_1",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:47:08.980Z",
+        "endedAt": "2026-11-06T06:47:08.980Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome back to the circle. The candles are lit and the deck is warm."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793947425334_oh2q",
+        "conversationId": "tarot_2",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:43:45.334Z",
+        "endedAt": "2026-11-06T06:43:45.334Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The Tower frightens people, but it only removes what was already falling."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793947229707_t3rd",
+        "conversationId": "engagement_5",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:40:29.707Z",
+        "endedAt": "2026-11-06T06:40:29.707Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "What is one thing you are ready to leave behind this month?"
+          }
+        ]
+      },
+      {
+        "runId": "run_1793947166098_9vao",
+        "conversationId": "welcome_1",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:39:26.098Z",
+        "endedAt": "2026-11-06T06:39:26.098Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome back to the circle. The candles are lit and the deck is warm."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793946632728_8v43",
+        "conversationId": "ambient_2",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:30:32.729Z",
+        "endedAt": "2026-11-06T06:30:32.729Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The room is quiet tonight, the way it always is before a message arrives."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793946572584_ns09",
+        "conversationId": "welcome_4",
+        "category": "welcome",
+        "status": "failed",
+        "startedAt": "2026-11-06T06:29:32.584Z",
+        "endedAt": "2026-11-06T06:29:32.584Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome, wanderer. Whatever brought you here brought you at the right time."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945255324_ezl3",
+        "conversationId": "story_6",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:07:35.324Z",
+        "endedAt": "2026-11-06T06:07:35.324Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "A crow learned a single word and refused to use it. The village waited years, and the crow enjoyed every moment."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945208539_juk6",
+        "conversationId": "reading_4",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:06:48.540Z",
+        "endedAt": "2026-11-06T06:06:48.540Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "A reading is not a verdict. It is a lantern held at a different angle."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945161350_k02y",
+        "conversationId": "engagement_4",
+        "category": "engagement",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:06:01.351Z",
+        "endedAt": "2026-11-06T06:06:01.351Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Some of you are here for the reading. Some of you are here for the quiet. Both are welcome."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945114355_m8nc",
+        "conversationId": "ambient_1",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:05:14.355Z",
+        "endedAt": "2026-11-06T06:05:14.355Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The candles are lit and the cards are resting. We begin whenever you are ready."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945067155_t6tz",
+        "conversationId": "tarot_5",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:04:27.155Z",
+        "endedAt": "2026-11-06T06:04:27.155Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The Hermit carries a lamp, not a torch. Some truths only survive a small light."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793945016188_5myi",
+        "conversationId": "tarot_4",
+        "category": "tarot",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:03:36.189Z",
+        "endedAt": "2026-11-06T06:03:36.189Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The Star asks for nothing but your attention. That is why it is so often missed."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944970831_44z1",
+        "conversationId": "reading_1",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:02:50.832Z",
+        "endedAt": "2026-11-06T06:02:50.832Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "If a question has been circling you for days, a reading may give it somewhere to land."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944911234_6kpv",
+        "conversationId": "ambient_5",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:01:51.235Z",
+        "endedAt": "2026-11-06T06:01:51.235Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The smoke curls upward and forgets where it was going. I like that about it."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944893477_6qwh",
+        "conversationId": "ambient_2",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:01:33.477Z",
+        "endedAt": "2026-11-06T06:01:33.477Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The room is quiet tonight, the way it always is before a message arrives."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944864633_bdzg",
+        "conversationId": "follow_4",
+        "category": "follow",
+        "status": "failed",
+        "startedAt": "2026-11-06T06:01:04.634Z",
+        "endedAt": "2026-11-06T06:01:04.634Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "@Lisa lifebycats has bound their thread to ours. Welcome to the weave."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944847267_gl4j",
+        "conversationId": "story_6",
+        "category": "story",
+        "status": "failed",
+        "startedAt": "2026-11-06T06:00:47.267Z",
+        "endedAt": "2026-11-06T06:00:47.267Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "A crow learned a single word and refused to use it. The village waited years, and the crow enjoyed every moment."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944801946_ud4y",
+        "conversationId": "welcome_4",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-06T06:00:01.946Z",
+        "endedAt": "2026-11-06T06:00:01.946Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome, wanderer. Whatever brought you here brought you at the right time."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944799402_zysa",
+        "conversationId": "story_1",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:59:59.402Z",
+        "endedAt": "2026-11-06T05:59:59.402Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944756516_4zb7",
+        "conversationId": "story_1",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:59:16.516Z",
+        "endedAt": "2026-11-06T05:59:16.516Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944706480_zhe1",
+        "conversationId": "story_5",
+        "category": "story",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:58:26.480Z",
+        "endedAt": "2026-11-06T05:58:26.480Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The fortune teller kept one card face down her whole life. Her last words were, not yet."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944658991_1a5j",
+        "conversationId": "reading_3",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:57:38.991Z",
+        "endedAt": "2026-11-06T05:57:38.991Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "I can draw for you whenever you are ready. The deck does not judge the question."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944612239_2o16",
+        "conversationId": "reading_4",
+        "category": "reading",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:56:52.239Z",
+        "endedAt": "2026-11-06T05:56:52.239Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "A reading is not a verdict. It is a lantern held at a different angle."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944554735_cxz6",
+        "conversationId": "ambient_2",
+        "category": "ambient",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:55:54.735Z",
+        "endedAt": "2026-11-06T05:55:54.735Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "The room is quiet tonight, the way it always is before a message arrives."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944475875_362x",
+        "conversationId": "welcome_3",
+        "category": "welcome",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:54:35.875Z",
+        "endedAt": "2026-11-06T05:54:35.875Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Come in, sit close. The room is quiet and the cards are listening."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944429180_al9e",
+        "conversationId": "welcome_4",
+        "category": "welcome",
+        "status": "failed",
+        "startedAt": "2026-11-06T05:53:49.180Z",
+        "endedAt": "2026-11-06T05:53:49.180Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome, wanderer. Whatever brought you here brought you at the right time."
+          }
+        ]
+      },
+      {
+        "runId": "run_1793944337580_lq11",
+        "conversationId": "greeting_5",
+        "category": "greeting",
+        "status": "spoken",
+        "startedAt": "2026-11-06T05:52:17.580Z",
+        "endedAt": "2026-11-06T05:52:17.580Z",
+        "lines": [
+          {
+            "speaker": "oracle",
+            "text": "Welcome, friend. Whatever you carry in, you may set it down here."
+          }
+        ]
+      },
+      {
         "runId": "run_1793719547677_a4c2",
         "conversationId": "welcome_4",
         "category": "welcome",
@@ -919,398 +1133,6 @@
             "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
           }
         ]
-      },
-      {
-        "runId": "run_1793719455523_js1a",
-        "conversationId": "engagement_4",
-        "category": "engagement",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:24:15.523Z",
-        "endedAt": "2026-11-03T15:24:15.523Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Some of you are here for the reading. Some of you are here for the quiet. Both are welcome."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793719132916_bnp2",
-        "conversationId": "engagement_6",
-        "category": "engagement",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:18:52.916Z",
-        "endedAt": "2026-11-03T15:18:52.916Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The chat is part of the circle tonight. Say something, and I will answer."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793719075364_wnmn",
-        "conversationId": "story_2",
-        "category": "story",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:17:55.364Z",
-        "endedAt": "2026-11-03T15:17:55.364Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "They say a witch once traded her reflection for a single true answer. She never regretted it, and she never looked in mirrors again."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793719029963_9uqu",
-        "conversationId": "story_1",
-        "category": "story",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:17:09.963Z",
-        "endedAt": "2026-11-03T15:17:09.963Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "There was once a girl who could hear the river speak. She never told anyone, and the river never stopped talking."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718981837_0i12",
-        "conversationId": "story_6",
-        "category": "story",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:16:21.837Z",
-        "endedAt": "2026-11-03T15:16:21.837Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "A crow learned a single word and refused to use it. The village waited years, and the crow enjoyed every moment."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718936522_oql7",
-        "conversationId": "story_5",
-        "category": "story",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:15:36.523Z",
-        "endedAt": "2026-11-03T15:15:36.523Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The fortune teller kept one card face down her whole life. Her last words were, not yet."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718890484_b75n",
-        "conversationId": "welcome_2",
-        "category": "welcome",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:14:50.484Z",
-        "endedAt": "2026-11-03T15:14:50.484Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "You found your way here again. The spirits noticed before I did."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718844646_ply9",
-        "conversationId": "engagement_5",
-        "category": "engagement",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:14:04.647Z",
-        "endedAt": "2026-11-03T15:14:04.647Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "What is one thing you are ready to leave behind this month?"
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718798497_q89r",
-        "conversationId": "reading_2",
-        "category": "reading",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:13:18.497Z",
-        "endedAt": "2026-11-03T15:13:18.497Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "One card is enough for a single question. Three cards are for a story that has not finished."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718752347_uqsx",
-        "conversationId": "tarot_1",
-        "category": "tarot",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:12:32.347Z",
-        "endedAt": "2026-11-03T15:12:32.347Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The Moon is not a warning. It is an invitation to walk carefully through what you cannot see."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718707129_c79d",
-        "conversationId": "engagement_2",
-        "category": "engagement",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:11:47.130Z",
-        "endedAt": "2026-11-03T15:11:47.130Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "If you could ask one question and be guaranteed a true answer, what would it be?"
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718661035_ua3w",
-        "conversationId": "welcome_5",
-        "category": "welcome",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:11:01.035Z",
-        "endedAt": "2026-11-03T15:11:01.035Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The door was never locked. Welcome to Mystic Witch Live."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718614330_czbz",
-        "conversationId": "engagement_3",
-        "category": "engagement",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:10:14.330Z",
-        "endedAt": "2026-11-03T15:10:14.330Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Type the first word that comes to you. We will see what it stirs."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718568862_sphk",
-        "conversationId": "greeting_3",
-        "category": "greeting",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:09:28.862Z",
-        "endedAt": "2026-11-03T15:09:28.862Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Ah, friend. I was wondering when you would find your way back."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718523569_8zu0",
-        "conversationId": "tarot_5",
-        "category": "tarot",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:08:43.569Z",
-        "endedAt": "2026-11-03T15:08:43.569Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The Hermit carries a lamp, not a torch. Some truths only survive a small light."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718477340_8dur",
-        "conversationId": "reading_3",
-        "category": "reading",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:07:57.340Z",
-        "endedAt": "2026-11-03T15:07:57.340Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "I can draw for you whenever you are ready. The deck does not judge the question."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718431820_mkic",
-        "conversationId": "reading_5",
-        "category": "reading",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:07:11.820Z",
-        "endedAt": "2026-11-03T15:07:11.820Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Send your question, and I will let the cards answer in their own slow language."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793718019536_ln91",
-        "conversationId": "tarot_2",
-        "category": "tarot",
-        "status": "spoken",
-        "startedAt": "2026-11-03T15:00:19.536Z",
-        "endedAt": "2026-11-03T15:00:19.536Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The Tower frightens people, but it only removes what was already falling."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717959156_8x0l",
-        "conversationId": "ambient_1",
-        "category": "ambient",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:59:19.156Z",
-        "endedAt": "2026-11-03T14:59:19.156Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The candles are lit and the cards are resting. We begin whenever you are ready."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717913903_1c1s",
-        "conversationId": "greeting_2",
-        "category": "greeting",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:58:33.903Z",
-        "endedAt": "2026-11-03T14:58:33.903Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "friend has arrived. The candles noticed."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717867898_5zgf",
-        "conversationId": "greeting_5",
-        "category": "greeting",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:57:47.898Z",
-        "endedAt": "2026-11-03T14:57:47.898Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Welcome, friend. Whatever you carry in, you may set it down here."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717773263_9jdu",
-        "conversationId": "reading_4",
-        "category": "reading",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:56:13.264Z",
-        "endedAt": "2026-11-03T14:56:13.264Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "A reading is not a verdict. It is a lantern held at a different angle."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717772816_mhvy",
-        "conversationId": "welcome_3",
-        "category": "welcome",
-        "status": "failed",
-        "startedAt": "2026-11-03T14:56:12.816Z",
-        "endedAt": "2026-11-03T14:56:12.816Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Come in, sit close. The room is quiet and the cards are listening."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717727492_4oid",
-        "conversationId": "story_3",
-        "category": "story",
-        "status": "failed",
-        "startedAt": "2026-11-03T14:55:27.492Z",
-        "endedAt": "2026-11-03T14:55:27.492Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "In the old quarter every house had a key that opened no door. The keys were the point."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717726472_v6i7",
-        "conversationId": "greeting_1",
-        "category": "greeting",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:55:26.472Z",
-        "endedAt": "2026-11-03T14:55:26.472Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "Welcome, friend. The circle opens a little wider for you."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717681257_56v5",
-        "conversationId": "tarot_2",
-        "category": "tarot",
-        "status": "spoken",
-        "startedAt": "2026-11-03T14:54:41.257Z",
-        "endedAt": "2026-11-03T14:54:41.257Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "The Tower frightens people, but it only removes what was already falling."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717681255_e3yq",
-        "conversationId": "reading_1",
-        "category": "reading",
-        "status": "failed",
-        "startedAt": "2026-11-03T14:54:41.255Z",
-        "endedAt": "2026-11-03T14:54:41.255Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "If a question has been circling you for days, a reading may give it somewhere to land."
-          }
-        ]
-      },
-      {
-        "runId": "run_1793717635920_kha0",
-        "conversationId": "welcome_2",
-        "category": "welcome",
-        "status": "failed",
-        "startedAt": "2026-11-03T14:53:55.920Z",
-        "endedAt": "2026-11-03T14:53:55.920Z",
-        "lines": [
-          {
-            "speaker": "oracle",
-            "text": "You found your way here again. The spirits noticed before I did."
-          }
-        ]
       }
     ],
     "version": 2
@@ -1319,17 +1141,17 @@
     "enabled": true,
     "aiInterpretation": true,
     "ai": {
-      "at": "2026-11-03T15:05:54.946Z",
-      "ok": false,
+      "at": "2026-11-06T06:44:37.764Z",
+      "ok": true,
       "enabled": true,
-      "source": "builtin",
-      "provider": "OpenRouter",
-      "providerId": "openrouter",
-      "model": "openrouter/free",
-      "httpStatus": 403,
-      "latencyMs": 0,
-      "sections": 0,
-      "reason": "OpenRouter HTTP 429: Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day | TokenRouter HTTP 403: User's credit limit is insufficient, remaining credit limit: ＄0.000000 (request id: 20261103150"
+      "source": "ai",
+      "provider": "Ollama",
+      "providerId": "ollama",
+      "model": "llama3.2:latest",
+      "httpStatus": 200,
+      "latencyMs": 2444,
+      "sections": 6,
+      "reason": ""
     },
     "commentCooldownSeconds": 20,
     "perViewerCooldownSeconds": 120,
@@ -1692,286 +1514,13 @@
     },
     "queueState": {
       "capacity": 100,
-      "seq": 106,
+      "seq": 145,
       "waitIntervalSeconds": 90,
       "waitAmount": 1,
-      "served": 44,
+      "served": 47,
       "dropped": 0,
       "current": null,
-      "entries": [
-        {
-          "id": "q_1793717072401_56",
-          "key": "u:sim.viewer.1793717072401",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717072401",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 24,
-          "waitSteps": 10,
-          "joinedAt": 1793717072401,
-          "seq": 90,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717075931_57",
-          "key": "u:sim.viewer.1793717075930",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717075930",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717075931,
-          "seq": 91,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717077045_58",
-          "key": "u:sim.viewer.1793717077045",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717077045",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717077045,
-          "seq": 92,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717078165_59",
-          "key": "u:sim.viewer.1793717078165",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717078165",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717078165,
-          "seq": 93,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717078462_60",
-          "key": "u:sim.viewer.1793717078461",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717078461",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717078462,
-          "seq": 94,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717078678_61",
-          "key": "u:sim.viewer.1793717078678",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717078678",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717078678,
-          "seq": 95,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717078847_62",
-          "key": "u:sim.viewer.1793717078846",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717078846",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717078847,
-          "seq": 96,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717079024_63",
-          "key": "u:sim.viewer.1793717079024",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717079024",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717079024,
-          "seq": 97,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717079197_64",
-          "key": "u:sim.viewer.1793717079196",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717079196",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717079197,
-          "seq": 98,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717079371_65",
-          "key": "u:sim.viewer.1793717079370",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717079370",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717079371,
-          "seq": 99,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717079558_66",
-          "key": "u:sim.viewer.1793717079558",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717079558",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717079558,
-          "seq": 100,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717079731_67",
-          "key": "u:sim.viewer.1793717079731",
-          "user": "Sophia",
-          "uniqueId": "sim.viewer.1793717079731",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "Love Reading",
-          "question": "What does my love life hold?",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717079731,
-          "seq": 101,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717092330_68",
-          "key": "u:gift.1793717092327",
-          "user": "Sophia",
-          "uniqueId": "gift.1793717092327",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "",
-          "question": "",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717092330,
-          "seq": 102,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717093044_69",
-          "key": "u:gift.1793717093036",
-          "user": "Sophia",
-          "uniqueId": "gift.1793717093036",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "",
-          "question": "",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717093044,
-          "seq": 103,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717093681_70",
-          "key": "u:gift.1793717093678",
-          "user": "Sophia",
-          "uniqueId": "gift.1793717093678",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "",
-          "question": "",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717093681,
-          "seq": 104,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717093867_71",
-          "key": "u:gift.1793717093863",
-          "user": "Sophia",
-          "uniqueId": "gift.1793717093863",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "",
-          "question": "",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717093867,
-          "seq": 105,
-          "promotions": []
-        },
-        {
-          "id": "q_1793717094042_72",
-          "key": "u:gift.1793717094038",
-          "user": "Sophia",
-          "uniqueId": "gift.1793717094038",
-          "avatar": "",
-          "topicId": "",
-          "topicLabel": "",
-          "question": "",
-          "spread": "three",
-          "boost": 0,
-          "waitSteps": 10,
-          "joinedAt": 1793717094042,
-          "seq": 106,
-          "promotions": []
-        }
-      ]
+      "entries": []
     }
   },
   "reactive": {
@@ -1980,9 +1529,9 @@
       "understanding": true,
       "chatOrders": true,
       "llmEnabled": true,
-      "provider": "openrouter",
-      "baseUrl": "https://openrouter.ai/api/v1",
-      "model": "openrouter/free",
+      "provider": "ollama",
+      "baseUrl": "http://10.0.0.142:11434/v1",
+      "model": "llama3.2:latest",
       "language": "en",
       "defaultSeller": "alternate",
       "perViewerCooldown": 20,
@@ -1990,7 +1539,7 @@
       "maxResponseLength": 180,
       "confidenceThreshold": 0.55,
       "maxPending": 6,
-      "timeoutMs": 8000,
+      "timeoutMs": 15000,
       "dedupeSeconds": 45,
       "savedAt": "2026-11-02T20:33:37.052Z"
     },
@@ -2003,7 +1552,7 @@
           "baseUrl": "https://openrouter.ai/api/v1",
           "endpointPath": "/chat/completions",
           "model": "openrouter/free",
-          "enabled": true,
+          "enabled": false,
           "requiresKey": true,
           "timeoutMs": 8000,
           "maxTokens": 2000,
@@ -2011,7 +1560,7 @@
           "reasoningMode": "auto",
           "headers": {},
           "createdAt": "2026-11-02T19:14:56.850Z",
-          "updatedAt": "2026-11-03T15:25:46.855Z"
+          "updatedAt": "2026-11-06T06:48:05.480Z"
         },
         {
           "id": "tokenrouter",
@@ -2019,7 +1568,7 @@
           "baseUrl": "https://api.tokenrouter.com/v1",
           "endpointPath": "/chat/completions",
           "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
-          "enabled": true,
+          "enabled": false,
           "requiresKey": true,
           "timeoutMs": 15000,
           "maxTokens": 1200,
@@ -2027,16 +1576,33 @@
           "reasoningMode": "auto",
           "headers": {},
           "createdAt": "2026-11-02T19:14:56.850Z",
-          "updatedAt": "2026-11-03T15:25:46.855Z"
+          "updatedAt": "2026-11-06T06:48:05.480Z"
+        },
+        {
+          "id": "ollama",
+          "name": "Ollama",
+          "baseUrl": "http://10.0.0.142:11434/v1",
+          "endpointPath": "/chat/completions",
+          "model": "llama3.2:latest",
+          "enabled": true,
+          "requiresKey": false,
+          "timeoutMs": 45000,
+          "maxTokens": 1800,
+          "jsonMode": true,
+          "reasoningMode": "auto",
+          "headers": {},
+          "createdAt": "2026-11-06T05:55:33.688Z",
+          "updatedAt": "2026-11-06T06:48:05.480Z"
         }
       ],
-      "primaryProviderId": "openrouter",
+      "primaryProviderId": "ollama",
       "fallbackProviderIds": [
+        "openrouter",
         "tokenrouter"
       ],
       "maxAttempts": 3,
       "seededAt": "2026-11-02T19:14:56.850Z",
-      "updatedAt": "2026-11-02T19:34:22.084Z"
+      "updatedAt": "2026-11-06T06:24:49.944Z"
     }
   }
 }

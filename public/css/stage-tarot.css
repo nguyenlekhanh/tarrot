@@ -156,7 +156,7 @@
   border-radius: 999px;
   border: 1px solid rgba(166, 120, 255, 0.18);
   background: rgba(60, 30, 110, 0.45);
-  font-size: 16px;
+  font-size: 25px;
   color: rgba(236, 226, 255, 0.88);
   white-space: nowrap;
   overflow: hidden;
@@ -186,6 +186,7 @@
   transform: translateY(16px);
   transition: opacity 0.5s ease, transform 0.5s ease;
   overflow: hidden;
+  font-size: 28px !important;
 }
 
 .reading-result.show { opacity: 1; transform: translateY(0); }
